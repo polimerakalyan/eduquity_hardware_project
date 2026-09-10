@@ -1,0 +1,1 @@
+# eduquity_hardware_project
