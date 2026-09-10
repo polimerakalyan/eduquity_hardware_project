@@ -18,10 +18,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 
-SECRET_KEY = "django-insecure-9nkip+vuqc%uggfw%y4706cf^8&!)i648s)wo(6o012!w%1xt^"
-DEBUG = True
+import os
 
-ALLOWED_HOSTS = ['localhost', '127.0.0.1', '192.168.1.*']
+SECRET_KEY = os.getenv(
+    "DJANGO_SECRET_KEY",
+    "django-insecure-dev-only-key"
+)
+
+DEBUG = os.getenv("DEBUG", "False").lower() == "true"
+
+ALLOWED_HOSTS = [
+    host.strip()
+    for host in os.getenv(
+        "ALLOWED_HOSTS",
+        "localhost,127.0.0.1"
+    ).split(",")
+    if host.strip()
+]
 
 
 
@@ -73,11 +86,11 @@ WSGI_APPLICATION = 'eduquity_hardware.wsgi.application'
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'eduquity_hardware_db',  
-        'USER': 'root',                   
-        'PASSWORD': '',                   
-        'HOST': 'localhost',              
-        'PORT': '3306',                  
+        'NAME': os.getenv('MYSQL_DATABASE', 'eduquity_hardware_db'),
+        'USER': os.getenv('MYSQL_USER', 'root'),
+        'PASSWORD': os.getenv('MYSQL_PASSWORD', ''),
+        'HOST': os.getenv('MYSQL_HOST', 'db'),
+        'PORT': os.getenv('MYSQL_PORT', '3306'),
         'OPTIONS': {
             'init_command': "SET sql_mode='STRICT_TRANS_TABLES'",
             'charset': 'utf8mb4',
@@ -166,8 +179,8 @@ EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
 EMAIL_HOST = 'smtp.gmail.com'
 EMAIL_PORT = 587
 EMAIL_USE_TLS = True
-EMAIL_HOST_USER = "sridharnidamanuri@gmail.com"
-EMAIL_HOST_PASSWORD = "uaraolelowgpzdyu"
+EMAIL_HOST_USER = os.getenv("EMAIL_HOST_USER", "")
+EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD", "")
 
 # ✅ FIXED: DEFAULT_FROM_EMAIL as a simple string (no angle brackets, no EmailPolicy)
 DEFAULT_FROM_EMAIL = 'noreply@eduquity.com'

@@ -2,7 +2,6 @@
 
 from datetime import date, timezone
 from email.policy import default
-from turtle import title
 
 from django.core.mail import send_mail
 from django.db.models.functions import Length
