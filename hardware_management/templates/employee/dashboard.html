@@ -1,0 +1,821 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Employee Dashboard - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.first_name|default:user.username }}!{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== MODERN DASHBOARD STYLES ========== */
+    :root {
+        --primary-gradient: linear-gradient(135deg, #E04D00 0%, #FF6B1A 100%);
+        --card-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+        --card-shadow-hover: 0 6px 20px rgba(0, 0, 0, 0.10);
+        --border-radius: 12px;
+        --transition: all 0.2s ease;
+    }
+
+    /* ========== WELCOME SECTION ========== */
+    .welcome-section {
+        background: var(--primary-gradient);
+        border-radius: var(--border-radius);
+        padding: 16px 24px;
+        color: white;
+        position: relative;
+        overflow: hidden;
+        margin-bottom: 20px;
+    }
+
+    .welcome-section::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -10%;
+        width: 300px;
+        height: 300px;
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 50%;
+    }
+
+    .welcome-section h1 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        margin-bottom: 2px;
+    }
+
+    .welcome-section .welcome-subtitle {
+        font-size: 0.8rem;
+        opacity: 0.9;
+    }
+
+    .welcome-section .welcome-badge {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 2px 12px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    /* ========== STATISTICS CARDS ========== */
+    .stat-card-modern {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 14px 18px;
+        box-shadow: var(--card-shadow);
+        transition: var(--transition);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .stat-card-modern:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .stat-card-modern .stat-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+    }
+
+    .stat-card-modern .stat-icon-wrapper {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        flex-shrink: 0;
+    }
+
+    .stat-card-modern .stat-icon-wrapper.primary { background: rgba(224, 77, 0, 0.1); color: #E04D00; }
+    .stat-card-modern .stat-icon-wrapper.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .stat-card-modern .stat-icon-wrapper.warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+    .stat-card-modern .stat-icon-wrapper.info { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+
+    .stat-card-modern .stat-number {
+        font-size: 1.4rem;
+        font-weight: 700;
+        color: #1E293B;
+        line-height: 1.2;
+    }
+
+    .stat-card-modern .stat-label {
+        font-size: 0.65rem;
+        color: #94A3B8;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .stat-card-modern .stat-footer {
+        margin-top: 6px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .stat-card-modern .stat-change {
+        font-size: 0.6rem;
+        font-weight: 600;
+        padding: 1px 8px;
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+    }
+
+    .stat-card-modern .stat-change.up { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .stat-card-modern .stat-change.down { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+    .stat-card-modern .stat-subtext {
+        font-size: 0.6rem;
+        color: #94A3B8;
+    }
+
+    .stat-card-modern .stat-center-name {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1E293B;
+    }
+
+    .stat-card-modern .stat-center-location {
+        font-size: 0.6rem;
+        color: #94A3B8;
+    }
+
+    /* ========== QUICK ACTION CARDS ========== */
+    .quick-action-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .quick-action-item {
+        background: white;
+        border-radius: 10px;
+        padding: 12px;
+        text-align: center;
+        text-decoration: none;
+        color: #1E293B;
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transition: var(--transition);
+        box-shadow: var(--card-shadow);
+    }
+
+    .quick-action-item:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--card-shadow-hover);
+        text-decoration: none;
+        color: #1E293B;
+        border-color: #E04D00;
+    }
+
+    .quick-action-item .qa-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 4px;
+        font-size: 1rem;
+    }
+
+    .quick-action-item .qa-icon.primary { background: rgba(224, 77, 0, 0.1); color: #E04D00; }
+    .quick-action-item .qa-icon.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .quick-action-item .qa-icon.info { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+    .quick-action-item .qa-icon.warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+
+    .quick-action-item .qa-title {
+        font-size: 0.7rem;
+        font-weight: 600;
+        margin-bottom: 0;
+    }
+
+    .quick-action-item .qa-sub {
+        font-size: 0.55rem;
+        color: #94A3B8;
+    }
+
+    /* ========== ACTIVITY TIMELINE ========== */
+    .activity-timeline {
+        position: relative;
+        padding-left: 16px;
+    }
+
+    .activity-timeline::before {
+        content: '';
+        position: absolute;
+        left: 3px;
+        top: 0;
+        bottom: 0;
+        width: 2px;
+        background: #E2E8F0;
+    }
+
+    .activity-item-modern {
+        position: relative;
+        padding-bottom: 12px;
+        padding-left: 12px;
+    }
+
+    .activity-item-modern:last-child {
+        padding-bottom: 0;
+    }
+
+    .activity-item-modern::before {
+        content: '';
+        position: absolute;
+        left: -16px;
+        top: 4px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid #E2E8F0;
+        background: white;
+    }
+
+    .activity-item-modern.active::before {
+        border-color: #E04D00;
+        background: #E04D00;
+    }
+
+    .activity-item-modern .activity-time {
+        font-size: 0.55rem;
+        color: #94A3B8;
+    }
+
+    .activity-item-modern .activity-title {
+        font-weight: 600;
+        font-size: 0.75rem;
+        color: #1E293B;
+    }
+
+    .activity-item-modern .activity-desc {
+        font-size: 0.65rem;
+        color: #64748B;
+    }
+
+    /* ========== ASSIGNMENT CARDS ========== */
+    .assignment-card {
+        background: white;
+        border-radius: var(--border-radius);
+        padding: 12px 16px;
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        transition: var(--transition);
+        margin-bottom: 10px;
+    }
+
+    .assignment-card:last-child {
+        margin-bottom: 0;
+    }
+
+    .assignment-card:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .assignment-card .assignment-project {
+        font-weight: 600;
+        font-size: 0.85rem;
+        color: #1E293B;
+    }
+
+    .assignment-card .assignment-meta {
+        font-size: 0.7rem;
+        color: #64748B;
+    }
+
+    .assignment-card .assignment-status {
+        font-size: 0.55rem;
+        padding: 1px 10px;
+        border-radius: 20px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .assignment-card .assignment-status.active { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .assignment-card .assignment-status.overdue { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+    .assignment-card .assignment-status.pending { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+    .assignment-card .assignment-status.completed { background: rgba(59, 130, 246, 0.1); color: #3B82F6; }
+
+    .assignment-progress {
+        height: 4px;
+        background: #F1F5F9;
+        border-radius: 4px;
+        overflow: hidden;
+        margin-top: 6px;
+    }
+
+    .assignment-progress .progress-bar {
+        height: 100%;
+        border-radius: 4px;
+        transition: width 0.4s ease;
+    }
+
+    .assignment-progress .progress-bar.success { background: linear-gradient(90deg, #10B981, #34D399); }
+    .assignment-progress .progress-bar.warning { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
+    .assignment-progress .progress-bar.danger { background: linear-gradient(90deg, #EF4444, #F87171); }
+
+    /* ========== EMPTY STATE ========== */
+    .empty-state {
+        text-align: center;
+        padding: 24px 20px;
+    }
+
+    .empty-state .empty-icon {
+        font-size: 2.5rem;
+        color: #CBD5E1;
+        margin-bottom: 12px;
+    }
+
+    .empty-state h5 {
+        font-size: 0.9rem;
+        color: #1E293B;
+        font-weight: 600;
+    }
+
+    .empty-state p {
+        font-size: 0.75rem;
+        color: #94A3B8;
+        max-width: 400px;
+        margin: 0 auto;
+    }
+
+    /* ========== QUICK STATS ========== */
+    .quick-stats-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+    }
+
+    .quick-stat-item {
+        background: #F8FAFC;
+        border-radius: 8px;
+        padding: 8px 12px;
+        text-align: center;
+    }
+
+    .quick-stat-item .qs-label {
+        font-size: 0.6rem;
+        color: #94A3B8;
+        font-weight: 500;
+        text-transform: uppercase;
+    }
+
+    .quick-stat-item .qs-value {
+        font-size: 1rem;
+        font-weight: 700;
+        color: #1E293B;
+    }
+
+    /* ========== UTILITY ========== */
+    .card-modern {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--card-shadow);
+        border: 1px solid rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        transition: var(--transition);
+    }
+
+    .card-modern:hover {
+        box-shadow: var(--card-shadow-hover);
+    }
+
+    .card-modern .card-header-modern {
+        padding: 12px 16px;
+        border-bottom: 1px solid #F1F5F9;
+        background: transparent;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .card-modern .card-header-modern h5 {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin: 0;
+    }
+
+    .card-modern .card-body-modern {
+        padding: 12px 16px;
+    }
+
+    .badge-modern {
+        padding: 2px 10px;
+        border-radius: 20px;
+        font-weight: 500;
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+
+    .badge-modern.primary { background: rgba(224, 77, 0, 0.1); color: #E04D00; }
+    .badge-modern.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .badge-modern.warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+    .badge-modern.danger { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+
+    /* Buttons */
+    .btn-modern {
+        font-size: 0.7rem !important;
+        padding: 0.2rem 0.8rem !important;
+        border-radius: 8px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- ========== WELCOME SECTION ========== -->
+<div class="welcome-section">
+    <div class="welcome-content d-flex flex-wrap justify-content-between align-items-center">
+        <div>
+            <h1>👋 Welcome back, {{ user.first_name|default:user.username }}!</h1>
+            <div class="welcome-subtitle">
+                <i class="bi bi-building me-1"></i> 
+                {{ user.branch_location|default:"Head Office" }}
+                <span class="mx-2">•</span>
+                <i class="bi bi-person-badge me-1"></i>
+                {{ user.get_user_type_display }}
+            </div>
+        </div>
+        <div class="welcome-badges mt-2 mt-sm-0">
+            <span class="welcome-badge">
+                <i class="bi bi-calendar3"></i>
+                {{ today|date:"d M Y" }}
+            </span>
+        </div>
+    </div>
+</div>
+
+<!-- ========== STATISTICS CARDS ========== -->
+<div class="row g-2 mb-3">
+    <div class="col-6 col-xl-3">
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-label">Active Assignments</div>
+                    <div class="stat-number">{{ current_assignments_count|default:"0" }}</div>
+                </div>
+                <div class="stat-icon-wrapper primary">
+                    <i class="bi bi-clipboard-check"></i>
+                </div>
+            </div>
+            <div class="stat-footer">
+                <span class="stat-change up">
+                    <i class="bi bi-arrow-up-short"></i> Active
+                </span>
+                <span class="stat-subtext">Currently active</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-label">Pending Entries</div>
+                    <div class="stat-number">{{ pending_asset_count|default:"0" }}</div>
+                </div>
+                <div class="stat-icon-wrapper warning">
+                    <i class="bi bi-upc-scan"></i>
+                </div>
+            </div>
+            <div class="stat-footer">
+                <span class="stat-change {% if pending_asset_count > 0 %}down{% else %}up{% endif %}">
+                    <i class="bi bi-{% if pending_asset_count > 0 %}arrow-down{% else %}arrow-up{% endif %}-short"></i>
+                    {% if pending_asset_count > 0 %}Needs attention{% else %}All done{% endif %}
+                </span>
+                <span class="stat-subtext">Asset entries</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-label">Completed</div>
+                    <div class="stat-number">{{ completed_assignments_count|default:"0" }}</div>
+                </div>
+                <div class="stat-icon-wrapper success">
+                    <i class="bi bi-check-circle"></i>
+                </div>
+            </div>
+            <div class="stat-footer">
+                <span class="stat-change up">
+                    <i class="bi bi-arrow-up-short"></i> Done
+                </span>
+                <span class="stat-subtext">Finished</span>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="stat-card-modern">
+            <div class="stat-header">
+                <div class="stat-content">
+                    <div class="stat-label">Exam Center</div>
+                    <div class="stat-center-name">
+                        {% if current_exam_center_name %}
+                            {{ current_exam_center_name|truncatechars:12 }}
+                        {% else %}
+                            —
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="stat-icon-wrapper info">
+                    <i class="bi bi-building"></i>
+                </div>
+            </div>
+            <div class="stat-footer">
+                <span class="stat-center-location">
+                    {% if current_exam_city %}
+                        <i class="bi bi-geo-alt"></i> {{ current_exam_city }}
+                    {% else %}
+                        No location set
+                    {% endif %}
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ========== MAIN CONTENT ========== -->
+<div class="row g-3">
+    <!-- Current Assignments -->
+    <div class="col-12 col-xl-7">
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5>
+                    <i class="bi bi-clipboard-data text-primary me-2"></i>
+                    Current Assignments
+                    <span class="badge-modern primary ms-2">{{ current_assignments_count|default:0 }}</span>
+                </h5>
+                <a href="{% url 'view_my_assignments' %}" class="btn btn-sm btn-outline-primary btn-modern">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body-modern">
+                {% if current_assignments %}
+                    {% for assignment in current_assignments %}
+                    <div class="assignment-card">
+                        <div class="assignment-header d-flex justify-content-between align-items-start">
+                            <div>
+                                <div class="assignment-project">{{ assignment.project.project_name }}</div>
+                                <div class="assignment-meta">
+                                    <i class="bi bi-calendar"></i>
+                                    {{ assignment.assigned_date|date:"d M Y" }}
+                                    {% if assignment.exam_center_name %}
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-building"></i>
+                                        {{ assignment.exam_center_name|truncatechars:15 }}
+                                    {% endif %}
+                                    {% if assignment.exam_city %}
+                                        <span class="mx-1">•</span>
+                                        <i class="bi bi-geo-alt"></i>
+                                        {{ assignment.exam_city }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="text-end">
+                                <div>
+                                    {% if assignment.expected_return_date < today %}
+                                        <span class="assignment-status overdue">Overdue</span>
+                                    {% else %}
+                                        <span class="assignment-status active">Active</span>
+                                    {% endif %}
+                                </div>
+                                <div class="assignment-meta mt-1">
+                                    <i class="bi bi-arrow-return-left"></i>
+                                    {{ assignment.expected_return_date|date:"d M Y" }}
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Progress -->
+                        {% if assignment.total_items > 0 %}
+                        <div class="d-flex justify-content-between align-items-center mt-2">
+                            <div class="flex-grow-1 me-3">
+                                <div class="assignment-progress">
+                                    {% with progress=assignment.verified_asset_count|default:0|add:assignment.entered_asset_count|default:0 %}
+                                    <div class="progress-bar {% if progress == assignment.total_items %}success{% elif progress > 0 %}warning{% else %}danger{% endif %}" 
+                                         style="width: {% widthratio progress assignment.total_items 100 %}%;">
+                                    </div>
+                                    {% endwith %}
+                                </div>
+                            </div>
+                            <div>
+                                <span class="badge-modern {% if assignment.pending_asset_count == assignment.total_items %}danger{% elif assignment.pending_asset_count == 0 and assignment.verified_asset_count == assignment.total_items %}success{% else %}warning{% endif %}">
+                                    {% if assignment.pending_asset_count == assignment.total_items %}
+                                        All Pending
+                                    {% elif assignment.pending_asset_count == 0 and assignment.verified_asset_count == assignment.total_items %}
+                                        All Verified
+                                    {% else %}
+                                        {{ assignment.entered_asset_count }}/{{ assignment.total_items }}
+                                    {% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endif %}
+                        
+                        <!-- Actions -->
+                        <div class="mt-2 d-flex gap-1">
+                            {% if assignment.pending_asset_count > 0 %}
+                                <a href="{% url 'enter_serial_numbers' assignment.assignment_id %}" 
+                                   class="btn btn-sm btn-primary btn-modern">
+                                    <i class="bi bi-upc-scan"></i> Enter Asset
+                                </a>
+                            {% else %}
+                                <button class="btn btn-sm btn-secondary btn-modern" disabled>
+                                    <i class="bi bi-check-circle"></i> Done
+                                </button>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class="bi bi-clipboard-x"></i>
+                        </div>
+                        <h5>No Active Assignments</h5>
+                        <p>You don't have any active hardware assignments at the moment. Check back later or contact your manager.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="col-12 col-xl-5">
+        <!-- Quick Actions -->
+        <div class="card-modern mb-3">
+            <div class="card-header-modern">
+                <h5>
+                    <i class="bi bi-lightning-charge text-warning me-2"></i>
+                    Quick Actions
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <div class="quick-action-grid">
+                    <a href="{% url 'view_my_assignments' %}" class="quick-action-item">
+                        <div class="qa-icon primary">
+                            <i class="bi bi-clipboard-data"></i>
+                        </div>
+                        <div class="qa-title">Assignments</div>
+                        <div class="qa-sub">View all</div>
+                    </a>
+                    <a href="{% url 'my_hardware' %}" class="quick-action-item">
+                        <div class="qa-icon success">
+                            <i class="bi bi-laptop"></i>
+                        </div>
+                        <div class="qa-title">My Hardware</div>
+                        <div class="qa-sub">View inventory</div>
+                    </a>
+                    <a href="{% url 'request_hardware_transfer' %}" class="quick-action-item">
+                        <div class="qa-icon info">
+                            <i class="bi bi-arrow-left-right"></i>
+                        </div>
+                        <div class="qa-title">Transfer</div>
+                        <div class="qa-sub">Request transfer</div>
+                    </a>
+                    {% if pending_asset_count > 0 %}
+                    <a href="{% url 'view_my_assignments' %}" class="quick-action-item urgent">
+                        <div class="qa-icon warning">
+                            <i class="bi bi-exclamation-triangle"></i>
+                        </div>
+                        <div class="qa-title">Pending ({{ pending_asset_count }})</div>
+                        <div class="qa-sub">Complete entries</div>
+                    </a>
+                    {% else %}
+                    <a href="{% url 'view_my_assignments' %}" class="quick-action-item">
+                        <div class="qa-icon primary">
+                            <i class="bi bi-check-circle"></i>
+                        </div>
+                        <div class="qa-title">All Done!</div>
+                        <div class="qa-sub">No pending tasks</div>
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="card-modern mb-3">
+            <div class="card-header-modern">
+                <h5>
+                    <i class="bi bi-clock-history text-primary me-2"></i>
+                    Recent Activity
+                </h5>
+                {% if current_assignments %}
+                <span class="badge-modern primary">{{ current_assignments|length }}</span>
+                {% endif %}
+            </div>
+            <div class="card-body-modern">
+                <div class="activity-timeline">
+                    {% if current_assignments %}
+                        {% for assignment in current_assignments|slice:":4" %}
+                        <div class="activity-item-modern active">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="activity-title">{{ assignment.project.project_name|truncatechars:20 }}</div>
+                                    <div class="activity-desc">
+                                        <i class="bi bi-calendar me-1"></i>
+                                        {{ assignment.assigned_date|date:"d M Y" }}
+                                        {% if assignment.exam_city %}
+                                            <span class="mx-1">•</span>
+                                            <i class="bi bi-geo-alt me-1"></i>
+                                            {{ assignment.exam_city }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="activity-time">
+                                    {% if assignment.expected_return_date < today %}
+                                        <span class="badge-modern danger">Overdue</span>
+                                    {% else %}
+                                        <span class="badge-modern success">Active</span>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                        
+                        {% if pending_asset_count > 0 %}
+                        <div class="activity-item-modern active">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <div class="activity-title">
+                                        <i class="bi bi-upc-scan text-warning me-1"></i>
+                                        Pending Asset Entries
+                                    </div>
+                                    <div class="activity-desc">
+                                        You have <strong>{{ pending_asset_count }}</strong> item(s) pending
+                                    </div>
+                                </div>
+                                <div class="activity-time">
+                                    <span class="badge-modern warning">Pending</span>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="activity-item-modern">
+                            <div class="d-flex align-items-start">
+                                <div class="flex-grow-1">
+                                    <div class="activity-title text-muted">No recent activity</div>
+                                    <div class="activity-desc">Your recent assignments will appear here</div>
+                                </div>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats -->
+        <div class="card-modern">
+            <div class="card-header-modern">
+                <h5>
+                    <i class="bi bi-bar-chart-fill text-primary me-2"></i>
+                    Quick Stats
+                </h5>
+            </div>
+            <div class="card-body-modern">
+                <div class="quick-stats-grid">
+                    <div class="quick-stat-item">
+                        <div class="qs-label">Total Items</div>
+                        <div class="qs-value">{{ total_hardware_items|default:0 }}</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="qs-label">Verified</div>
+                        <div class="qs-value text-success">{{ verified_count|default:0 }}</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="qs-label">Pending</div>
+                        <div class="qs-value text-warning">{{ pending_asset_count|default:0 }}</div>
+                    </div>
+                    <div class="quick-stat-item">
+                        <div class="qs-label">Completion</div>
+                        <div class="qs-value text-primary">
+                            {% if total_hardware_items > 0 %}
+                                {% widthratio verified_count total_hardware_items 100 %}%
+                            {% else %}
+                                0%
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

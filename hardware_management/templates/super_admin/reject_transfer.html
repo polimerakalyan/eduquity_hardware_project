@@ -1,0 +1,156 @@
+<!-- templates/super_admin/reject_transfer.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Reject Cross-Branch Transfer - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-3 mb-md-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h4 h2-md"><i class="bi bi-x-circle"></i> Reject Cross-Branch Transfer</h2>
+                <p class="text-muted mb-0 small small-md">Reject hardware transfer request between branches</p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_transfer_requests' %}" class="btn btn-outline-secondary btn-sm btn-md">
+                    <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Back to Requests</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white py-2 py-md-3">
+                <h5 class="mb-0 h6 h5-md">
+                    <i class="bi bi-shield-x"></i> Reject Transfer Request
+                    <span class="badge bg-light text-dark ms-2">{{ transfer.transfer_id }}</span>
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <!-- Transfer Summary -->
+                <div class="row g-3">
+                    <div class="col-12 col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="bi bi-person"></i> From</h6>
+                                <hr>
+                                <p><strong>{{ transfer.from_employee.get_full_name|default:transfer.from_employee.username }}</strong></p>
+                                <p class="text-muted small">{{ transfer.from_employee.email }}</p>
+                                <p><span class="badge bg-info">{{ transfer.from_branch|default:'Unknown Branch' }}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="text-success"><i class="bi bi-person"></i> To</h6>
+                                <hr>
+                                <p><strong>{{ transfer.to_employee.get_full_name|default:transfer.to_employee.username }}</strong></p>
+                                <p class="text-muted small">{{ transfer.to_employee.email }}</p>
+                                <p><span class="badge bg-warning text-dark">{{ transfer.to_branch|default:'Unknown Branch' }}</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="text-info"><i class="bi bi-info-circle"></i> Transfer Details</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-12 col-md-6">
+                                        <p><strong>Items:</strong> {{ transfer.transfer_items.count }}</p>
+                                        <p><strong>Type:</strong> {{ transfer.get_transfer_type_display }}</p>
+                                    </div>
+                                    <div class="col-12 col-md-6">
+                                        <p><strong>Expected Arrival:</strong> {{ transfer.expected_arrival_date|date:"d M Y" }}</p>
+                                        <p><strong>Reason:</strong> {{ transfer.reason|truncatechars:100 }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Rejection Form -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="rejection_reason" class="form-label small fw-bold text-danger">
+                                    <i class="bi bi-exclamation-triangle"></i> Rejection Reason *
+                                </label>
+                                <textarea class="form-control" id="rejection_reason" name="rejection_reason" rows="4" required placeholder="Please provide a detailed reason for rejecting this transfer..."></textarea>
+                                <small class="text-muted">This reason will be shared with the requesting employee.</small>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="alert alert-danger py-2 py-md-3 small small-md">
+                                <i class="bi bi-exclamation-circle"></i>
+                                <strong>Warning:</strong> This action cannot be undone. The transfer request will be rejected and the requesting employee will be notified.
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                <a href="{% url 'super_admin_approve_transfer' transfer.id %}" class="btn btn-success btn-sm btn-md">
+                                    <i class="bi bi-check-lg"></i> Go Back to Approve
+                                </a>
+                                <a href="{% url 'super_admin_transfer_requests' %}" class="btn btn-outline-secondary btn-sm btn-md">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-danger btn-sm btn-md" id="rejectBtn">
+                                    <i class="bi bi-x-lg"></i> Reject Transfer
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const rejectBtn = document.getElementById('rejectBtn');
+        const rejectionReason = document.getElementById('rejection_reason');
+        
+        rejectBtn.addEventListener('click', function(e) {
+            if (!rejectionReason.value.trim()) {
+                e.preventDefault();
+                alert('Please provide a reason for rejecting this transfer.');
+                rejectionReason.focus();
+                rejectionReason.style.borderColor = '#dc3545';
+                return false;
+            }
+            
+            const reason = rejectionReason.value.trim();
+            return confirm(
+                `⚠️ Confirm Rejection\n\n` +
+                `Are you sure you want to reject this cross-branch transfer?\n\n` +
+                `Transfer ID: {{ transfer.transfer_id }}\n` +
+                `From: {{ transfer.from_employee.get_full_name|default:transfer.from_employee.username }}\n` +
+                `To: {{ transfer.to_employee.get_full_name|default:transfer.to_employee.username }}\n` +
+                `Items: {{ transfer.transfer_items.count }}\n\n` +
+                `Reason: ${reason}\n\n` +
+                `⚠️ This action cannot be undone!`
+            );
+        });
+        
+        // Auto-expand textarea
+        rejectionReason.addEventListener('input', function() {
+            this.style.height = 'auto';
+            this.style.height = this.scrollHeight + 'px';
+        });
+    });
+</script>
+{% endblock %}

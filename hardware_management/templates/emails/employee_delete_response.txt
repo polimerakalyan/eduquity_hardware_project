@@ -1,0 +1,32 @@
+{% if action == 'approved' %}✅ REQUEST APPROVED{% else %}❌ REQUEST REJECTED{% endif %}
+===============================================
+
+Dear {{ manager.get_full_name|default:manager.username }},
+
+Your employee deletion request has been {{ action }}.
+
+📋 REQUEST DETAILS
+-----------------------------------------------
+Request ID: #{{ delete_request.id }}
+Status: {{ action.upper() }}
+Employee: {{ employee.get_full_name|default:employee.username }}
+Username: {{ employee.username }}
+Email: {{ employee.email }}
+Reviewed By: {{ reviewed_by.get_full_name|default:reviewed_by.username }}
+Reviewed At: {{ reviewed_at|date:"F d, Y H:i" }}
+
+Reason Provided:
+{{ delete_request.reason }}
+
+{% if notes %}
+Admin Notes:
+{{ notes }}
+{% endif %}
+
+===============================================
+Please login to view your employees:
+{{ employee_list_url }}
+
+===============================================
+This is an automated notification from Eduquity Hardware Management System.
+© {% now "Y" }} Eduquity. All rights reserved.

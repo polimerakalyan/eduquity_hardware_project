@@ -1,0 +1,584 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee List - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Employee Management{% endblock %}
+{% block page_subtitle %}View and manage all employees{% endblock %}
+
+{% block extra_css %}
+<style>
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 12px;
+    }
+    
+    .stat-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 0.6rem 0.4rem;
+    }
+    
+    .table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #1e293b;
+        padding: 0.6rem 0.4rem;
+        font-size: 0.7rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+        padding: 0.2rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+    }
+    
+    .employee-avatar {
+        width: 30px;
+        height: 30px;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .employee-avatar span {
+        font-size: 11px;
+        font-weight: bold;
+        color: white;
+    }
+    
+    .btn-action {
+        padding: 0.15rem 0.3rem;
+        font-size: 0.6rem;
+        transition: all 0.2s ease;
+    }
+    
+    .btn-action:hover {
+        transform: scale(1.1);
+    }
+    
+    .btn-action:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    
+    .action-group {
+        display: flex;
+        gap: 4px;
+        flex-wrap: wrap;
+        align-items: center;
+    }
+    
+    .filter-card {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+        border-color: #e2e8f0;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 3px rgba(224, 77, 0, 0.08);
+    }
+
+    /* WhatsApp Button Styles */
+    .btn-whatsapp {
+        background: #25D366;
+        color: white;
+        border: none;
+        transition: all 0.2s ease;
+    }
+
+    .btn-whatsapp:hover {
+        background: #1da851;
+        color: white;
+        transform: scale(1.1);
+    }
+
+    .btn-whatsapp:disabled {
+        background: #a8a8a8;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+
+    .whatsapp-tooltip {
+        position: relative;
+        cursor: pointer;
+    }
+
+    .whatsapp-tooltip .tooltip-text {
+        visibility: hidden;
+        width: 180px;
+        background: #1e293b;
+        color: white;
+        text-align: center;
+        border-radius: 6px;
+        padding: 4px 8px;
+        position: absolute;
+        z-index: 1;
+        bottom: 125%;
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: 0.6rem;
+        opacity: 0;
+        transition: opacity 0.3s;
+        white-space: nowrap;
+    }
+
+    .whatsapp-tooltip .tooltip-text::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 5px;
+        border-style: solid;
+        border-color: #1e293b transparent transparent transparent;
+    }
+
+    .whatsapp-tooltip:hover .tooltip-text {
+        visibility: visible;
+        opacity: 1;
+    }
+
+    /* Phone number display */
+    .phone-display {
+        font-size: 0.65rem;
+        color: #64748b;
+        display: block;
+        margin-top: 1px;
+    }
+    
+    @media (max-width: 768px) {
+        .table td, .table th {
+            padding: 0.4rem 0.2rem;
+            font-size: 0.7rem;
+        }
+        
+        .btn-action {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.2rem;
+        }
+        
+        .badge {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.3rem;
+        }
+        
+        .employee-avatar {
+            width: 24px;
+            height: 24px;
+        }
+        
+        .employee-avatar span {
+            font-size: 9px;
+        }
+        
+        .stat-icon {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .stat-icon i {
+            font-size: 1.2rem !important;
+        }
+
+        .btn-whatsapp {
+            padding: 0.1rem 0.25rem !important;
+            font-size: 0.5rem !important;
+        }
+
+        .phone-display {
+            font-size: 0.55rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th {
+            padding: 0.3rem 0.15rem;
+            font-size: 0.65rem;
+        }
+        
+        .btn-action {
+            font-size: 0.5rem;
+            padding: 0.08rem 0.15rem;
+        }
+        
+        .badge {
+            font-size: 0.5rem;
+            padding: 0.1rem 0.25rem;
+        }
+        
+        .action-group {
+            gap: 2px;
+        }
+        
+        .employee-avatar {
+            width: 20px;
+            height: 20px;
+        }
+        
+        .employee-avatar span {
+            font-size: 8px;
+        }
+
+        .btn-whatsapp {
+            padding: 0.08rem 0.2rem !important;
+            font-size: 0.45rem !important;
+        }
+
+        .phone-display {
+            font-size: 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <div>
+        <h4 class="fw-bold mb-0"><i class="bi bi-people-fill text-primary me-2"></i>Employee Management</h4>
+        <p class="text-muted small mb-0">View and manage all employees under your management</p>
+    </div>
+    <div class="d-flex flex-wrap gap-2">
+        <!-- <a href="{% url 'create_employee' %}" class="btn btn-primary btn-sm">
+            <i class="bi bi-person-plus-fill me-1"></i>Add Employee
+        </a>
+        <a href="{% url 'bulk_create_employees' %}" class="btn btn-outline-success btn-sm">
+            <i class="bi bi-file-earmark-excel me-1"></i>Bulk Upload
+        </a> -->
+        <a href="{% url 'manager_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+            <i class="bi bi-arrow-left me-1"></i>Back
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-2 g-md-3 mb-3 mb-md-4">
+    <div class="col-6 col-md-4">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted small">Total</span>
+                        <h3 class="mb-0 fw-bold text-primary">{{ total_employees }}</h3>
+                    </div>
+                    <div class="stat-icon bg-primary bg-opacity-10">
+                        <i class="bi bi-people-fill text-primary fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-md-4">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted small">Active</span>
+                        <h3 class="mb-0 fw-bold text-success">{{ active_employees }}</h3>
+                    </div>
+                    <div class="stat-icon bg-success bg-opacity-10">
+                        <i class="bi bi-check-circle-fill text-success fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-6 col-md-4">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted small">Pending</span>
+                        <h3 class="mb-0 fw-bold text-warning">{{ pending_employees }}</h3>
+                    </div>
+                    <div class="stat-icon bg-warning bg-opacity-10">
+                        <i class="bi bi-clock-fill text-warning fs-3"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Search and Filter -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card filter-card shadow-sm">
+            <div class="card-body py-2">
+                <div class="row g-2">
+                    <div class="col-md-4">
+                        <input type="text" class="form-control form-control-sm" id="searchInput" 
+                               placeholder="Search by name, username, email...">
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="statusFilter">
+                            <option value="all">All Status</option>
+                            <option value="active">Active</option>
+                            <option value="pending">Pending</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <select class="form-select form-select-sm" id="assignmentFilter">
+                            <option value="all">All Assignments</option>
+                            <option value="active">With Active</option>
+                            <option value="inactive">No Active</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button class="btn btn-outline-secondary btn-sm w-100" onclick="resetFilters()">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employees Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-2 py-md-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0 fw-bold"><i class="bi bi-list-check me-2"></i>All Employees</h5>
+        <span class="badge bg-secondary">{{ employees|length }} Total</span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th style="width: 40px;">#</th>
+                        <th>Name</th>
+                        <th class="d-none d-sm-table-cell">Username</th>
+                        <th class="d-none d-md-table-cell">Email</th>
+                        <th class="d-none d-lg-table-cell">Phone</th>
+                        <th>Status</th>
+                        <th class="text-center">Assignments</th>
+                        <th class="text-center" style="min-width: 180px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr class="employee-row" 
+                        data-name="{{ emp.get_full_name|default:emp.username|lower }}"
+                        data-username="{{ emp.username|lower }}"
+                        data-email="{{ emp.email|lower }}"
+                        data-status="{% if emp.is_first_login %}pending{% else %}active{% endif %}"
+                        data-active-assignments="{{ emp.active_assignments }}">
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="employee-avatar">
+                                    <span>{{ emp.get_full_name|default:emp.username|first|upper }}</span>
+                                </div>
+                                <span class="small">{{ emp.get_full_name|default:emp.username }}</span>
+                            </div>
+                        </td>
+                        <td class="d-none d-sm-table-cell"><code>{{ emp.username }}</code></td>
+                        <td class="d-none d-md-table-cell small">{{ emp.email }}</td>
+                        <td class="d-none d-lg-table-cell">
+                            {% if emp.phone %}
+                                <span class="phone-display">{{ emp.phone }}</span>
+                            {% else %}
+                                <span class="text-muted small">—</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if emp.is_first_login %}
+                                <span class="badge bg-warning">Pending</span>
+                            {% else %}
+                                <span class="badge bg-success">Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <span class="badge bg-info me-1" title="Active">{{ emp.active_assignments }}</span>
+                            <span class="badge bg-secondary" title="Total">{{ emp.total_assignments }}</span>
+                        </td>
+                        <td>
+                            <div class="action-group justify-content-center">
+                                <!-- WhatsApp Button -->
+                                {% if emp.whatsapp_number %}
+                                    <a href="https://wa.me/{{ emp.whatsapp_number }}" 
+                                       target="_blank" 
+                                       class="btn btn-whatsapp btn-action whatsapp-tooltip" 
+                                       title="Chat on WhatsApp">
+                                        <i class="bi bi-whatsapp"></i>
+                                        <span class="tooltip-text">Chat on WhatsApp</span>
+                                    </a>
+                                {% else %}
+                                    <button class="btn btn-secondary btn-action" disabled title="No phone number">
+                                        <i class="bi bi-whatsapp"></i>
+                                    </button>
+                                {% endif %}
+                                
+                                <!-- View Button -->
+                              
+                                
+                                <!-- Update Request Button -->
+                                {% if emp.has_pending_update_request %}
+                                    <button class="btn btn-sm btn-warning btn-action" disabled title="Update request pending">
+                                        <i class="bi bi-clock"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'request_employee_update' emp.id %}" class="btn btn-sm btn-outline-primary btn-action" title="Request Update">
+                                        <i class="bi bi-pencil"></i>
+                                    </a>
+                                {% endif %}
+                                
+                                <!-- Delete Request Button -->
+                                {% if emp.has_pending_delete_request %}
+                                    <button class="btn btn-sm btn-warning btn-action" disabled title="Delete request pending">
+                                        <i class="bi bi-clock"></i>
+                                    </button>
+                                {% else %}
+                                    <a href="{% url 'request_employee_delete' emp.id %}" class="btn btn-sm btn-outline-danger btn-action" title="Request Delete">
+                                        <i class="bi bi-trash"></i>
+                                    </a>
+                                {% endif %}
+                                
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <i class="bi bi-people" style="font-size: 2.5rem; color: #ccc;"></i>
+                            <h6 class="mt-2">No Employees Found</h6>
+                            <p class="text-muted small">No employees under your management yet.</p>
+                            <a href="{% url 'create_employee' %}" class="btn btn-primary btn-sm">
+                                <i class="bi bi-person-plus me-1"></i>Create First Employee
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Info -->
+<div class="mt-2 text-muted small d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-info-circle me-1"></i>
+        Showing {{ employees|length }} employees
+    </div>
+    <div class="d-flex flex-wrap gap-3">
+        <span class="text-muted">
+            <i class="bi bi-whatsapp text-success me-1"></i> 
+            Click WhatsApp icon to chat
+        </span>
+        <span class="text-muted">
+            <i class="bi bi-clock me-1"></i> 
+            Pending requests shown with clock icon
+        </span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const searchInput = document.getElementById('searchInput');
+        const statusFilter = document.getElementById('statusFilter');
+        const assignmentFilter = document.getElementById('assignmentFilter');
+        const rows = document.querySelectorAll('.employee-row');
+        
+        function filterTable() {
+            const searchTerm = searchInput.value.toLowerCase();
+            const status = statusFilter.value;
+            const assignment = assignmentFilter.value;
+            
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const name = row.dataset.name;
+                const username = row.dataset.username;
+                const email = row.dataset.email;
+                const rowStatus = row.dataset.status;
+                const activeAssignments = parseInt(row.dataset.activeAssignments);
+                
+                let show = true;
+                
+                // Search filter
+                if (searchTerm && !name.includes(searchTerm) && !username.includes(searchTerm) && !email.includes(searchTerm)) {
+                    show = false;
+                }
+                
+                // Status filter
+                if (status !== 'all' && rowStatus !== status) {
+                    show = false;
+                }
+                
+                // Assignment filter
+                if (assignment === 'active' && activeAssignments === 0) {
+                    show = false;
+                } else if (assignment === 'inactive' && activeAssignments > 0) {
+                    show = false;
+                }
+                
+                row.style.display = show ? '' : 'none';
+                if (show) visibleCount++;
+            });
+            
+            // Update visible count
+            const countBadge = document.querySelector('.card-header .badge');
+            if (countBadge) {
+                countBadge.textContent = visibleCount + ' Visible';
+            }
+        }
+        
+        searchInput.addEventListener('input', filterTable);
+        statusFilter.addEventListener('change', filterTable);
+        assignmentFilter.addEventListener('change', filterTable);
+        
+        // Trigger initial filter
+        filterTable();
+    });
+    
+    function resetFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('assignmentFilter').value = 'all';
+        
+        const event = new Event('input');
+        document.getElementById('searchInput').dispatchEvent(event);
+    }
+</script>
+{% endblock %}

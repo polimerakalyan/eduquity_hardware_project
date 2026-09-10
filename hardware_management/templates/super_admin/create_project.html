@@ -1,0 +1,306 @@
+{% extends 'base.html' %}
+{% block title %}Create Global Project - Super Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h4 h-md-3"><i class="bi bi-folder-plus text-primary"></i> Create Global Project</h2>
+                <p class="text-muted small mb-0">Create a project that will be available to <strong>ALL managers</strong> across <strong>ALL branches</strong></p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_projects' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Back to Projects</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-2 py-md-3">
+                <h5 class="mb-0 h6 h-md-5">
+                    <i class="bi bi-folder-plus"></i> Project Details
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <form method="POST" action="{% url 'super_admin_create_project' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <label for="project_id" class="form-label small fw-bold">Project ID <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-hash text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-sm border-0 bg-light" 
+                                       id="project_id" name="project_id" 
+                                       placeholder="e.g., PROJ-2024-001" required>
+                            </div>
+                            <small class="text-muted">Unique identifier for the project</small>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <label for="project_name" class="form-label small fw-bold">Project Name <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-tag text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-sm border-0 bg-light" 
+                                       id="project_name" name="project_name" 
+                                       placeholder="e.g., Client Assessment - March 2024" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12">
+                            <label for="description" class="form-label small fw-bold">Description</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-file-text text-primary"></i>
+                                </span>
+                                <textarea class="form-control form-control-sm border-0 bg-light" 
+                                          id="description" name="description" 
+                                          rows="3" placeholder="Project description..."></textarea>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <label for="start_date" class="form-label small fw-bold">Start Date <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-calendar text-primary"></i>
+                                </span>
+                                <input type="date" class="form-control form-control-sm border-0 bg-light" 
+                                       id="start_date" name="start_date" 
+                                       min="{{ today|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <label for="end_date" class="form-label small fw-bold">End Date <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-calendar-check text-primary"></i>
+                                </span>
+                                <input type="date" class="form-control form-control-sm border-0 bg-light" 
+                                       id="end_date" name="end_date" 
+                                       min="{{ today|date:'Y-m-d' }}" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <!-- Global Project Summary -->
+                    <!-- <div class="alert alert-success">
+                        <i class="bi bi-globe me-2 fs-5"></i>
+                        <div>
+                            <strong>🌍 Global Project:</strong> This project will be available to 
+                            <strong>ALL {{ manager_count }} managers</strong> across 
+                            <strong>ALL branches</strong> in the organization.
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                No location or manager restrictions - this is a truly global project. It will be automatically active and visible to all managers immediately.
+                            </small>
+                        </div>
+                    </div> -->
+                    
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a href="{% url 'super_admin_projects' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-folder-plus"></i> Create Global Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Tips -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Projects
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex mb-3">
+                    <i class="bi bi-globe text-primary me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">Available to ALL Managers</h6>
+                        <small class="text-muted">Once created, this project is available to <strong>every manager</strong> in the organization</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-building text-success me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">All Branches Included</h6>
+                        <small class="text-muted">Managers from <strong>any branch</strong> can access this project</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-people text-warning me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">Always Active</h6>
+                        <small class="text-muted">Projects are automatically active and visible to all managers immediately</small>
+                    </div>
+                </div>
+                <div class="alert alert-warning small">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Note:</strong> Projects cannot be deleted if they have active hardware assignments.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Organization Stats
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-primary mb-0 h3 h-md-2">{{ total_projects|default:0 }}</h4>
+                            <small class="text-muted">Total Projects</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-success mb-0 h3 h-md-2">{{ active_projects|default:0 }}</h4>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-info mb-0 h3 h-md-2">{{ manager_count|default:0 }}</h4>
+                            <small class="text-muted">All Managers</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-warning mb-0 h3 h-md-2">All</h4>
+                            <small class="text-muted">Branches</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .input-group-text {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0 8px 8px 0;
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: none;
+        border-color: #E04D00;
+        background-color: #fff;
+    }
+    
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .alert-success {
+        background-color: #d1fae5;
+        border-color: #a7f3d0;
+        color: #065f46;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .col-lg-8, .col-lg-4 {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .h2 {
+            font-size: 1.3rem !important;
+        }
+        .h3 {
+            font-size: 1.1rem !important;
+        }
+        .h4 {
+            font-size: 0.9rem !important;
+        }
+        .h5 {
+            font-size: 0.8rem !important;
+        }
+        .h6 {
+            font-size: 0.7rem !important;
+        }
+        .small {
+            font-size: 0.7rem !important;
+        }
+        .btn {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.6rem !important;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+        .card-header {
+            padding: 0.5rem !important;
+        }
+    }
+</style>
+
+<script>
+    // Auto-set min date for end date based on start date
+    document.getElementById('start_date').addEventListener('change', function() {
+        var startDate = this.value;
+        var endDateInput = document.getElementById('end_date');
+        if (startDate) {
+            endDateInput.min = startDate;
+            if (endDateInput.value && endDateInput.value < startDate) {
+                endDateInput.value = startDate;
+            }
+        }
+    });
+    
+    // Prevent future dates for start date
+    document.addEventListener('DOMContentLoaded', function() {
+        var today = new Date().toISOString().split('T')[0];
+        document.getElementById('start_date').setAttribute('min', today);
+        document.getElementById('end_date').setAttribute('min', today);
+    });
+</script>
+{% endblock %}

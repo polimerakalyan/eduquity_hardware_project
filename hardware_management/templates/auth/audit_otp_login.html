@@ -1,0 +1,203 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}OTP Verification - Audit Logs{% endblock %}
+
+{% block content %}
+<div class="otp-wrapper">
+    <div class="otp-card">
+        <div class="otp-header">
+            <div class="header-icon">
+                <i class="bi bi-shield-lock-fill"></i>
+            </div>
+            <h4>🔐 Secure Access</h4>
+            <p class="text-muted small">One-Time Password (OTP) required for Audit Logs</p>
+            <span class="badge bg-danger mt-1">
+                <i class="bi bi-shield-exclamation me-1"></i> Restricted Area
+            </span>
+        </div>
+
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' %}exclamation-circle-fill{% else %}info-circle-fill{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <div class="otp-form">
+            <!-- If OTP not yet sent, show Request Button -->
+            {% if not otp_sent %}
+                <p class="text-center text-muted small">
+                    Click the button below to receive a 6-digit OTP on your registered email:
+                    <br>
+                    <strong>{{ user_email }}</strong>
+                </p>
+                
+                <form method="POST" action="{% url 'audit_otp_send' %}" class="mt-3">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-envelope me-2"></i> Request OTP
+                    </button>
+                </form>
+
+            <!-- If OTP was sent, show Verify Input -->
+            {% else %}
+                <p class="text-center text-muted small">
+                    An OTP has been sent to your registered email:
+                    <br>
+                    <strong>{{ user_email }}</strong>
+                </p>
+
+                <form method="POST" action="{% url 'audit_otp_verify' %}" id="otpForm">
+                    {% csrf_token %}
+                    
+                    <div class="otp-input-container">
+                        <input type="text" name="otp" id="otpInput" class="form-control otp-input" 
+                               placeholder="Enter 6-digit OTP" maxlength="6" autocomplete="off" required>
+                    </div>
+                    
+                    <button type="submit" class="btn btn-danger w-100 mt-2">
+                        <i class="bi bi-check-circle me-2"></i> Verify OTP
+                    </button>
+                </form>
+            {% endif %}
+
+            <!-- Footer Actions -->
+            <div class="otp-footer mt-3">
+                {% if otp_sent %}
+                    <p class="text-muted small text-center mb-2">Didn't receive the OTP?</p>
+                    <form method="POST" action="{% url 'audit_otp_send' %}" class="d-inline w-100">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary btn-sm w-100">
+                            <i class="bi bi-arrow-clockwise me-1"></i> Resend OTP
+                        </button>
+                    </form>
+                {% endif %}
+                
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary btn-sm w-100 mt-2">
+                    <i class="bi bi-arrow-left me-1"></i> Return to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .otp-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+    }
+
+    .otp-card {
+        max-width: 450px;
+        width: 100%;
+        background: white;
+        border-radius: 16px;
+        padding: 40px 30px;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);
+        animation: slideUp 0.4s ease;
+    }
+
+    .otp-header {
+        text-align: center;
+        margin-bottom: 25px;
+    }
+
+    .header-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+    }
+
+    .header-icon i {
+        font-size: 32px;
+        color: white;
+    }
+
+    .otp-input-container {
+        display: flex;
+        justify-content: center;
+        margin: 20px 0;
+    }
+
+    .otp-input {
+        width: 200px;
+        text-align: center;
+        font-size: 24px;
+        font-weight: bold;
+        letter-spacing: 8px;
+        padding: 12px 10px;
+        border-radius: 12px;
+        border: 2px solid #e9ecef;
+        transition: all 0.3s ease;
+    }
+
+    .otp-input:focus {
+        border-color: #dc3545;
+        box-shadow: 0 0 0 4px rgba(220, 53, 69, 0.08);
+        outline: none;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545, #b02a37);
+        border: none;
+        padding: 12px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+    }
+
+    .btn-danger:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(220, 53, 69, 0.3);
+    }
+
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    @media (max-width: 576px) {
+        .otp-card {
+            padding: 30px 20px;
+        }
+        .otp-input {
+            width: 160px;
+            font-size: 20px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-submit OTP when 6 digits are entered
+        const otpInput = document.getElementById('otpInput');
+        if (otpInput) {
+            otpInput.addEventListener('input', function() {
+                if (this.value.length === 6) {
+                    document.getElementById('otpForm').submit();
+                }
+            });
+            otpInput.focus();
+        }
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,791 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}My Profile - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}My Profile{% endblock %}
+{% block page_subtitle %}View and update your profile information{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== PROFILE CARD ========== */
+    .profile-avatar {
+        width: 90px;
+        height: 90px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #E04D00, #FF6B1A);
+        color: white;
+        font-size: 2.2rem;
+        margin: 0 auto 0.6rem;
+        box-shadow: 0 6px 18px rgba(224, 77, 0, 0.2);
+        border: 3px solid white;
+    }
+    
+    .profile-avatar i {
+        font-size: 2.2rem;
+    }
+    
+    /* ========== STATS ========== */
+    .profile-stat {
+        background: #F8FAFC;
+        border-radius: 8px;
+        padding: 0.4rem 0.2rem;
+        text-align: center;
+        transition: all 0.2s ease;
+    }
+    
+    .profile-stat:hover {
+        background: #F1F5F9;
+        transform: translateY(-1px);
+    }
+    
+    .profile-stat .number {
+        font-size: 0.95rem;
+        font-weight: 700;
+        color: #1E293B;
+    }
+    
+    .profile-stat .label {
+        font-size: 0.5rem;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+    
+    /* ========== INFO LIST ========== */
+    .info-list {
+        background: #F8FAFC;
+        border-radius: 8px;
+        padding: 0.2rem 0;
+    }
+    
+    .info-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.3rem 0.7rem;
+        border-bottom: 1px solid #F1F5F9;
+        font-size: 0.7rem;
+    }
+    
+    .info-item:last-child {
+        border-bottom: none;
+    }
+    
+    .info-item .label {
+        color: #64748B;
+        font-weight: 500;
+        font-size: 0.7rem;
+    }
+    
+    .info-item .value {
+        color: #1E293B;
+        font-weight: 500;
+        font-size: 0.7rem;
+    }
+    
+    /* ========== FORM ========== */
+    .profile-form .form-control {
+        border-radius: 6px;
+        border: 1px solid #E2E8F0;
+        padding: 0.35rem 0.6rem;
+        font-size: 0.75rem;
+        transition: all 0.2s ease;
+    }
+    
+    .profile-form .form-control:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 2px rgba(224, 77, 0, 0.08);
+    }
+    
+    .profile-form .form-label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.15rem;
+    }
+    
+    .profile-form .form-text {
+        font-size: 0.6rem;
+        color: #94A3B8;
+    }
+    
+    /* ========== TIMELINE ========== */
+    .timeline {
+        position: relative;
+        padding-left: 24px;
+    }
+    
+    .timeline-item {
+        position: relative;
+        margin-bottom: 10px;
+        padding-left: 10px;
+    }
+    
+    .timeline-item:last-child {
+        margin-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -24px;
+        top: 3px;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        border: 2px solid white;
+        box-shadow: 0 1px 4px rgba(0,0,0,0.1);
+    }
+    
+    .timeline-marker.primary { background: #E04D00; }
+    .timeline-marker.success { background: #10B981; }
+    .timeline-marker.info { background: #3B82F6; }
+    .timeline-marker.warning { background: #F59E0B; }
+    
+    .timeline-content {
+        padding-bottom: 4px;
+        border-left: 1.5px solid #E2E8F0;
+        padding-left: 10px;
+    }
+    
+    .timeline-item:last-child .timeline-content {
+        border-left: none;
+    }
+    
+    .timeline-content h6 {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: #1E293B;
+        margin-bottom: 1px;
+    }
+    
+    .timeline-content small {
+        font-size: 0.6rem;
+        color: #94A3B8;
+    }
+    
+    .timeline-content .badge {
+        font-size: 0.5rem !important;
+    }
+    
+    /* ========== CARD ========== */
+    .card {
+        border-radius: 10px;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .card-header {
+        padding: 0.4rem 0.9rem;
+        border-bottom: none;
+    }
+    
+    .card-header h5 {
+        font-size: 0.8rem;
+        font-weight: 600;
+        margin: 0;
+    }
+    
+    .card-header h5 i {
+        font-size: 0.8rem;
+    }
+    
+    .card-body {
+        padding: 0.8rem;
+    }
+    
+    /* ========== LIST GROUP ========== */
+    .list-group-item {
+        padding: 0.35rem 0.8rem;
+        font-size: 0.7rem;
+    }
+    
+    .list-group-item i {
+        font-size: 0.75rem;
+    }
+    
+    /* ========== BUTTONS ========== */
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+        font-size: 0.7rem !important;
+        padding: 0.3rem 0.7rem !important;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    .btn-outline-primary {
+        color: #E04D00;
+        border-color: #E04D00;
+        font-size: 0.7rem !important;
+        padding: 0.25rem 0.6rem !important;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #E04D00;
+        border-color: #E04D00;
+        color: white;
+    }
+    
+    .btn-outline-secondary {
+        font-size: 0.7rem !important;
+        padding: 0.3rem 0.7rem !important;
+    }
+    
+    /* ========== BADGES ========== */
+    .badge {
+        font-size: 0.55rem !important;
+        padding: 0.15rem 0.4rem !important;
+    }
+    
+    /* ========== ALERTS ========== */
+    .alert {
+        font-size: 0.7rem !important;
+        padding: 0.4rem 0.7rem !important;
+    }
+    
+    .alert i {
+        font-size: 0.7rem;
+    }
+    
+    /* ========== MISC ========== */
+    .text-muted.small {
+        font-size: 0.6rem !important;
+    }
+    
+    .fw-bold.mb-1 {
+        font-size: 0.9rem;
+    }
+    
+    .p-2.bg-light.rounded.border {
+        font-size: 0.75rem;
+        padding: 0.25rem 0.5rem !important;
+    }
+    
+    .form-label.text-muted.small {
+        font-size: 0.65rem !important;
+    }
+    
+    .gap-3 {
+        gap: 0.6rem !important;
+    }
+    
+    .gap-2 {
+        gap: 0.3rem !important;
+    }
+    
+    .mt-3 {
+        margin-top: 0.6rem !important;
+    }
+    
+    .mb-1 {
+        margin-bottom: 0.15rem !important;
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 576px) {
+        .profile-avatar {
+            width: 65px;
+            height: 65px;
+            font-size: 1.6rem;
+        }
+        
+        .profile-avatar i {
+            font-size: 1.6rem;
+        }
+        
+        .profile-stat .number {
+            font-size: 0.8rem;
+        }
+        
+        .profile-stat .label {
+            font-size: 0.45rem;
+        }
+        
+        .info-item {
+            font-size: 0.65rem;
+            padding: 0.25rem 0.5rem;
+        }
+        
+        .info-item .label,
+        .info-item .value {
+            font-size: 0.65rem;
+        }
+        
+        .card-body {
+            padding: 0.6rem !important;
+        }
+        
+        .card-header {
+            padding: 0.35rem 0.6rem !important;
+        }
+        
+        .card-header h5 {
+            font-size: 0.7rem;
+        }
+        
+        .btn {
+            font-size: 0.65rem !important;
+            padding: 0.2rem 0.5rem !important;
+        }
+        
+        .list-group-item {
+            font-size: 0.6rem;
+            padding: 0.25rem 0.6rem;
+        }
+        
+        .list-group-item i {
+            font-size: 0.65rem;
+        }
+        
+        .timeline {
+            padding-left: 18px;
+        }
+        
+        .timeline-marker {
+            width: 8px;
+            height: 8px;
+            left: -18px;
+        }
+        
+        .timeline-content h6 {
+            font-size: 0.65rem;
+        }
+        
+        .timeline-content small {
+            font-size: 0.55rem;
+        }
+        
+        .row.g-3 {
+            --bs-gutter-y: 0.4rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .profile-avatar {
+            width: 75px;
+            height: 75px;
+        }
+        
+        .profile-avatar i {
+            font-size: 1.8rem;
+        }
+        
+        .profile-stat .number {
+            font-size: 0.85rem;
+        }
+        
+        .card-body {
+            padding: 0.7rem !important;
+        }
+        
+        .info-item {
+            font-size: 0.68rem;
+            padding: 0.25rem 0.6rem;
+        }
+        
+        .info-item .label,
+        .info-item .value {
+            font-size: 0.68rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row g-3">
+    <!-- Left Column -->
+    <div class="col-12 col-lg-4">
+        <!-- Profile Card -->
+        <div class="card shadow-sm">
+            <div class="card-body text-center">
+                <div class="profile-avatar">
+                    <i class="bi bi-person-fill"></i>
+                </div>
+                
+                <h6 class="fw-bold mb-0" style="font-size: 0.85rem;">{{ user.get_full_name|default:user.username }}</h6>
+                <p class="text-muted small mb-1" style="font-size: 0.6rem !important;">
+                    <span class="badge {% if user.user_type == 'super_admin' %}bg-danger{% elif user.user_type == 'manager' %}bg-primary{% else %}bg-info{% endif %}">
+                        {{ user.get_user_type_display }}
+                    </span>
+                </p>
+                
+                <div class="row g-1 mt-2">
+                    <div class="col-4">
+                        <div class="profile-stat">
+                            <div class="number">{{ user.user_type|yesno:'1,0' }}</div>
+                            <div class="label">Role</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="profile-stat">
+                            <div class="number">{{ user.date_joined|date:"Y" }}</div>
+                            <div class="label">Joined</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="profile-stat">
+                            <div class="number">
+                                {% if user.user_type == 'manager' %}
+                                    {{ user.managed_employees.count }}
+                                {% elif user.user_type == 'employee' %}
+                                    {{ user.hardware_assignments.count }}
+                                {% else %}
+                                    {{ user.created_projects.count }}
+                                {% endif %}
+                            </div>
+                            <div class="label">
+                                {% if user.user_type == 'manager' %}Employees
+                                {% elif user.user_type == 'employee' %}Assignments
+                                {% else %}Projects
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card-footer bg-white border-0 pt-0 pb-2">
+                <div class="info-list">
+                    <div class="info-item">
+                        <span class="label"><i class="bi bi-person-badge me-1"></i>Username</span>
+                        <span class="value">{{ user.username }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label"><i class="bi bi-envelope me-1"></i>Email</span>
+                        <span class="value">{{ user.email }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label"><i class="bi bi-telephone me-1"></i>Phone</span>
+                        <span class="value">{{ user.phone|default:"Not set" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label"><i class="bi bi-geo-alt me-1"></i>Branch</span>
+                        <span class="value">{{ user.branch_location|default:"Not set" }}</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="label"><i class="bi bi-clock me-1"></i>Last Login</span>
+                        <span class="value">{{ user.last_login|date:"d M Y H:i"|default:"Never" }}</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Actions - Role Specific -->
+        <div class="card shadow-sm mt-2">
+            <div class="card-header bg-light">
+                <h5><i class="bi bi-lightning-fill text-warning me-1"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    <!-- Common Actions for All -->
+                    <a href="{% url 'change_password' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-key me-1 text-primary"></i> Change Password
+                    </a>
+                    
+                    <!-- Super Admin Specific Actions -->
+                    {% if user.user_type == 'super_admin' %}
+                    <a href="{% url 'super_admin_dashboard' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-speedometer2 me-1 text-danger"></i> Dashboard
+                    </a>
+                    <a href="{% url 'super_admin_employees' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people me-1 text-info"></i> Manage Employees
+                    </a>
+                    <a href="{% url 'super_admin_managers' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-person-badge me-1 text-warning"></i> Manage Managers
+                    </a>
+                    <a href="{% url 'super_admin_projects' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-folder-fill me-1 text-success"></i> All Projects
+                    </a>
+                    <a href="{% url 'super_admin_create_project' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle me-1 text-primary"></i> Create Project
+                    </a>
+                    <a href="{% url 'super_admin_hardware' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-laptop me-1 text-info"></i> All Hardware
+                    </a>
+                    <a href="{% url 'super_admin_assignments' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-clipboard-check me-1 text-success"></i> All Assignments
+                    </a>
+                    <a href="{% url 'super_admin_branches' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-building me-1 text-warning"></i> Branches
+                    </a>
+                    <a href="{% url 'super_admin_requests' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-clipboard me-1 text-danger"></i> Hardware Requests
+                    </a>
+                    <a href="{% url 'super_admin_delete_requests' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-person-x me-1 text-danger"></i> Delete Requests
+                    </a>
+                    
+                    <!-- Manager Specific Actions -->
+                    {% elif user.user_type == 'manager' %}
+                    <a href="{% url 'manager_dashboard' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-speedometer2 me-1 text-primary"></i> Dashboard
+                    </a>
+                    <a href="{% url 'manage_hardware' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-laptop me-1 text-info"></i> Inventory
+                    </a>
+                    <a href="{% url 'add_hardware' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle me-1 text-success"></i> Add Hardware
+                    </a>
+                    <a href="{% url 'employee_list' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-people me-1 text-primary"></i> Employees
+                    </a>
+                    <a href="{% url 'view_assignments' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-clipboard-check me-1 text-success"></i> Assignments
+                    </a>
+                    <a href="{% url 'create_assignment' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle me-1 text-warning"></i> Create Assignment
+                    </a>
+                    <a href="{% url 'manager_projects' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-folder-fill me-1 text-info"></i> Projects
+                    </a>
+                    <a href="{% url 'view_serial_entries' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-list-check me-1 text-primary"></i> Verification
+                    </a>
+                    <a href="{% url 'manager_transfer_requests' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-arrow-left-right me-1 text-warning"></i> Transfer Requests
+                    </a>
+                    <a href="{% url 'chatbot' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-robot me-1 text-success"></i> AI Assistant
+                    </a>
+                    
+                    <!-- Employee Specific Actions -->
+                    {% else %}
+                    <a href="{% url 'employee_dashboard' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-speedometer2 me-1 text-primary"></i> Dashboard
+                    </a>
+                    <a href="{% url 'view_my_assignments' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-clipboard-data me-1 text-success"></i> My Assignments
+                    </a>
+                    <a href="{% url 'my_hardware' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-laptop me-1 text-info"></i> My Hardware
+                    </a>
+                    <a href="{% url 'my_transfers' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-arrow-left-right me-1 text-warning"></i> My Transfers
+                    </a>
+                    <a href="{% url 'request_hardware_transfer' %}" class="list-group-item list-group-item-action">
+                        <i class="bi bi-plus-circle me-1 text-primary"></i> Request Transfer
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Right Column -->
+    <div class="col-12 col-lg-8">
+        
+        <!-- ============================================================ -->
+        <!-- ✅ Update Profile (Visible ONLY to Managers and Super Admins)  -->
+        <!-- ============================================================ -->
+        {% if can_edit %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h5><i class="bi bi-pencil-square me-1"></i>Update Profile</h5>
+            </div>
+            <div class="card-body profile-form">
+                <form method="POST" action="{% url 'update_profile' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label for="first_name" class="form-label">First Name</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ user.first_name|default:'' }}" placeholder="Enter first name">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="last_name" class="form-label">Last Name</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ user.last_name|default:'' }}" placeholder="Enter last name">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email Address <span class="text-danger">*</span></label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ user.email }}" required placeholder="Enter email address">
+                        </div>
+                        
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" 
+                                   value="{{ user.phone|default:'' }}" placeholder="Enter phone number">
+                            <div class="form-text">Optional</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-2 d-flex gap-1">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Update Profile
+                        </button>
+                        <a href="{% url 'profile' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- ============================================================ -->
+        <!-- ✅ Read-Only Profile View (Visible ONLY to Employees)         -->
+        <!-- ============================================================ -->
+        {% else %}
+        <div class="card shadow-sm">
+            <div class="card-header bg-secondary text-white">
+                <h5><i class="bi bi-eye me-1"></i>Profile Details (Read Only)</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-2">
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small" style="font-size: 0.65rem !important;">First Name</label>
+                        <div class="p-1 bg-light rounded border" style="font-size: 0.75rem; padding: 0.25rem 0.5rem !important;">{{ user.first_name|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small" style="font-size: 0.65rem !important;">Last Name</label>
+                        <div class="p-1 bg-light rounded border" style="font-size: 0.75rem; padding: 0.25rem 0.5rem !important;">{{ user.last_name|default:"-" }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small" style="font-size: 0.65rem !important;">Email Address</label>
+                        <div class="p-1 bg-light rounded border" style="font-size: 0.75rem; padding: 0.25rem 0.5rem !important;">{{ user.email }}</div>
+                    </div>
+                    <div class="col-md-6">
+                        <label class="form-label text-muted small" style="font-size: 0.65rem !important;">Phone Number</label>
+                        <div class="p-1 bg-light rounded border" style="font-size: 0.75rem; padding: 0.25rem 0.5rem !important;">{{ user.phone|default:"-" }}</div>
+                    </div>
+                </div>
+                <div class="mt-2 alert alert-info py-1 small" style="font-size: 0.7rem !important;">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Your profile is read-only. To request changes, please contact your Manager or Super Admin.
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        <!-- ============================================================ -->
+        
+        <!-- Recent Activity -->
+        <div class="card shadow-sm mt-2">
+            <div class="card-header bg-light">
+                <h5><i class="bi bi-clock-history me-1 text-primary"></i>Recent Activity</h5>
+            </div>
+            <div class="card-body">
+                <div class="timeline">
+                    <div class="timeline-item">
+                        <div class="timeline-marker primary"></div>
+                        <div class="timeline-content">
+                            <h6>Account Created</h6>
+                            <small>{{ user.date_joined|date:"d M Y H:i" }}</small>
+                        </div>
+                    </div>
+                    
+                    <div class="timeline-item">
+                        <div class="timeline-marker warning"></div>
+                        <div class="timeline-content">
+                            <h6>Last Login</h6>
+                            <small>{{ user.last_login|date:"d M Y H:i"|default:"Never" }}</small>
+                        </div>
+                    </div>
+                    
+                    {% if user.user_type == 'employee' %}
+                        {% for assignment in user.hardware_assignments.all|slice:":3" %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker success"></div>
+                            <div class="timeline-content">
+                                <h6>Assignment: {{ assignment.project.project_name }}</h6>
+                                <small>Assigned on {{ assignment.assigned_date|date:"d M Y" }}</small>
+                                <br>
+                                <span class="badge {% if assignment.actual_return_date %}bg-secondary{% else %}bg-success{% endif %}">
+                                    {% if assignment.actual_return_date %}Completed{% else %}Active{% endif %}
+                                </span>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% elif user.user_type == 'manager' %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker info"></div>
+                            <div class="timeline-content">
+                                <h6>Employees Managed</h6>
+                                <small>{{ user.managed_employees.count }} employees under your management</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker success"></div>
+                            <div class="timeline-content">
+                                <h6>Assignments Created</h6>
+                                <small>{{ user.assignments_made.count }} assignments created</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker primary"></div>
+                            <div class="timeline-content">
+                                <h6>Hardware Items</h6>
+                                <small>{{ user.created_hardware.count }} hardware items in inventory</small>
+                            </div>
+                        </div>
+                    {% else %}
+                        <div class="timeline-item">
+                            <div class="timeline-marker info"></div>
+                            <div class="timeline-content">
+                                <h6>Super Admin Access</h6>
+                                <small>Full system access</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker success"></div>
+                            <div class="timeline-content">
+                                <h6>Projects Created</h6>
+                                <small>{{ user.created_projects.count }} projects created</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker primary"></div>
+                            <div class="timeline-content">
+                                <h6>Managers Managed</h6>
+                                <small>{{ user.managed_managers.count }} managers in the system</small>
+                            </div>
+                        </div>
+                        <div class="timeline-item">
+                            <div class="timeline-marker warning"></div>
+                            <div class="timeline-content">
+                                <h6>Hardware Items</h6>
+                                <small>{{ user.created_hardware.count }} hardware items across all branches</small>
+                            </div>
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        
+        <!-- Account Info -->
+        <div class="card shadow-sm mt-2">
+            <div class="card-header bg-light">
+                <h5><i class="bi bi-shield-lock me-1 text-warning"></i>Account Security</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-1" style="font-size: 0.7rem;"></i>
+                        <span class="small" style="font-size: 0.7rem !important;">Email Verified</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-check-circle-fill text-success me-1" style="font-size: 0.7rem;"></i>
+                        <span class="small" style="font-size: 0.7rem !important;">2FA Disabled</span>
+                    </div>
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-clock-history me-1 text-warning" style="font-size: 0.7rem;"></i>
+                        <span class="small" style="font-size: 0.7rem !important;">Last Password Change: {{ user.last_login|date:"d M Y"|default:"Never" }}</span>
+                    </div>
+                </div>
+                <div class="mt-1">
+                    <a href="{% url 'change_password' %}" class="btn btn-sm btn-outline-primary" style="font-size: 0.65rem !important; padding: 0.15rem 0.5rem !important;">
+                        <i class="bi bi-key me-1"></i> Change Password
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

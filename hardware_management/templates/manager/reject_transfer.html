@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block title %}Reject Transfer - {{ transfer.transfer_id }}{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h4 class="mb-0"><i class="bi bi-x-circle"></i> Reject Transfer Request</h4>
+            </div>
+            <div class="card-body">
+                <div class="alert alert-warning">
+                    <strong>Transfer Details:</strong><br>
+                    Hardware: {{ transfer.hardware_item.hardware_type.name }} - {{ transfer.hardware_item.serial_number }}<br>
+                    From: {{ transfer.from_employee.get_full_name|default:transfer.from_employee.username }} ({{ transfer.from_exam_city }})<br>
+                    To: {{ transfer.to_employee.get_full_name|default:transfer.to_employee.username }} ({{ transfer.to_exam_city }})<br>
+                    Type: {% if transfer.transfer_type == 'temporary' %}Temporary{% else %}Permanent{% endif %}
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label">Rejection Reason *</label>
+                        <textarea name="rejection_reason" class="form-control" rows="3" required></textarea>
+                    </div>
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">Confirm Rejection</button>
+                        <a href="{% url 'manager_transfer_requests' %}" class="btn btn-outline-secondary">Cancel</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

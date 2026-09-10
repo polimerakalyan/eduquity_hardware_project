@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% block title %}Create Employee - Super Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h4 h-md-3"><i class="bi bi-person-plus text-primary"></i> Create Employee</h2>
+                <p class="text-muted small mb-0">Create employee accounts and assign to branches</p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_employees' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Employees
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-2 py-md-3">
+                <h5 class="mb-0 h6 h-md-5">
+                    <i class="bi bi-person-plus"></i> Employee Details
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <form method="POST" action="{% url 'create_employee' %}">
+                    {% csrf_token %}
+                    
+                    <div class="row g-3">
+                        <!-- Name -->
+                        <div class="col-12">
+                            <label for="name" class="form-label small fw-bold">Full Name <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-person text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-sm border-0 bg-light" 
+                                       id="name" name="name" 
+                                       placeholder="Enter full name" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Username -->
+                        <div class="col-12 col-md-6">
+                            <label for="username" class="form-label small fw-bold">Username <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-person-badge text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-sm border-0 bg-light" 
+                                       id="username" name="username" 
+                                       placeholder="Enter username" required>
+                            </div>
+                            <small class="text-muted">Unique username for login</small>
+                        </div>
+                        
+                        <!-- Email -->
+                        <div class="col-12 col-md-6">
+                            <label for="email" class="form-label small fw-bold">Email <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-envelope text-primary"></i>
+                                </span>
+                                <input type="email" class="form-control form-control-sm border-0 bg-light" 
+                                       id="email" name="email" 
+                                       placeholder="Enter email address" required>
+                            </div>
+                        </div>
+                        
+                        <!-- Phone -->
+                        <div class="col-12 col-md-6">
+                            <label for="phone" class="form-label small fw-bold">Phone</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-phone text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control form-control-sm border-0 bg-light" 
+                                       id="phone" name="phone" 
+                                       placeholder="Enter phone number">
+                            </div>
+                        </div>
+                        
+                        <!-- Branch -->
+                        <div class="col-12 col-md-6">
+                            <label for="branch" class="form-label small fw-bold">Branch <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-building text-primary"></i>
+                                </span>
+                                <select class="form-select form-select-sm border-0 bg-light" 
+                                        id="branch" name="branch" required>
+                                    <option value="">Select branch</option>
+                                    {% for branch in branches %}
+                                    <option value="{{ branch }}">{{ branch }}</option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted">Branch where the employee will work</small>
+                        </div>
+                        
+                        <!-- Manager -->
+                        <div class="col-12">
+                            <label for="manager" class="form-label small fw-bold">Assign Manager (Optional)</label>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-person-badge text-primary"></i>
+                                </span>
+                                <select class="form-select form-select-sm border-0 bg-light" 
+                                        id="manager" name="manager">
+                                    <option value="">-- Unassigned --</option>
+                                    {% for manager in managers %}
+                                    <option value="{{ manager.id }}" data-branch="{{ manager.branch_location }}">
+                                        {{ manager.get_full_name|default:manager.username }} 
+                                        ({{ manager.branch_location|default:"No Branch" }})
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                            </div>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                Manager must be in the same branch as the employee
+                            </small>
+                        </div>
+                        
+                        <!-- Default Password Info -->
+                        <div class="col-12">
+                            <div class="alert alert-info py-2 small">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Default Password:</strong> <code>{{ default_password }}</code>
+                                <span class="text-muted">- Will be sent to employee via email</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <hr class="my-4">
+                    
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a href="{% url 'super_admin_employees' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-sm">
+                            <i class="bi bi-person-plus"></i> Create Employee
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Tips -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Employee Creation
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex mb-3">
+                    <i class="bi bi-building text-primary me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">Branch Assignment</h6>
+                        <small class="text-muted">Employees are assigned to specific branches</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-person-badge text-success me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">Manager Assignment</h6>
+                        <small class="text-muted">Optionally assign a manager from the same branch</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-envelope text-warning me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1 small">Auto-Email</h6>
+                        <small class="text-muted">Login credentials are automatically sent via email</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Employee Stats
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-primary mb-0 h3 h-md-2">{{ total_employees|default:0 }}</h4>
+                            <small class="text-muted">Total Employees</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-success mb-0 h3 h-md-2">{{ active_employees|default:0 }}</h4>
+                            <small class="text-muted">Active</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-warning mb-0 h3 h-md-2">{{ pending_employees|default:0 }}</h4>
+                            <small class="text-muted">Pending</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-info mb-0 h3 h-md-2">{{ branches|length }}</h4>
+                            <small class="text-muted">Branches</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter managers by branch
+    document.getElementById('branch').addEventListener('change', function() {
+        const selectedBranch = this.value;
+        const managerSelect = document.getElementById('manager');
+        const options = managerSelect.options;
+        
+        // Reset to first option
+        managerSelect.selectedIndex = 0;
+        
+        for (let i = 1; i < options.length; i++) {
+            const option = options[i];
+            const branch = option.dataset.branch;
+            
+            if (selectedBranch && branch !== selectedBranch) {
+                option.style.display = 'none';
+            } else {
+                option.style.display = '';
+            }
+        }
+    });
+</script>
+
+<style>
+    .input-group-text {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0 8px 8px 0;
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: none;
+        border-color: #E04D00;
+        background-color: #fff;
+    }
+    
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    @media (max-width: 768px) {
+        .col-lg-8, .col-lg-4 {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+    }
+</style>
+{% endblock %}

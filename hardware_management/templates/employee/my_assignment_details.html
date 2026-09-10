@@ -1,0 +1,424 @@
+{% extends 'base.html' %}
+{% block title %}Assignment Details - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-2 mb-md-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h4 class="mb-0 h2-md fw-bold">
+                    <i class="bi bi-clipboard-data me-1"></i> Assignment Details
+                </h4>
+                <p class="text-muted mb-0" style="font-size: 0.75rem;">
+                    <span class="d-block d-sm-inline">Project: <strong>{{ assignment.project.project_name }}</strong></span>
+                    <span class="d-block d-sm-inline">| ID: {{ assignment.assignment_id|slice:"0:8" }}...</span>
+                    {% if assignment.exam_city %}
+                    <span class="d-block d-sm-inline">| <i class="bi bi-geo-alt text-info"></i> {{ assignment.exam_city }}</span>
+                    {% endif %}
+                    {% if exam_center_name %}
+                    <span class="d-block d-sm-inline">| <i class="bi bi-building text-primary"></i> {{ exam_center_name }}</span>
+                    {% endif %}
+                    {% if is_returned %}
+                    <span class="badge bg-success ms-1" style="font-size: 0.6rem;"><i class="bi bi-check-circle"></i> Returned</span>
+                    {% else %}
+                    <span class="badge bg-primary ms-1" style="font-size: 0.6rem;"><i class="bi bi-clock"></i> Active</span>
+                    {% endif %}
+                </p>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+                <!-- Export button - visible only when all items are verified -->
+                {% if verified_count == total_items and total_items > 0 %}
+                    <a href="{% url 'export_assignment_excel' assignment.assignment_id %}" class="btn btn-success btn-sm" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">
+                        <i class="bi bi-file-excel me-1"></i>Export
+                    </a>
+                {% else %}
+                    <button class="btn btn-secondary btn-sm" disabled title="All hardware must be verified before exporting" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">
+                        <i class="bi bi-file-excel me-1"></i>Export
+                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.5rem;">Locked</span>
+                    </button>
+                {% endif %}
+                <a href="{% url 'view_my_assignments' %}" class="btn btn-outline-secondary btn-sm" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">
+                    <i class="bi bi-arrow-left me-1"></i>Back
+                </a>
+            </div>
+        </div>
+        
+        <!-- Status message for export -->
+        {% if verified_count < total_items and total_items > 0 %}
+            <div class="alert alert-warning mt-2 py-1 mb-0" style="font-size: 0.7rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <small>Export available after all items verified. ({{ verified_count }}/{{ total_items }})</small>
+            </div>
+        {% elif total_items == 0 %}
+            <div class="alert alert-info mt-2 py-1 mb-0" style="font-size: 0.7rem;">
+                <i class="bi bi-info-circle me-1"></i>
+                <small>No hardware items to export.</small>
+            </div>
+        {% elif verified_count == total_items and total_items > 0 %}
+            <div class="alert alert-success mt-2 py-1 mb-0" style="font-size: 0.7rem;">
+                <i class="bi bi-check-circle me-1"></i>
+                <small>All items verified! Export available.</small>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row g-2 g-md-3">
+    <!-- Main Content -->
+    <div class="col-12 col-lg-8">
+        <!-- Assignment Information Card -->
+        <div class="card mb-2 mb-md-3">
+            <div class="card-header text-white py-1 py-md-2" style="background-color: #E04D00;">
+                <h5 class="mb-0 h5 h4-md fw-bold">
+                    <i class="bi bi-info-circle me-1"></i> Assignment Information
+                </h5>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <div class="row g-1">
+                    <div class="col-12 col-md-6">
+                        <table class="table table-borderless table-sm mb-0" style="font-size: 0.75rem;">
+                            <tbody>
+                                <tr>
+                                    <th width="35%" class="text-muted">Project:</th>
+                                    <td class="fw-semibold">{{ assignment.project.project_name }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Project ID:</th>
+                                    <td class="fw-semibold">{{ assignment.project.project_id }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Location:</th>
+                                    <td>{{ assignment.project.location }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Exam City:</th>
+                                    <td>
+                                        {% if assignment.exam_city %}
+                                            <span class="badge bg-secondary" style="font-size: 0.6rem;">{{ assignment.exam_city }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary" style="font-size: 0.6rem;">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Exam Center:</th>
+                                    <td>
+                                        {% if exam_center_name %}
+                                            <span class="badge bg-primary" style="font-size: 0.6rem;">{{ exam_center_name }}</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary" style="font-size: 0.6rem;">Not specified</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="col-12 col-md-6">
+                        <table class="table table-borderless table-sm mb-0" style="font-size: 0.75rem;">
+                            <tbody>
+                                <tr>
+                                    <th width="35%" class="text-muted">Assigned Date:</th>
+                                    <td>{{ assignment.assigned_date|date:"d M Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Expected Return:</th>
+                                    <td>{{ assignment.expected_return_date|date:"d M Y" }}</td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Actual Return:</th>
+                                    <td>
+                                        {% if assignment.actual_return_date %}
+                                            <span>{{ assignment.actual_return_date|date:"d M Y" }}</span>
+                                            <span class="badge bg-secondary" style="font-size: 0.5rem;">Returned</span>
+                                        {% else %}
+                                            <span class="badge bg-primary" style="font-size: 0.5rem;">Active</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <th class="text-muted">Assigned By:</th>
+                                    <td>{{ assignment.assigned_by.get_full_name|default:assignment.assigned_by.username }}</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if assignment.notes %}
+                <div class="alert alert-light border mt-2 py-1 mb-0" style="font-size: 0.7rem;">
+                    <h6 class="mb-0 fw-bold"><i class="bi bi-sticky" style="color: #E04D00;"></i> Notes:</h6>
+                    <p class="mb-0">{{ assignment.notes }}</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Assigned Hardware Items Card -->
+        <div class="card">
+            <div class="card-header text-white py-1 py-md-2" style="background-color: #444444;">
+                <h5 class="mb-0 h5 h4-md fw-bold">
+                    <i class="bi bi-laptop me-1"></i> Hardware Items
+                </h5>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover table-sm mb-0" style="font-size: 0.75rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="text-center" style="width: 30px;">#</th>
+                                <th class="d-none d-sm-table-cell">Type</th>
+                                <th class="d-none d-md-table-cell">Asset Number</th>
+                                <th class="d-none d-lg-table-cell">Serial</th>
+                                <th class="d-none d-xl-table-cell">Entered</th>
+                                <th class="text-center d-none d-sm-table-cell">Status</th>
+                                <th class="text-center" style="min-width: 60px;">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for item in items %}
+                            <tr class="{% if item.is_returned %}table-success{% elif not item.is_verified and item.has_asset_entry %}table-warning{% elif not item.has_asset_entry %}table-secondary{% endif %}">
+                                <td class="text-center">{{ forloop.counter }}</td>
+                                <td class="d-none d-sm-table-cell">{{ item.hardware.hardware_type.name }}</td>
+                                <td class="d-none d-md-table-cell">
+                                    <code class="asset-number" style="font-size: 0.7rem;">{{ item.asset_number }}</code>
+                                </td>
+                                <td class="d-none d-lg-table-cell">
+                                    <code class="serial-number" style="font-size: 0.7rem;">{{ item.serial_number_display }}</code>
+                                </td>
+                                <td class="d-none d-xl-table-cell">
+                                    {% if item.entered_asset %}
+                                        <code class="text-success" style="font-size: 0.7rem;">{{ item.entered_asset }}</code>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center d-none d-sm-table-cell">
+                                    {% if is_returned %}
+                                        <span class="badge bg-secondary" style="font-size: 0.55rem;">Returned</span>
+                                    {% elif item.is_returned %}
+                                        <span class="badge bg-success" style="font-size: 0.55rem;">Returned</span>
+                                    {% else %}
+                                        <span class="badge" style="font-size: 0.55rem; 
+                                            {% if item.hardware_status == 'available' %}bg-success
+                                            {% elif item.hardware_status == 'assigned' %}bg-warning text-black
+                                            {% elif item.hardware_status == 'in_use' %}bg-info
+                                            {% elif item.hardware_status == 'maintenance' %}bg-danger
+                                            {% else %}bg-secondary{% endif %}">
+                                            {{ item.hardware.get_status_display|truncatechars:8 }}
+                                        </span>
+                                    {% endif %}
+                                </td>
+                                <td class="text-center">
+                                    {% if not is_returned and not item.is_returned %}
+                                        {% if not item.is_verified %}
+                                            {% if item.entered_asset %}
+                                            <a href="{% url 'edit_serial_numbers' assignment.assignment_id %}" 
+                                               class="btn btn-sm btn-outline-secondary" style="font-size: 0.6rem; padding: 0.1rem 0.3rem;">
+                                                <i class="bi bi-pencil"></i>
+                                            </a>
+                                            {% else %}
+                                            <a href="{% url 'enter_serial_numbers' assignment.assignment_id %}" 
+                                               class="btn btn-sm btn-outline-primary" style="font-size: 0.6rem; padding: 0.1rem 0.3rem;">
+                                                <i class="bi bi-upc-scan"></i>
+                                            </a>
+                                            {% endif %}
+                                        {% else %}
+                                            <button class="btn btn-sm btn-outline-secondary" disabled style="font-size: 0.6rem; padding: 0.1rem 0.3rem;">
+                                                <i class="bi bi-lock"></i>
+                                            </button>
+                                        {% endif %}
+                                    {% else %}
+                                        <span class="text-muted" style="font-size: 0.6rem;">—</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            
+                            <!-- Mobile Card View -->
+                            <tr class="d-sm-none">
+                                <td colspan="7" class="p-1 bg-light">
+                                    <div class="row g-1" style="font-size: 0.7rem;">
+                                        <div class="col-6"><strong>Type:</strong> {{ item.hardware.hardware_type.name }}</div>
+                                        <div class="col-6"><strong>Asset:</strong> <code>{{ item.asset_number }}</code></div>
+                                        <div class="col-6"><strong>Serial:</strong> <code>{{ item.serial_number }}</code></div>
+                                        <div class="col-6"><strong>Entered:</strong> 
+                                            {% if item.entered_asset %}
+                                                <code class="text-success">{{ item.entered_asset }}</code>
+                                            {% else %}
+                                                <span class="text-muted">—</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="col-6"><strong>Status:</strong> 
+                                            {% if is_returned %}
+                                                <span class="badge bg-secondary">Returned</span>
+                                            {% elif item.is_returned %}
+                                                <span class="badge bg-success">Returned</span>
+                                            {% else %}
+                                                <span class="badge" style="
+                                                    {% if item.hardware_status == 'available' %}bg-success
+                                                    {% elif item.hardware_status == 'assigned' %}bg-warning text-dark
+                                                    {% elif item.hardware_status == 'in_use' %}bg-info
+                                                    {% elif item.hardware_status == 'maintenance' %}bg-danger
+                                                    {% else %}bg-secondary{% endif %}">
+                                                    {{ item.hardware.get_status_display }}
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="7" class="text-center py-3">
+                                    <i class="bi bi-laptop text-muted" style="font-size: 2rem;"></i>
+                                    <p class="text-muted mb-0" style="font-size: 0.8rem;">No hardware items assigned</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                
+                {% if not assignment.actual_return_date and items %}
+                <div class="mt-2 p-2 bg-light border-top">
+                    <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+                        <span style="font-size: 0.75rem;">
+                            <i class="bi bi-info-circle text-primary"></i> 
+                            <strong>Status:</strong> 
+                            {{ items|length }} total | 
+                            {{ pending_count }} pending entries
+                        </span>
+                        <a href="{% url 'enter_serial_numbers' assignment.assignment_id %}" 
+                           class="btn btn-sm btn-primary" style="font-size: 0.7rem; padding: 0.15rem 0.5rem;">
+                            <i class="bi bi-upc-scan"></i> 
+                            {% if pending_count > 0 %}Enter Assets{% else %}Update Assets{% endif %}
+                        </a>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-12 col-lg-4">
+        <!-- Assignment Overview -->
+        <div class="card mb-2 mb-md-3">
+            <div class="card-header text-white py-1 py-md-2" style="background-color: #666666;">
+                <h5 class="mb-0 h5 h4-md fw-bold">
+                    <i class="bi bi-geo-alt me-1"></i> Overview
+                </h5>
+            </div>
+            <div class="card-body p-2 p-md-3" style="font-size: 0.75rem;">
+                <div class="mb-2">
+                    <h6 class="text-uppercase text-muted mb-0" style="font-size: 0.6rem;">Project</h6>
+                    <div class="fw-semibold">{{ assignment.project.project_name }}</div>
+                    <small class="text-muted">{{ assignment.project.location }}</small>
+                </div>
+                
+                <div class="mb-2">
+                    <h6 class="text-uppercase text-muted mb-0" style="font-size: 0.6rem;">Exam</h6>
+                    <div>
+                        <span class="text-muted">City:</span>
+                        {% if assignment.exam_city %}
+                            <span class="badge bg-secondary" style="font-size: 0.6rem;">{{ assignment.exam_city }}</span>
+                        {% else %}
+                            <span class="badge bg-secondary" style="font-size: 0.6rem;">Not set</span>
+                        {% endif %}
+                    </div>
+                    {% if exam_center_name %}
+                    <div>
+                        <span class="text-muted">Center:</span>
+                        <span class="badge bg-primary" style="font-size: 0.6rem;">{{ exam_center_name }}</span>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div>
+                    <h6 class="text-uppercase text-muted mb-0" style="font-size: 0.6rem;">Timeline</h6>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Assigned</small>
+                        <small>{{ assignment.assigned_date|date:"d M Y" }}</small>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <small class="text-muted">Return</small>
+                        <small>{{ assignment.expected_return_date|date:"d M Y" }}</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Hardware Status -->
+        <div class="card mb-2 mb-md-3">
+            <div class="card-header text-white py-1 py-md-2" style="background-color: #888888;">
+                <h5 class="mb-0 h5 h4-md fw-bold">
+                    <i class="bi bi-graph-up me-1"></i> Status
+                </h5>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <div class="text-center mb-1">
+                    <div style="font-size: 1.8rem; font-weight: 700;">{{ total_items }}</div>
+                    <small class="text-muted" style="font-size: 0.65rem;">Total Items</small>
+                </div>
+                
+                <div class="d-flex justify-content-between small mb-1">
+                    <span>Entered: <strong>{{ entered_count }}</strong></span>
+                    <span>Pending: <strong>{{ pending_count }}</strong></span>
+                </div>
+                
+                <div class="progress mb-1" style="height: 5px;">
+                    {% if total_items > 0 %}
+                        {% if entered_count > 0 %}
+                        <div class="progress-bar bg-dark" style="width: {% widthratio entered_count total_items 100 %}%;"></div>
+                        {% endif %}
+                        {% if pending_count > 0 %}
+                        <div class="progress-bar bg-secondary" style="width: {% widthratio pending_count total_items 100 %}%;"></div>
+                        {% endif %}
+                    {% else %}
+                        <div class="progress-bar bg-secondary" style="width: 100%;"></div>
+                    {% endif %}
+                </div>
+                
+                <div class="bg-light p-1 rounded border" style="font-size: 0.7rem;">
+                    <span class="text-muted">Verification:</span>
+                    {% if verified_count == total_items and total_items > 0 %}
+                        <span class="text-success fw-bold">✓ All verified</span>
+                    {% elif verified_count > 0 %}
+                        <span class="fw-bold">{{ verified_count }} verified</span>
+                    {% else %}
+                        <span class="text-muted">None verified</span>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .table-borderless th { font-weight: 600; padding: 0.2rem 0; }
+    .table-borderless td { padding: 0.2rem 0; }
+    code { background: #f8f9fa; padding: 1px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+    .asset-number { background: #e7f1ff; color: #0d6efd; font-weight: 600; }
+    .serial-number { background: #f8f9fa; color: #6c757d; }
+    .table-success { background-color: #d4edda !important; }
+    .table-warning { background-color: #fff3cd !important; }
+    .table-secondary { background-color: #e9ecef !important; }
+    
+    @media (max-width: 576px) {
+        .table td, .table th { font-size: 0.65rem; padding: 0.2rem; }
+        .badge { font-size: 0.5rem !important; padding: 0.1rem 0.3rem !important; }
+        .btn { font-size: 0.6rem !important; padding: 0.1rem 0.3rem !important; }
+        .card-body { padding: 0.5rem !important; }
+        .card-header { padding: 0.4rem 0.6rem !important; }
+        code { font-size: 0.6rem !important; }
+        .progress { height: 4px !important; }
+    }
+    
+    @media (max-width: 768px) {
+        .table td, .table th { font-size: 0.7rem; padding: 0.3rem; }
+        .badge { font-size: 0.6rem !important; }
+        .btn { font-size: 0.65rem !important; }
+        .card-body { padding: 0.5rem !important; }
+        .card-header { padding: 0.4rem 0.7rem !important; }
+    }
+</style>
+{% endblock %}

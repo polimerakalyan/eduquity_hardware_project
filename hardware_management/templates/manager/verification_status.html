@@ -1,0 +1,627 @@
+{% extends 'base.html' %}
+{% block title %}Verification Status - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Hardware Verification Status{% endblock %}
+{% block page_subtitle %}Monitor employee hardware asset verification across all assignments{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-end gap-2 mb-4">
+    <a href="{% url 'view_serial_entries' %}" class="btn btn-outline-primary">
+        <i class="bi bi-upc-scan me-2"></i>Asset Entries
+    </a>
+    <a href="{% url 'view_assignments' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Assignments
+    </a>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-xl-2-4 col-md-4 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-bold">Active EMP</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ assignments|length }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle p-3">
+                        <i class="bi bi-people fs-2 text-primary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">With assignments</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2-4 col-md-4 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-bold">Verified</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ total_verified|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle p-3">
+                        <i class="bi bi-check-circle fs-2 text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Approved by manager</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2-4 col-md-4 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-bold">Matched</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ total_matched|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle p-3">
+                        <i class="bi bi-check2 fs-2 text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Ready to verify</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2-4 col-md-4 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-bold">Mismatched</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ total_mismatch|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle p-3">
+                        <i class="bi bi-x-circle fs-2 text-danger"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Asset mismatch</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-xl-2-4 col-md-4 col-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-bold">Pending</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ total_pending|default:0 }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle p-3">
+                        <i class="bi bi-clock fs-2 text-secondary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">No entry yet</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-clipboard-check me-2 text-primary"></i>Employee Verification Status
+        </h5>
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            {% if has_pending %}
+            <form method="POST" action="{% url 'manager_verification_status' %}" style="display: inline;" id="bulkReminderForm">
+                {% csrf_token %}
+                <button type="submit" 
+                        name="action" 
+                        value="send_bulk_reminder" 
+                        class="btn btn-warning btn-sm"
+                        onclick="return confirmBulkReminder();">
+                    <i class="bi bi-envelope-paper me-1"></i> 
+                    <span class="d-none d-sm-inline">Send Bulk Reminder</span>
+                    <span class="d-sm-none">Bulk Reminder</span>
+                    <span class="badge bg-danger text-white ms-1">{{ pending_assignments|length }}</span>
+                </button>
+            </form>
+            {% endif %}
+            <span class="badge bg-light text-dark border px-3 py-2">
+                Total Assignments: {{ assignments|length }}
+            </span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-3">Employee</th>
+                        <th>Exam City</th>
+                        <th>Assigned Date</th>
+                        <th>Expected Return</th>
+                        <th>Hardware</th>
+                        <th style="min-width: 200px;">Progress</th>
+                        <th>Status Summary</th>
+                        <th class="px-3">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td class="px-3">
+                            <div class="d-flex align-items-center">
+                                <div class="rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px; background: #f0f0f0;">
+                                    <span class="fw-bold text-primary">{{ assignment.employee.get_full_name|default:assignment.employee.username|first|upper }}</span>
+                                </div>
+                                <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-white px-3 py-2">
+                                <i class="bi bi-geo-alt me-1"></i>{{ assignment.exam_city }}
+                            </span>
+                        </td>
+                        <td><small>{{ assignment.assigned_date|date:"d/m/Y" }}</small></td>
+                        <td>
+                            {% if assignment.expected_return_date < today %}
+                                <span class="text-danger">{{ assignment.expected_return_date|date:"d/m/Y" }}</span>
+                                <span class="badge bg-danger text-white ms-1">Overdue</span>
+                            {% else %}
+                                <small>{{ assignment.expected_return_date|date:"d/m/Y" }}</small>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary text-white px-3 py-2">{{ assignment.verification_stats.total }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    {% if assignment.verification_stats.verified > 0 %}
+                                    <div class="progress-bar bg-success" 
+                                         role="progressbar" 
+                                         style="width: {{ assignment.verification_stats.verified_percentage }}%"
+                                         title="Verified: {{ assignment.verification_stats.verified }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.verification_stats.matched > 0 %}
+                                    <div class="progress-bar bg-info" 
+                                         role="progressbar" 
+                                         style="width: {{ assignment.verification_stats.matched_percentage }}%"
+                                         title="Matched - Ready to verify: {{ assignment.verification_stats.matched }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.verification_stats.pending > 0 %}
+                                    <div class="progress-bar bg-secondary" 
+                                         role="progressbar" 
+                                         style="width: {{ assignment.verification_stats.pending_percentage }}%"
+                                         title="Pending - No entry: {{ assignment.verification_stats.pending }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.verification_stats.mismatch > 0 %}
+                                    <div class="progress-bar bg-danger" 
+                                         role="progressbar" 
+                                         style="width: {{ assignment.verification_stats.mismatch_percentage }}%"
+                                         title="Mismatch: {{ assignment.verification_stats.mismatch }}">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <small class="fw-semibold">{{ assignment.verification_stats.verified_percentage|floatformat:0 }}%</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% if assignment.verification_stats.verified > 0 %}
+                                <span class="badge bg-success text-white px-2 py-1" title="Verified by manager">
+                                    <i class="bi bi-check-circle me-1"></i>{{ assignment.verification_stats.verified }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.verification_stats.matched > 0 %}
+                                <span class="badge bg-info text-white px-2 py-1" title="Asset numbers match - Ready to verify">
+                                    <i class="bi bi-check2 me-1"></i>{{ assignment.verification_stats.matched }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.verification_stats.mismatch > 0 %}
+                                <span class="badge bg-danger text-white px-2 py-1" title="Asset numbers don't match">
+                                    <i class="bi bi-x-circle me-1"></i>{{ assignment.verification_stats.mismatch }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.verification_stats.pending > 0 %}
+                                <span class="badge bg-secondary text-white px-2 py-1" title="No asset entered yet">
+                                    <i class="bi bi-clock me-1"></i>{{ assignment.verification_stats.pending }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td class="px-3">
+                            <div class="d-flex gap-2 flex-wrap">
+                                <a href="{% url 'manager_verification_details' assignment.assignment_id %}" 
+                                   class="btn btn-sm btn-outline-info" 
+                                   title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                {% if assignment.verification_stats.pending > 0 or assignment.verification_stats.mismatch > 0 %}
+                                <form method="POST" action="{% url 'manager_verification_status' %}" style="display: inline;">
+                                    {% csrf_token %}
+                                    <input type="hidden" name="assignment_id" value="{{ assignment.id }}">
+                                    <button type="submit" 
+                                            name="action" 
+                                            value="send_reminder" 
+                                            class="btn btn-sm btn-outline-warning"
+                                            title="Send Reminder Email">
+                                        <i class="bi bi-envelope"></i>
+                                    </button>
+                                </form>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="py-4">
+                                <i class="bi bi-shield-check" style="font-size: 3rem; color: #dee2e6;"></i>
+                                <h5 class="mt-3 text-dark">No Active Assignments</h5>
+                                <p class="text-muted mb-0">There are no active assignments pending verification.</p>
+                                <a href="{% url 'create_assignment' %}" class="btn btn-primary mt-3">
+                                    <i class="bi bi-plus-circle me-2"></i>Create New Assignment
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+{% if assignments %}
+<div class="row g-4 mt-4">
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-check-circle-fill text-success me-2"></i>Fully Verified
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                        {% if assignment.verification_stats.pending == 0 and assignment.verification_stats.mismatch == 0 and assignment.verification_stats.matched == 0 and assignment.verification_stats.verified == assignment.verification_stats.total %}
+                        <div class="list-group-item border-0 d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-success bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-success"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ assignment.exam_city }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-success text-white px-3 py-2">
+                                <i class="bi bi-check-circle me-1"></i>Verified
+                            </span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-check2-circle text-info me-2"></i>Ready to Verify
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                        {% if assignment.verification_stats.matched > 0 and assignment.verification_stats.verified < assignment.verification_stats.total %}
+                        <div class="list-group-item border-0 d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-info bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-info"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ assignment.exam_city }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-info text-white px-3 py-2">
+                                {{ assignment.verification_stats.matched }} Ready
+                            </span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-exclamation-triangle-fill text-danger me-2"></i>Mismatched
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                        {% if assignment.verification_stats.mismatch > 0 %}
+                        <div class="list-group-item border-0 d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-danger bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-danger"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ assignment.exam_city }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-danger text-white px-3 py-2">
+                                {{ assignment.verification_stats.mismatch }} Mismatch
+                            </span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-3">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-3">
+                <h6 class="mb-0 fw-bold">
+                    <i class="bi bi-clock text-secondary me-2"></i>No Entries Yet
+                </h6>
+            </div>
+            <div class="card-body p-0">
+                <div class="list-group list-group-flush">
+                    {% for assignment in assignments %}
+                        {% if assignment.verification_stats.pending > 0 and assignment.verification_stats.matched == 0 and assignment.verification_stats.mismatch == 0 %}
+                        <div class="list-group-item border-0 d-flex justify-content-between align-items-center py-3">
+                            <div>
+                                <div class="d-flex align-items-center">
+                                    <div class="bg-secondary bg-opacity-10 rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
+                                        <i class="bi bi-person text-secondary"></i>
+                                    </div>
+                                    <div>
+                                        <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                                        <br>
+                                        <small class="text-muted">{{ assignment.exam_city }}</small>
+                                    </div>
+                                </div>
+                            </div>
+                            <span class="badge bg-secondary text-white px-3 py-2">
+                                {{ assignment.verification_stats.pending }} Pending
+                            </span>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<style>
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+    
+    .card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+    
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 20px;
+        overflow: hidden;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    .table td {
+        vertical-align: middle;
+    }
+    
+    .table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #1e293b;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .btn {
+        transition: all 0.2s;
+        border-radius: 8px;
+    }
+    
+    .btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    .btn-outline-primary {
+        border-color: #E04D00;
+        color: #E04D00;
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #E04D00;
+        color: white;
+        border-color: #E04D00;
+    }
+    
+    .btn-outline-info {
+        border-color: #17a2b8;
+        color: #17a2b8;
+    }
+    
+    .btn-outline-info:hover {
+        background-color: #17a2b8;
+        color: white;
+        border-color: #17a2b8;
+    }
+    
+    .btn-outline-secondary {
+        border-color: #e2e8f0;
+        color: #64748b;
+    }
+    
+    .btn-outline-secondary:hover {
+        background-color: #f8fafc;
+        color: #1e293b;
+        border-color: #94a3b8;
+    }
+    
+    .list-group-item {
+        background-color: transparent;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    @media (max-width: 768px) {
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+        }
+        
+        .stat-icon i {
+            font-size: 1.5rem;
+        }
+        
+        .col-xl-2, .col-lg-3 {
+            margin-bottom: 15px;
+        }
+        
+        .d-flex.gap-2 {
+            flex-wrap: wrap;
+        }
+        
+        .btn-group .btn {
+            margin: 2px;
+        }
+    }
+
+    .col-xl-2-4 {
+        flex: 0 0 auto;
+        width: 20%;
+        padding-left: calc(var(--bs-gutter-x) * 0.5);
+        padding-right: calc(var(--bs-gutter-x) * 0.5);
+    }
+    
+    @media (max-width: 1200px) {
+        .col-xl-2-4 {
+            width: 33.333%;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .col-xl-2-4 {
+            width: 50%;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .col-xl-2-4 {
+            width: 100%;
+        }
+    }
+    
+    .stat-icon {
+        width: 60px;
+        height: 60px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .stat-icon i {
+        font-size: 2rem !important;
+    }
+    
+    .bg-opacity-10 {
+        --bs-bg-opacity: 0.1;
+    }
+    
+    .card-body .text-muted.text-uppercase {
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        max-width: 100%;
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // Auto-refresh every 30 seconds
+        setInterval(function() {
+            location.reload();
+        }, 30000);
+        
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+    
+    // Confirm bulk reminder
+    function confirmBulkReminder() {
+        var pendingCount = {{ pending_assignments|length|default:0 }};
+        if (pendingCount === 0) {
+            alert('✅ All employees have completed their asset entries!');
+            return false;
+        }
+        return confirm('📧 Send reminder emails to ' + pendingCount + ' employee(s) with pending or mismatched entries?\n\nThis will send a detailed email with instructions to complete the asset verification process.');
+    }
+</script>
+{% endblock %}

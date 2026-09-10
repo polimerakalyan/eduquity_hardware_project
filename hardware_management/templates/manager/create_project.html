@@ -1,0 +1,559 @@
+{% extends 'base.html' %}
+{% block title %}Create Project - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-folder-plus"></i> Create New Project</h2>
+                <p class="text-muted">Create a new project for hardware assignments</p>
+            </div>
+            <div>
+                <a href="{% url 'manager_dashboard' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Dashboard
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <!-- Create Project Form -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-folder-plus"></i> Project Details
+                </h4>
+            </div>
+            <div class="card-body">
+                {% if messages %}
+                    {% for message in messages %}
+                        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                            <i class="bi bi-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% else %}info-circle{% endif %} me-2"></i>
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+                
+                <form method="POST" action="{% url 'create_project' %}">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="project_id" class="form-label">Project ID *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-hash text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control border-0 bg-light" id="project_id" name="project_id" 
+                                       placeholder="e.g., PROJ-2024-001" required>
+                            </div>
+                            <small class="text-muted">Unique project identifier</small>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="project_name" class="form-label">Project Name *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-tag text-primary"></i>
+                                </span>
+                                <input type="text" class="form-control border-0 bg-light" id="project_name" name="project_name" 
+                                       placeholder="e.g., Client Assessment - March 2024" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-file-text text-primary"></i>
+                            </span>
+                            <textarea class="form-control border-0 bg-light" id="description" name="description" 
+                                      rows="3" placeholder="Project description..."></textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="start_date" class="form-label">Start Date *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-calendar text-primary"></i>
+                                </span>
+                                <input type="date" class="form-control border-0 bg-light" id="start_date" name="start_date" required>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-6 mb-3">
+                            <label for="end_date" class="form-label">End Date *</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light border-0">
+                                    <i class="bi bi-calendar-check text-primary"></i>
+                                </span>
+                                <input type="date" class="form-control border-0 bg-light" id="end_date" name="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="location" class="form-label">Branch Location *</label>
+                        <div class="input-group">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-building text-primary"></i>
+                            </span>
+                            <input type="text" class="form-control border-0 bg-light" id="location" name="location" 
+                                   placeholder="e.g., Hyderabad, Bangalore, Mumbai" required>
+                        </div>
+                        <small class="text-muted">Location where the project will be executed</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <button type="reset" class="btn btn-outline-secondary me-md-2">
+                            <i class="bi bi-arrow-repeat"></i> Reset
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-folder-plus"></i> Create Project
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <!-- Project Statistics -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-primary text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Project Statistics
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-3">
+                            <h3 class="text-primary mb-0">{{ total_projects|default:0 }}</h3>
+                            <small class="text-muted">Total Projects</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-3">
+                            <h3 class="text-success mb-0">{{ active_projects|default:0 }}</h3>
+                            <small class="text-muted">Active Projects</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-3">
+                            <h3 class="text-info mb-0">{{ total_hardware_assigned|default:0 }}</h3>
+                            <small class="text-muted">Hardware Assigned</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-3">
+                            <h3 class="text-warning mb-0">{{ total_employees|default:0 }}</h3>
+                            <small class="text-muted">Employees Working</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Tips -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-info text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Project Information
+                </h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex mb-3">
+                    <i class="bi bi-check-circle-fill text-success me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1">What are Projects?</h6>
+                        <small class="text-muted">Projects represent assessment activities and exam duties</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-arrow-repeat text-primary me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1">Multiple Assignments</h6>
+                        <small class="text-muted">Each project can have multiple hardware assignments</small>
+                    </div>
+                </div>
+                <div class="d-flex mb-3">
+                    <i class="bi bi-unique text-warning me-3 fs-4"></i>
+                    <div>
+                        <h6 class="mb-1">Unique Project ID</h6>
+                        <small class="text-muted">Each project has a unique identifier for tracking</small>
+                    </div>
+                </div>
+                <div class="alert alert-warning mt-2">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Note:</strong> Projects cannot be deleted if they have active assignments.
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Project Wise Hardware Assignment Details -->
+<div class="row mt-4">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="bi bi-laptop"></i> Project Wise Hardware Assignments
+                </h5>
+                <small class="text-white-50">
+                    <i class="bi bi-info-circle"></i> Click delete to remove project
+                </small>
+            </div>
+            <div class="card-body">
+                {% if projects %}
+                    <div class="row">
+                        {% for project in projects %}
+                        <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="card h-100 border-0 shadow-sm project-card">
+                                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                                    <div class="flex-grow-1">
+                                        <h6 class="mb-0">
+                                            <i class="bi bi-folder-fill me-2"></i>
+                                            {{ project.project_name }}
+                                        </h6>
+                                        <small class="text-white-50">{{ project.project_id }}</small>
+                                    </div>
+                                    <!-- Delete Button (Only show if no active assignments) -->
+                                    {% if project.total_hardware == 0 %}
+                                        <button type="button" class="btn btn-sm btn-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteProjectModal{{ project.id }}">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark" title="Cannot delete - has active hardware assignments">
+                                            <i class="bi bi-lock"></i> In Use
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <div class="card-body">
+                                    <!-- Project Details -->
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted"><i class="bi bi-building"></i> Location:</span>
+                                            <strong>{{ project.location }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between mb-2">
+                                            <span class="text-muted"><i class="bi bi-calendar"></i> Duration:</span>
+                                            <strong>{{ project.start_date|date:"d/m/y" }} - {{ project.end_date|date:"d/m/y" }}</strong>
+                                        </div>
+                                        <div class="d-flex justify-content-between">
+                                            <span class="text-muted"><i class="bi bi-people"></i> Employees:</span>
+                                            <strong>{{ project.employee_count }}</strong>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Hardware Summary -->
+                                    <div class="border-top pt-3">
+                                        <h6 class="mb-2"><i class="bi bi-laptop"></i> Hardware Summary</h6>
+                                        
+                                        <div class="row g-2 mb-3">
+                                            <div class="col-6">
+                                                <div class="bg-light rounded-3 p-2 text-center">
+                                                    <div class="fw-bold text-primary">{{ project.total_hardware }}</div>
+                                                    <small class="text-muted">Total Items</small>
+                                                </div>
+                                            </div>
+                                            <div class="col-6">
+                                                <div class="bg-light rounded-3 p-2 text-center">
+                                                    <div class="fw-bold text-success">{{ project.active_hardware }}</div>
+                                                    <small class="text-muted">In Use</small>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        
+                                        <!-- Hardware by Type -->
+                                        {% if project.hardware_by_type %}
+                                        <div class="mb-3">
+                                            <small class="text-muted">By Hardware Type:</small>
+                                            <div class="mt-1">
+                                                {% for hardware_type, count in project.hardware_by_type.items %}
+                                                <span class="badge bg-secondary me-1 mb-1">{{ hardware_type }}: {{ count }}</span>
+                                                {% endfor %}
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                        
+                                        <!-- Hardware Items List -->
+                                        {% if project.hardware_items %}
+                                        <div class="border-top pt-2 mt-2">
+                                            <small class="text-muted">Assigned Hardware:</small>
+                                            <div class="mt-1" style="max-height: 150px; overflow-y: auto;">
+                                                <table class="table table-sm table-borderless mb-0">
+                                                    {% for item in project.hardware_items|slice:":5" %}
+                                                    <tr>
+                                                        <td><code class="small">{{ item.serial_number }}</code></td>
+                                                        <td><small>{{ item.hardware_type }}</small></td>
+                                                        <td>
+                                                            {% if item.status == 'in_use' %}
+                                                                <span class="badge bg-success" style="font-size: 0.6rem;">In Use</span>
+                                                            {% else %}
+                                                                <span class="badge bg-warning" style="font-size: 0.6rem;">Assigned</span>
+                                                            {% endif %}
+                                                        </td>
+                                                    </tr>
+                                                    {% endfor %}
+                                                    {% if project.hardware_items|length > 5 %}
+                                                    <tr>
+                                                        <td colspan="3" class="text-center">
+                                                            <small class="text-muted">+{{ project.hardware_items|length|add:"-5" }} more items</small>
+                                                        </td>
+                                                    </tr>
+                                                    {% endif %}
+                                                </table>
+                                            </div>
+                                        </div>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="card-footer bg-white border-0 text-center">
+    <div class="progress mb-2" style="height: 5px;">
+        <div class="progress-bar bg-success" role="progressbar" 
+             style="width: {% widthratio project.active_hardware project.total_hardware 100 %}%">
+        </div>
+    </div>
+    <div class="btn-group w-100" role="group">
+        <a href="{% url 'project_assignments' project.id %}" class="btn btn-sm btn-outline-primary">
+            <i class="bi bi-eye"></i> View Assignments
+        </a>
+
+        {% if project.total_hardware == 0 %}
+        <button type="button" class="btn btn-sm btn-outline-danger delete-btn" data-bs-toggle="modal" data-bs-target="#deleteProjectModal{{ project.id }}">
+            <i class="bi bi-trash"></i> Delete
+        </button>
+        {% endif %}
+    </div>
+</div>
+                            </div>
+                        </div>
+
+                        <!-- Delete Confirmation Modal for each project - FIXED SHAKING ISSUE -->
+                        <div class="modal fade" id="deleteProjectModal{{ project.id }}" tabindex="-1" aria-labelledby="deleteProjectModalLabel{{ project.id }}" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content">
+                                    <div class="modal-header bg-danger text-white">
+                                        <h5 class="modal-title" id="deleteProjectModalLabel{{ project.id }}">
+                                            <i class="bi bi-exclamation-triangle-fill"></i> Confirm Delete
+                                        </h5>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div class="text-center mb-3">
+                                            <i class="bi bi-folder-x display-1 text-danger"></i>
+                                        </div>
+                                        <h5 class="text-center mb-3">Delete Project: {{ project.project_name }}?</h5>
+                                        <p class="text-muted text-center">
+                                            <strong>Project ID:</strong> {{ project.project_id }}<br>
+                                            <strong>Location:</strong> {{ project.location }}<br>
+                                            <strong>Duration:</strong> {{ project.start_date|date:"d M Y" }} - {{ project.end_date|date:"d M Y" }}
+                                        </p>
+                                        <div class="alert alert-warning">
+                                            <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                                            <strong>Warning:</strong> This action cannot be undone. The project will be permanently deleted from the system.
+                                        </div>
+                                        <p class="mb-0 text-muted small">
+                                            <i class="bi bi-info-circle"></i> Note: Only projects with no active hardware assignments can be deleted.
+                                        </p>
+                                    </div>
+                                    <div class="modal-footer">
+                                        <button type="button" class="btn btn-secondary cancel-btn" data-bs-dismiss="modal">
+                                            <i class="bi bi-x-circle"></i> Cancel
+                                        </button>
+                                        <form method="POST" action="{% url 'delete_project' project.id %}" style="display: inline;">
+                                            {% csrf_token %}
+                                            <button type="submit" class="btn btn-danger confirm-delete-btn">
+                                                <i class="bi bi-trash"></i> Yes, Delete Project
+                                            </button>
+                                        </form>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <i class="bi bi-folder-x display-1 text-muted"></i>
+                        <h5 class="mt-3">No Projects Found</h5>
+                        <p class="text-muted">Create your first project to see hardware assignments.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Prevent any transform or transition that might cause shaking */
+    .input-group-text {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .form-control {
+        border-radius: 0 8px 8px 0;
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control:focus {
+        box-shadow: none;
+        border-color: #E04D00;
+        background-color: #fff;
+    }
+    
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+        transition: none; /* Remove transitions to prevent shaking */
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    .btn-outline-primary {
+        border-color: #E04D00;
+        color: #E04D00;
+        transition: none; /* Remove transitions */
+    }
+    
+    .btn-outline-primary:hover {
+        background-color: #E04D00;
+        color: white;
+        border-color: #E04D00;
+    }
+    
+    .btn-outline-danger {
+        transition: none; /* Remove transitions to prevent shaking */
+    }
+    
+    .btn-outline-danger:hover {
+        background-color: #dc3545;
+        color: white;
+    }
+    
+    /* Remove card hover transform that might cause modal issues */
+    .project-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease; /* Only transition box-shadow, not transform */
+    }
+    
+    .project-card:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+        transform: none; /* Prevent any transform on hover */
+    }
+    
+    /* Modal buttons - remove any hover effects that cause shaking */
+    .modal-footer .btn {
+        transition: none;
+        transform: none !important;
+    }
+    
+    .modal-footer .btn:hover {
+        transform: none !important;
+    }
+    
+    .delete-btn, .cancel-btn, .confirm-delete-btn {
+        transition: none;
+        transform: none !important;
+    }
+    
+    .delete-btn:hover, .cancel-btn:hover, .confirm-delete-btn:hover {
+        transform: none !important;
+    }
+    
+    /* Ensure modal doesn't cause any layout shift */
+    .modal-dialog {
+        margin: 1.75rem auto;
+    }
+    
+    .modal.fade .modal-dialog {
+        transition: transform 0.3s ease-out;
+    }
+    
+    /* Prevent any shaking on button focus/hover */
+    button:focus, .btn:focus {
+        outline: none;
+        box-shadow: none;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: monospace;
+        font-size: 0.7rem;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .btn-group {
+        gap: 8px;
+    }
+    
+    .btn-group .btn {
+        flex: 1;
+    }
+    
+    @media (max-width: 768px) {
+        .col-md-8, .col-md-4 {
+            margin-bottom: 20px;
+        }
+        
+        .col-md-6, .col-lg-4 {
+            margin-bottom: 15px;
+        }
+        
+        .btn-group {
+            flex-direction: column;
+            gap: 5px;
+        }
+        
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    // Auto-dismiss alerts after 5 seconds
+    setTimeout(function() {
+        var alerts = document.querySelectorAll('.alert');
+        alerts.forEach(function(alert) {
+            var bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        });
+    }, 5000);
+    
+    // Prevent any shaking on modal buttons
+    document.addEventListener('DOMContentLoaded', function() {
+        var modalButtons = document.querySelectorAll('.modal-footer .btn');
+        modalButtons.forEach(function(btn) {
+            btn.addEventListener('mouseenter', function(e) {
+                this.style.transform = 'none';
+            });
+            btn.addEventListener('mouseleave', function(e) {
+                this.style.transform = 'none';
+            });
+        });
+    });
+</script>
+{% endblock %}

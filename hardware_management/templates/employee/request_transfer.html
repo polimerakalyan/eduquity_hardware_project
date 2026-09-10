@@ -1,0 +1,853 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Request Hardware Transfer - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-2 mb-md-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+            <div>
+                <h5 class="mb-0"><i class="bi bi-share text-primary"></i> Request Hardware Transfer</h5>
+                <p class="text-muted small mb-0" style="font-size: 0.7rem !important;">Request hardware transfer to another employee</p>
+            </div>
+            <div>
+                <a href="{% url 'my_transfers' %}" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 0.7rem;">
+                    <i class="bi bi-arrow-left"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-1">
+                <h6 class="mb-0"><i class="bi bi-share"></i> Transfer Request Details</h6>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <form method="POST" id="transferForm">
+                    {% csrf_token %}
+                    
+                    <!-- Branch Info Alert -->
+                    <div class="alert alert-info py-1 small" id="branchInfoAlert" style="display: none; font-size: 0.7rem !important;">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Transfer Type:</strong> 
+                        <span id="transferTypeDisplay">Same Branch Transfer</span> - 
+                        <span id="approvalTypeDisplay">Requires Manager Approval</span>
+                        <br>
+                        <span id="branchDetailsDisplay" style="font-size: 0.65rem;"></span>
+                    </div>
+                    
+                    <div class="row g-1 g-md-2">
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="to_employee_id" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Transfer To Employee *</label>
+                                <select class="form-select form-select-sm" id="to_employee_id" name="to_employee_id" required style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                                    <option value="">Select employee</option>
+                                    {% for emp in employees %}
+                                    <option value="{{ emp.id }}" 
+                                            data-exam-city="{{ emp.current_exam_city|default:'Not Assigned' }}"
+                                            data-exam-center="{{ emp.current_exam_center|default:'Not Specified' }}"
+                                            data-project="{{ emp.current_project.id|default:'' }}"
+                                            data-project-name="{{ emp.current_project.project_name|default:'No Project' }}"
+                                            data-has-assignment="{{ emp.has_assignment|yesno:'true,false' }}"
+                                            data-branch="{{ emp.branch_location|default:'Not Assigned' }}"
+                                            data-same-branch="{{ emp.is_same_branch|yesno:'true,false' }}">
+                                        {{ emp.get_full_name|default:emp.username }}
+                                        {% if emp.branch_location %}
+                                        <span class="d-none d-sm-inline">- Branch: </span>{{ emp.branch_location }}
+                                        {% else %}
+                                        <span class="d-none d-sm-inline">- Branch: </span>Not Assigned
+                                        {% endif %}
+                                        {% if emp.is_same_branch %}
+                                        <span class="badge bg-success ms-1" style="font-size: 0.55rem !important;">Same Branch</span>
+                                        {% else %}
+                                        <span class="badge bg-warning text-dark ms-1" style="font-size: 0.55rem !important;">Different Branch</span>
+                                        {% endif %}
+                                        {% if not emp.has_assignment %}
+                                        <span class="badge bg-info ms-1" style="font-size: 0.55rem !important;">No Assignment</span>
+                                        {% endif %}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted d-none d-sm-inline" style="font-size: 0.6rem !important;">
+                                    <i class="bi bi-info-circle"></i> 
+                                    <span id="branchInfoText">Select an employee to see branch information</span>
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="transfer_type" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Transfer Type *</label>
+                                <input type="hidden" name="transfer_type" id="transfer_type_hidden" value="permanent">
+                                <select class="form-select form-select-sm" id="transfer_type" required style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                                    <option value="temporary">Temporary Transfer (Will be returned)</option>
+                                    <option value="permanent" selected>Permanent Transfer</option>
+                                </select>
+                                <small class="text-muted d-none d-sm-inline" style="font-size: 0.6rem !important;">
+                                    <i class="bi bi-info-circle"></i> 
+                                    <span id="transferTypeInfo">Select transfer type</span>
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Receiver Info Fields -->
+                    <div class="row g-1 g-md-2" id="receiver_info_container" style="display: none;">
+                        <div class="col-12">
+                            <div class="alert alert-warning py-1 small" style="font-size: 0.7rem !important;">
+                                <i class="bi bi-info-circle"></i>
+                                <strong>Receiver has no active assignment.</strong> Please provide the following information.
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="receiver_city" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">
+                                    Receiver City <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-0" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           id="receiver_city" 
+                                           name="receiver_city" 
+                                           placeholder="Enter receiver's city" 
+                                           autocomplete="off"
+                                           list="citySuggestions"
+                                           style="font-size: 0.7rem !important; padding: 0.15rem 0.4rem;">
+                                    <datalist id="citySuggestions">
+                                        {% for emp in employees %}
+                                            {% if emp.current_exam_city and emp.current_exam_city != 'Not Assigned' %}
+                                            <option value="{{ emp.current_exam_city }}">
+                                            {% endif %}
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.6rem !important;">
+                                    <i class="bi bi-info-circle"></i> Enter the city where the receiver is located
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="receiver_exam_center" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">
+                                    Receiver Exam Center <span class="text-danger">*</span>
+                                </label>
+                                <div class="input-group input-group-sm">
+                                    <span class="input-group-text bg-light border-0" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                                        <i class="bi bi-building text-primary"></i>
+                                    </span>
+                                    <input type="text" 
+                                           class="form-control form-control-sm" 
+                                           id="receiver_exam_center" 
+                                           name="receiver_exam_center" 
+                                           placeholder="Enter receiver's exam center" 
+                                           autocomplete="off"
+                                           list="examCenterSuggestions"
+                                           style="font-size: 0.7rem !important; padding: 0.15rem 0.4rem;">
+                                    <datalist id="examCenterSuggestions">
+                                        {% for emp in employees %}
+                                            {% if emp.current_exam_center and emp.current_exam_center != 'Not Specified' %}
+                                            <option value="{{ emp.current_exam_center }}">
+                                            {% endif %}
+                                        {% endfor %}
+                                    </datalist>
+                                </div>
+                                <small class="text-muted" style="font-size: 0.6rem !important;">
+                                    <i class="bi bi-info-circle"></i> Enter the exam center where the receiver is located
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Project Selection -->
+                    <div class="row g-1 g-md-2">
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="to_project_id" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">
+                                    Select Project for Receiver
+                                </label>
+                                <select class="form-select form-select-sm" id="to_project_id" name="to_project_id" style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                                    <option value="">-- Use Employee's Current Project --</option>
+                                    {% for project in projects %}
+                                    <option value="{{ project.id }}">
+                                        {{ project.project_name }} ({{ project.project_id }})
+                                        {% if project.assigned_manager is None %}
+                                        <span class="badge bg-info" style="font-size: 0.5rem !important;">Global</span>
+                                        {% elif project.assigned_manager == user.manager %}
+                                        <span class="badge bg-primary" style="font-size: 0.5rem !important;">Assigned to Manager</span>
+                                        {% elif project.created_by == user.manager %}
+                                        <span class="badge bg-secondary" style="font-size: 0.5rem !important;">Created by Manager</span>
+                                        {% endif %}
+                                        <span class="text-muted" style="font-size: 0.6rem;">{{ project.location|default:"" }}</span>
+                                    </option>
+                                    {% empty %}
+                                    <option value="" disabled>No projects available</option>
+                                    {% endfor %}
+                                </select>
+                                <small class="text-muted" style="font-size: 0.6rem !important;">
+                                    <i class="bi bi-info-circle"></i> 
+                                    If not selected, the receiver's current project will be used.
+                                </small>
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6" id="return_date_div" style="display: none;">
+                            <div class="mb-1 mb-md-2">
+                                <label for="expected_return_date" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Expected Return Date</label>
+                                <input type="date" class="form-control form-control-sm" id="expected_return_date" name="expected_return_date" style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                                <small class="text-muted" style="font-size: 0.6rem !important;">When will the hardware be returned?</small>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row g-1 g-md-2">
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="expected_arrival_date" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Expected Arrival Date *</label>
+                                <input type="date" class="form-control form-control-sm" id="expected_arrival_date" name="expected_arrival_date" required min="{{ today|date:'Y-m-d' }}" style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                            </div>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <div class="mb-1 mb-md-2">
+                                <label for="delivery_method" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Delivery Method</label>
+                                <select class="form-select form-select-sm" id="delivery_method" name="delivery_method" style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;">
+                                    <option value="">Select delivery method</option>
+                                    <option value="courier">Courier Service</option>
+                                    <option value="hand_delivery">Hand Delivery</option>
+                                    <option value="office_transfer">Office Transfer</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Hardware Selection Table -->
+                    <div class="mb-2 mb-md-3">
+                        <label class="form-label fw-bold small" style="font-size: 0.7rem !important;">Select Hardware Items to Transfer *</label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-sm" style="font-size: 0.65rem !important;">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="30px" class="px-1 py-1">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input" id="selectAll" style="width: 0.8rem; height: 0.8rem;">
+                                            </div>
+                                        </th>
+                                        <th class="px-1 py-1">Hardware Type</th>
+                                        <th class="px-1 py-1 d-none d-sm-table-cell">Asset #</th>
+                                        <th class="px-1 py-1 d-none d-md-table-cell">Serial #</th>
+                                        <th class="px-1 py-1 d-none d-lg-table-cell">Model</th>
+                                        <th class="px-1 py-1 d-none d-xl-table-cell">Brand</th>
+                                        <th class="px-1 py-1">Location</th>
+                                        <th class="px-1 py-1 d-none d-md-table-cell">Project</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hardware in my_hardware %}
+                                    <tr>
+                                        <td class="px-1 py-1 text-center">
+                                            <div class="form-check">
+                                                <input type="checkbox" class="form-check-input hardware-checkbox" 
+                                                       name="hardware_ids" value="{{ hardware.id }}"
+                                                       data-asset="{{ hardware.asset_number }}"
+                                                       data-serial="{{ hardware.serial_number }}"
+                                                       data-type="{{ hardware.hardware_type }}"
+                                                       data-model="{{ hardware.model_name }}"
+                                                       data-brand="{{ hardware.brand|default:'-' }}"
+                                                       data-location="{{ hardware.current_exam_city }}"
+                                                       data-project="{{ hardware.current_project.project_name|default:'No Project' }}"
+                                                       style="width: 0.8rem; height: 0.8rem;">
+                                            </div>
+                                        </td>
+                                        <td class="px-1 py-1">{{ hardware.hardware_type|truncatechars:12 }}</td>
+                                        <td class="px-1 py-1 d-none d-sm-table-cell"><code class="asset-number" style="font-size: 0.6rem !important;">{{ hardware.asset_number }}</code></td>
+                                        <td class="px-1 py-1 d-none d-md-table-cell"><code style="font-size: 0.6rem !important;">{{ hardware.serial_number|truncatechars:10 }}</code></td>
+                                        <td class="px-1 py-1 d-none d-lg-table-cell">{{ hardware.model_name|truncatechars:10 }}</td>
+                                        <td class="px-1 py-1 d-none d-xl-table-cell">{{ hardware.brand|default:"-"|truncatechars:8 }}</td>
+                                        <td class="px-1 py-1"><span class="badge bg-info" style="font-size: 0.5rem !important;">{{ hardware.current_exam_city|truncatechars:10 }}</span></td>
+                                        <td class="px-1 py-1 d-none d-md-table-cell"><span class="badge bg-secondary" style="font-size: 0.5rem !important;">{{ hardware.current_project.project_name|truncatechars:10|default:'No Project' }}</span></td>
+                                    </tr>
+                                    
+                                    <!-- Mobile Card View -->
+                                    <tr class="d-sm-none">
+                                        <td colspan="8" class="p-0">
+                                            <div class="card m-1 shadow-sm">
+                                                <div class="card-body p-1">
+                                                    <div class="d-flex justify-content-between align-items-start">
+                                                        <div>
+                                                            <span class="fw-bold" style="font-size: 0.7rem;">{{ hardware.hardware_type }}</span>
+                                                            <br>
+                                                            <small class="text-muted" style="font-size: 0.55rem;">Asset: <code style="font-size: 0.55rem;">{{ hardware.asset_number }}</code></small>
+                                                            <br>
+                                                            <small class="text-muted" style="font-size: 0.55rem;">Serial: <code style="font-size: 0.55rem;">{{ hardware.serial_number }}</code></small>
+                                                        </div>
+                                                        <div class="form-check mt-1">
+                                                            <input type="checkbox" class="form-check-input hardware-checkbox" 
+                                                                   name="hardware_ids" value="{{ hardware.id }}"
+                                                                   data-asset="{{ hardware.asset_number }}"
+                                                                   data-serial="{{ hardware.serial_number }}"
+                                                                   data-type="{{ hardware.hardware_type }}"
+                                                                   data-model="{{ hardware.model_name }}"
+                                                                   data-brand="{{ hardware.brand|default:'-' }}"
+                                                                   data-location="{{ hardware.current_exam_city }}"
+                                                                   data-project="{{ hardware.current_project.project_name|default:'No Project' }}"
+                                                                   style="width: 1rem; height: 1rem;">
+                                                        </div>
+                                                    </div>
+                                                    <div class="row g-0" style="font-size: 0.55rem;">
+                                                        <div class="col-6"><span class="text-muted">Model:</span> {{ hardware.model_name|truncatechars:12 }}</div>
+                                                        <div class="col-6"><span class="text-muted">Brand:</span> {{ hardware.brand|default:"-" }}</div>
+                                                        <div class="col-6"><span class="text-muted">Location:</span> <span class="badge bg-info" style="font-size: 0.5rem;">{{ hardware.current_exam_city }}</span></div>
+                                                        <div class="col-6"><span class="text-muted">Project:</span> <span class="badge bg-secondary" style="font-size: 0.5rem;">{{ hardware.current_project.project_name|truncatechars:8|default:'No Project' }}</span></div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="8" class="text-center py-2">
+                                            <i class="bi bi-inbox display-6 text-muted"></i>
+                                            <p class="mt-1" style="font-size: 0.7rem;">No hardware items assigned to you</p>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        <div id="selectedCount" class="mt-1">
+                            <small class="text-muted" style="font-size: 0.6rem !important;">Selected: <span id="selectedCountValue" class="fw-bold">0</span> items</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Selected Hardware Items Summary -->
+                    <div class="mb-2 mb-md-3" id="selectedItemsSection" style="display: none;">
+                        <label class="form-label fw-bold text-success" style="font-size: 0.7rem !important;">
+                            <i class="bi bi-check-circle"></i> Selected Hardware Items to Transfer
+                        </label>
+                        <div class="table-responsive">
+                            <table class="table table-bordered table-success table-sm" style="font-size: 0.65rem !important;">
+                                <thead class="table-success">
+                                    <tr>
+                                        <th class="px-1 py-1">#</th>
+                                        <th class="px-1 py-1">Hardware Type</th>
+                                        <th class="px-1 py-1 d-none d-sm-table-cell">Asset #</th>
+                                        <th class="px-1 py-1 d-none d-md-table-cell">Serial #</th>
+                                        <th class="px-1 py-1 d-none d-lg-table-cell">Model</th>
+                                        <th class="px-1 py-1 d-none d-xl-table-cell">Brand</th>
+                                        <th class="px-1 py-1">Location</th>
+                                        <th class="px-1 py-1 d-none d-md-table-cell">Project</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="selectedItemsBody">
+                                    <tr>
+                                        <td colspan="8" class="text-center text-muted py-1" style="font-size: 0.6rem;">No items selected</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                    
+                    <!-- Reason & Notes -->
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-1 mb-md-2">
+                                <label for="reason" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Reason for Transfer *</label>
+                                <textarea class="form-control form-control-sm" id="reason" name="reason" rows="2" required placeholder="Please provide a reason for this transfer..." style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="mb-1 mb-md-2">
+                                <label for="requester_notes" class="form-label small" style="font-size: 0.7rem !important; font-weight: 500;">Additional Notes</label>
+                                <textarea class="form-control form-control-sm" id="requester_notes" name="requester_notes" rows="1" placeholder="Any additional information..." style="font-size: 0.7rem !important; padding: 0.2rem 0.4rem;"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Transfer Summary -->
+                    <div class="alert alert-info py-1 small" id="transferSummary" style="display: none; font-size: 0.7rem !important;">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Transfer Summary:</strong>
+                        <ul class="mb-0 mt-1 ps-3" style="font-size: 0.65rem !important;">
+                            <li>Items to transfer: <span id="summaryItemCount" class="fw-bold">0</span></li>
+                            <li>From Location: <span id="summaryFromLocation" class="fw-bold">{{ request.user.branch_location|default:'Current Location' }}</span></li>
+                            <li>From Branch: <span id="summaryFromBranch" class="fw-bold">{{ request.user.branch_location|default:'Not Assigned' }}</span></li>
+                            <li>To Employee: <span id="summaryToEmployee" class="fw-bold">Not selected</span></li>
+                            <li>To Branch: <span id="summaryToBranch" class="fw-bold">Not selected</span></li>
+                            <li>Receiver City: <span id="summaryReceiverCity" class="fw-bold">Not entered</span></li>
+                            <li>Receiver Exam Center: <span id="summaryReceiverExamCenter" class="fw-bold">Not entered</span></li>
+                            <li>To Project: <span id="summaryToProject" class="fw-bold">Not selected</span></li>
+                            <li>Type: <span id="summaryTransferType" class="fw-bold">Permanent</span></li>
+                            <li>Approval Required: <span id="summaryApprovalRequired" class="fw-bold text-primary">Manager</span></li>
+                        </ul>
+                    </div>
+                    
+                    <div class="alert alert-warning py-1 small" style="font-size: 0.7rem !important;">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Important Notes:</strong>
+                        <ul class="mb-0 mt-1 ps-3" style="font-size: 0.65rem !important;">
+                            <li>Only <strong>In Use</strong> hardware can be transferred</li>
+                            <li>Hardware must be returned in good condition</li>
+                            <li id="approvalNote"><strong>Manager approval</strong> is required before transfer</li>
+                            <li id="crossBranchNote"></li>
+                            <li>All transfers are tracked and logged</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex flex-wrap gap-1 justify-content-end">
+                        <a href="{% url 'my_transfers' %}" class="btn btn-outline-secondary btn-sm py-0" style="font-size: 0.7rem;">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary btn-sm py-0" id="submitBtn" disabled style="font-size: 0.7rem;">
+                            <i class="bi bi-send"></i> Submit Transfer Request
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .asset-number {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+        padding: 1px 3px;
+        border-radius: 2px;
+        font-size: 0.6rem !important;
+    }
+    
+    .table-sm td, .table-sm th {
+        padding: 0.2rem 0.3rem;
+    }
+    
+    .form-check-input {
+        cursor: pointer;
+    }
+    
+    .alert {
+        margin-bottom: 0.3rem;
+    }
+    
+    .card.m-1 {
+        border: 1px solid #e9ecef;
+        border-radius: 4px;
+        overflow: hidden;
+    }
+    
+    @media (max-width: 576px) {
+        .form-check-input {
+            width: 1rem !important;
+            height: 1rem !important;
+        }
+        .form-check {
+            padding-left: 1.5rem;
+        }
+        .btn-sm {
+            font-size: 0.65rem;
+            padding: 0.15rem 0.4rem;
+        }
+        .badge {
+            font-size: 0.45rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Select All functionality
+        const selectAllCheckbox = document.getElementById('selectAll');
+        const hardwareCheckboxes = document.querySelectorAll('.hardware-checkbox');
+        const selectedCountSpan = document.getElementById('selectedCountValue');
+        const submitBtn = document.getElementById('submitBtn');
+        const selectedItemsSection = document.getElementById('selectedItemsSection');
+        const selectedItemsBody = document.getElementById('selectedItemsBody');
+        const transferSummary = document.getElementById('transferSummary');
+        const summaryItemCount = document.getElementById('summaryItemCount');
+        const summaryToEmployee = document.getElementById('summaryToEmployee');
+        const summaryToBranch = document.getElementById('summaryToBranch');
+        const summaryToProject = document.getElementById('summaryToProject');
+        const summaryReceiverCity = document.getElementById('summaryReceiverCity');
+        const summaryReceiverExamCenter = document.getElementById('summaryReceiverExamCenter');
+        const summaryTransferType = document.getElementById('summaryTransferType');
+        const summaryApprovalRequired = document.getElementById('summaryApprovalRequired');
+        const approvalNote = document.getElementById('approvalNote');
+        const crossBranchNote = document.getElementById('crossBranchNote');
+        const branchInfoAlert = document.getElementById('branchInfoAlert');
+        const transferTypeDisplay = document.getElementById('transferTypeDisplay');
+        const approvalTypeDisplay = document.getElementById('approvalTypeDisplay');
+        const branchDetailsDisplay = document.getElementById('branchDetailsDisplay');
+        const branchInfoText = document.getElementById('branchInfoText');
+        const summaryFromBranch = document.getElementById('summaryFromBranch');
+        
+        // Transfer type elements
+        const transferTypeSelect = document.getElementById('transfer_type');
+        const transferTypeHidden = document.getElementById('transfer_type_hidden');
+        const returnDateDiv = document.getElementById('return_date_div');
+        const transferTypeInfo = document.getElementById('transferTypeInfo');
+        
+        // Receiver Info elements
+        const receiverInfoContainer = document.getElementById('receiver_info_container');
+        const receiverCityInput = document.getElementById('receiver_city');
+        const receiverExamCenterInput = document.getElementById('receiver_exam_center');
+        
+        // Current user branch
+        const currentBranch = '{{ request.user.branch_location|default:"Not Assigned" }}';
+        summaryFromBranch.textContent = currentBranch;
+        
+        function updateSelectedItemsTable() {
+            const selectedItems = [];
+            const seenAssets = new Set();
+            
+            hardwareCheckboxes.forEach(cb => {
+                if (cb.checked) {
+                    const hardwareType = cb.dataset.type || '';
+                    const assetNumber = cb.dataset.asset || '';
+                    const serialNumber = cb.dataset.serial || '';
+                    const model = cb.dataset.model || '';
+                    const brand = cb.dataset.brand || '';
+                    const location = cb.dataset.location || '';
+                    const project = cb.dataset.project || 'No Project';
+                    
+                    if (seenAssets.has(assetNumber) && assetNumber !== 'N/A') {
+                        return;
+                    }
+                    seenAssets.add(assetNumber);
+                    
+                    selectedItems.push({
+                        type: hardwareType,
+                        asset: assetNumber,
+                        serial: serialNumber,
+                        model: model,
+                        brand: brand,
+                        location: location,
+                        project: project
+                    });
+                }
+            });
+            
+            if (selectedItems.length > 0) {
+                selectedItemsSection.style.display = 'block';
+                let html = '';
+                selectedItems.forEach((item, index) => {
+                    html += `
+                        <tr>
+                            <td class="px-1 py-1 text-center">${index + 1}</td>
+                            <td class="px-1 py-1">${item.type}</td>
+                            <td class="px-1 py-1 d-none d-sm-table-cell"><code class="asset-number" style="font-size: 0.6rem !important;">${item.asset}</code></td>
+                            <td class="px-1 py-1 d-none d-md-table-cell"><code style="font-size: 0.6rem !important;">${item.serial}</code></td>
+                            <td class="px-1 py-1 d-none d-lg-table-cell">${item.model}</td>
+                            <td class="px-1 py-1 d-none d-xl-table-cell">${item.brand}</td>
+                            <td class="px-1 py-1"><span class="badge bg-info" style="font-size: 0.5rem !important;">${item.location}</span></td>
+                            <td class="px-1 py-1 d-none d-md-table-cell"><span class="badge bg-secondary" style="font-size: 0.5rem !important;">${item.project}</span></td>
+                        </tr>
+                    `;
+                });
+                selectedItemsBody.innerHTML = html;
+            } else {
+                selectedItemsSection.style.display = 'none';
+                selectedItemsBody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-1" style="font-size: 0.6rem;">No items selected</td></tr>';
+            }
+        }
+        
+        function updateSelectedCount() {
+            const checkedCheckboxes = document.querySelectorAll('.hardware-checkbox:checked');
+            const assetMap = new Map();
+            
+            checkedCheckboxes.forEach(cb => {
+                const asset = cb.dataset.asset;
+                if (asset && asset !== 'N/A') {
+                    if (assetMap.has(asset)) {
+                        cb.checked = false;
+                    } else {
+                        assetMap.set(asset, cb);
+                    }
+                }
+            });
+            
+            const finalCheckedCount = document.querySelectorAll('.hardware-checkbox:checked').length;
+            selectedCountSpan.textContent = finalCheckedCount;
+            submitBtn.disabled = finalCheckedCount === 0;
+            
+            summaryItemCount.textContent = finalCheckedCount;
+            transferSummary.style.display = finalCheckedCount > 0 ? 'block' : 'none';
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = finalCheckedCount === hardwareCheckboxes.length && hardwareCheckboxes.length > 0;
+                selectAllCheckbox.indeterminate = finalCheckedCount > 0 && finalCheckedCount < hardwareCheckboxes.length;
+            }
+            
+            updateSelectedItemsTable();
+        }
+        
+        // Select All
+        if (selectAllCheckbox) {
+            selectAllCheckbox.addEventListener('change', function() {
+                hardwareCheckboxes.forEach(cb => {
+                    cb.checked = selectAllCheckbox.checked;
+                });
+                updateSelectedCount();
+            });
+        }
+        
+        hardwareCheckboxes.forEach(cb => {
+            cb.addEventListener('change', updateSelectedCount);
+        });
+        
+        updateSelectedCount();
+        
+        // Transfer Type Handling
+        function updateTransferType() {
+            const selectedOption = employeeSelect.options[employeeSelect.selectedIndex];
+            if (!selectedOption.value) return;
+            
+            const isSameBranch = selectedOption.dataset.sameBranch === 'true';
+            
+            if (!isSameBranch) {
+                transferTypeSelect.value = 'permanent';
+                transferTypeSelect.disabled = true;
+                transferTypeSelect.title = 'Temporary transfers are not allowed for cross-branch transfers';
+                returnDateDiv.style.display = 'none';
+                document.getElementById('expected_return_date').value = '';
+                transferTypeHidden.value = 'permanent';
+                transferTypeInfo.textContent = '⚠️ For cross-branch transfers, only Permanent Transfer is allowed.';
+                transferTypeInfo.style.color = '#856404';
+                summaryTransferType.textContent = 'Permanent';
+                crossBranchNote.innerHTML = '<strong>⚠️ Cross-branch transfers are PERMANENT only.</strong> Temporary transfers are not allowed.';
+            } else {
+                transferTypeSelect.disabled = false;
+                transferTypeSelect.title = '';
+                transferTypeInfo.textContent = 'Both Temporary and Permanent transfers are allowed for same-branch transfers.';
+                transferTypeInfo.style.color = '#0c5460';
+                crossBranchNote.innerHTML = '';
+                transferTypeHidden.value = transferTypeSelect.value;
+                if (transferTypeSelect.value === 'temporary') {
+                    returnDateDiv.style.display = 'block';
+                    summaryTransferType.textContent = 'Temporary';
+                }
+            }
+        }
+        
+        transferTypeSelect.addEventListener('change', function() {
+            if (this.disabled) return;
+            transferTypeHidden.value = this.value;
+            const typeText = this.options[this.selectedIndex].text;
+            summaryTransferType.textContent = typeText;
+            if (this.value === 'temporary') {
+                returnDateDiv.style.display = 'block';
+            } else {
+                returnDateDiv.style.display = 'none';
+                document.getElementById('expected_return_date').value = '';
+            }
+        });
+        
+        const employeeSelect = document.getElementById('to_employee_id');
+        const projectSelect = document.getElementById('to_project_id');
+        
+        employeeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (!selectedOption.value) {
+                branchInfoAlert.style.display = 'none';
+                branchInfoText.textContent = 'Select an employee to see branch information';
+                summaryToEmployee.textContent = 'Not selected';
+                summaryToBranch.textContent = 'Not selected';
+                return;
+            }
+            
+            const city = selectedOption.dataset.examCity;
+            const examCenter = selectedOption.dataset.examCenter;
+            const projectName = selectedOption.dataset.projectName;
+            const projectId = selectedOption.dataset.project;
+            const hasAssignment = selectedOption.dataset.hasAssignment === 'true';
+            const employeeBranch = selectedOption.dataset.branch || 'Not Assigned';
+            const isSameBranch = selectedOption.dataset.sameBranch === 'true';
+            const employeeName = selectedOption.text.split(' - ')[0] || 'selected employee';
+            
+            summaryToEmployee.textContent = employeeName;
+            summaryToBranch.textContent = employeeBranch;
+            
+            updateTransferType();
+            
+            branchInfoAlert.style.display = 'block';
+            
+            if (isSameBranch) {
+                transferTypeDisplay.textContent = 'Same Branch Transfer';
+                transferTypeDisplay.className = 'text-success fw-bold';
+                approvalTypeDisplay.textContent = 'Requires Manager Approval';
+                approvalTypeDisplay.className = 'text-primary fw-bold';
+                summaryApprovalRequired.textContent = 'Manager';
+                approvalNote.innerHTML = '<strong>Manager approval</strong> is required before transfer';
+                branchDetailsDisplay.textContent = `Both you and ${employeeName} are in the same branch: ${employeeBranch}`;
+                branchInfoText.textContent = `${employeeName} is in the same branch (${employeeBranch}). Transfer requires manager approval.`;
+                branchInfoAlert.className = 'alert alert-success py-1 small';
+            } else {
+                transferTypeDisplay.textContent = 'Cross-Branch Transfer';
+                transferTypeDisplay.className = 'text-warning fw-bold';
+                approvalTypeDisplay.textContent = 'Requires Super Admin Approval';
+                approvalTypeDisplay.className = 'text-danger fw-bold';
+                summaryApprovalRequired.textContent = 'Super Admin';
+                approvalNote.innerHTML = '<strong>Super Admin approval</strong> is required before transfer';
+                branchDetailsDisplay.textContent = `You are in ${currentBranch} and ${employeeName} is in ${employeeBranch}. This is a cross-branch transfer.`;
+                branchInfoText.textContent = `${employeeName} is in a different branch (${employeeBranch}). Transfer requires Super Admin approval.`;
+                branchInfoAlert.className = 'alert alert-warning py-1 small';
+            }
+            
+            if (hasAssignment) {
+                receiverInfoContainer.style.display = 'none';
+                receiverCityInput.removeAttribute('required');
+                receiverCityInput.value = city || 'Not Assigned';
+                summaryReceiverCity.textContent = city || 'Not Assigned';
+                receiverExamCenterInput.removeAttribute('required');
+                receiverExamCenterInput.value = examCenter || 'Not Specified';
+                summaryReceiverExamCenter.textContent = examCenter || 'Not Specified';
+            } else {
+                receiverInfoContainer.style.display = 'block';
+                receiverCityInput.setAttribute('required', 'required');
+                receiverCityInput.value = '';
+                summaryReceiverCity.textContent = 'Not entered';
+                receiverExamCenterInput.setAttribute('required', 'required');
+                receiverExamCenterInput.value = '';
+                summaryReceiverExamCenter.textContent = 'Not entered';
+                receiverCityInput.focus();
+            }
+            
+            if (projectId) {
+                const options = projectSelect.options;
+                for (let i = 0; i < options.length; i++) {
+                    if (options[i].value === projectId) {
+                        projectSelect.selectedIndex = i;
+                        summaryToProject.textContent = options[i].text.split(' (')[0];
+                        break;
+                    }
+                }
+            } else {
+                summaryToProject.textContent = 'No Project';
+            }
+        });
+        
+        projectSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            if (selectedOption.value) {
+                summaryToProject.textContent = selectedOption.text.split(' (')[0];
+            } else {
+                const employeeOption = employeeSelect.options[employeeSelect.selectedIndex];
+                const projectName = employeeOption?.dataset.projectName || 'Not selected';
+                summaryToProject.textContent = projectName !== 'No Project' ? projectName : 'Use employee\'s current project';
+            }
+        });
+        
+        receiverCityInput.addEventListener('input', function() {
+            const city = this.value.trim();
+            if (city) {
+                summaryReceiverCity.textContent = city;
+                this.style.borderColor = '#28a745';
+            } else {
+                summaryReceiverCity.textContent = 'Not entered';
+                this.style.borderColor = '';
+            }
+        });
+        
+        receiverExamCenterInput.addEventListener('input', function() {
+            const center = this.value.trim();
+            if (center) {
+                summaryReceiverExamCenter.textContent = center;
+                this.style.borderColor = '#28a745';
+            } else {
+                summaryReceiverExamCenter.textContent = 'Not entered';
+                this.style.borderColor = '';
+            }
+        });
+        
+        const transferForm = document.getElementById('transferForm');
+        transferForm.addEventListener('submit', function(e) {
+            const selectedCount = document.querySelectorAll('.hardware-checkbox:checked').length;
+            if (selectedCount === 0) {
+                e.preventDefault();
+                alert('Please select at least one hardware item to transfer.');
+                return false;
+            }
+            
+            const employeeSelected = employeeSelect.value;
+            if (!employeeSelected) {
+                e.preventDefault();
+                alert('Please select an employee to transfer to.');
+                return false;
+            }
+            
+            const hasAssignment = employeeSelect.options[employeeSelect.selectedIndex]?.dataset.hasAssignment === 'true';
+            const receiverCity = receiverCityInput.value.trim();
+            const receiverExamCenter = receiverExamCenterInput.value.trim();
+            
+            if (!hasAssignment) {
+                if (!receiverCity) {
+                    e.preventDefault();
+                    alert('Please enter the receiver\'s city. (Receiver has no active assignment)');
+                    receiverCityInput.focus();
+                    receiverCityInput.style.borderColor = '#dc3545';
+                    return false;
+                }
+                if (!receiverExamCenter) {
+                    e.preventDefault();
+                    alert('Please enter the receiver\'s exam center. (Receiver has no active assignment)');
+                    receiverExamCenterInput.focus();
+                    receiverExamCenterInput.style.borderColor = '#dc3545';
+                    return false;
+                }
+            }
+            
+            const reason = document.getElementById('reason').value.trim();
+            if (!reason) {
+                e.preventDefault();
+                alert('Please provide a reason for the transfer.');
+                return false;
+            }
+            
+            const expectedArrival = document.getElementById('expected_arrival_date').value;
+            if (!expectedArrival) {
+                e.preventDefault();
+                alert('Please select an expected arrival date.');
+                return false;
+            }
+            
+            const employeeName = employeeSelect.options[employeeSelect.selectedIndex]?.text.split(' - ')[0] || 'selected employee';
+            const transferTypeText = transferTypeSelect.options[transferTypeSelect.selectedIndex]?.text || 'transfer';
+            const projectText = projectSelect.options[projectSelect.selectedIndex]?.text.split(' (')[0] || 'employee\'s current project';
+            const cityDisplay = hasAssignment ? (employeeSelect.options[employeeSelect.selectedIndex]?.dataset.examCity || 'Not Assigned') : receiverCity;
+            const centerDisplay = hasAssignment ? (employeeSelect.options[employeeSelect.selectedIndex]?.dataset.examCenter || 'Not Specified') : receiverExamCenter;
+            const isSameBranch = employeeSelect.options[employeeSelect.selectedIndex]?.dataset.sameBranch === 'true';
+            const approvalText = isSameBranch ? 'Manager' : 'Super Admin';
+            const branchDisplay = employeeSelect.options[employeeSelect.selectedIndex]?.dataset.branch || 'Not Assigned';
+            
+            return confirm(
+                `📋 Transfer Request Confirmation\n\n` +
+                `Items to transfer: ${selectedCount}\n` +
+                `To Employee: ${employeeName}\n` +
+                `To Branch: ${branchDisplay}\n` +
+                `Receiver City: ${cityDisplay}\n` +
+                `Receiver Exam Center: ${centerDisplay}\n` +
+                `Project: ${projectText}\n` +
+                `Transfer Type: ${transferTypeText}\n` +
+                `Approval Required: ${approvalText}\n\n` +
+                `⚠️ This action requires ${approvalText} approval and cannot be undone.`
+            );
+        });
+        
+        if (employeeSelect.value) {
+            employeeSelect.dispatchEvent(new Event('change'));
+        }
+    });
+</script>
+{% endblock %}

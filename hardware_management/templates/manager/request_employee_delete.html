@@ -1,0 +1,97 @@
+{% extends 'base.html' %}
+{% block title %}Request Employee Delete - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2><i class="bi bi-person-x text-danger"></i> Request Employee Deletion</h2>
+                <p class="text-muted">Submit a request to delete an employee</p>
+            </div>
+            <div>
+                <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Employees
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white">
+                <h5 class="mb-0">
+                    <i class="bi bi-exclamation-triangle"></i> Delete Employee Request
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-person-x display-1 text-danger"></i>
+                    <h5 class="mt-3">Delete: {{ employee.get_full_name|default:employee.username }}?</h5>
+                    <p class="text-muted small">This request will be sent to Super Admin for approval.</p>
+                </div>
+                
+                <!-- Employee Details -->
+                <div class="alert alert-info">
+                    <div class="row small">
+                        <div class="col-6"><strong>Username:</strong></div>
+                        <div class="col-6">{{ employee.username }}</div>
+                        
+                        <div class="col-6"><strong>Email:</strong></div>
+                        <div class="col-6">{{ employee.email }}</div>
+                        
+                        <div class="col-6"><strong>Phone:</strong></div>
+                        <div class="col-6">{{ employee.phone|default:"-" }}</div>
+                        
+                        <div class="col-6"><strong>Branch:</strong></div>
+                        <div class="col-6">{{ employee.branch_location|default:"-" }}</div>
+                        
+                        <div class="col-6"><strong>Active Assignments:</strong></div>
+                        <div class="col-6">
+                            {% if active_assignments > 0 %}
+                                <span class="badge bg-danger">{{ active_assignments }}</span>
+                            {% else %}
+                                <span class="badge bg-success">0</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                {% if active_assignments > 0 %}
+                <div class="alert alert-danger">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Cannot Delete:</strong> Employee has {{ active_assignments }} active assignment(s). 
+                    Please return all hardware first.
+                </div>
+                {% else %}
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label for="reason" class="form-label fw-bold">Reason for Deletion <span class="text-danger">*</span></label>
+                        <textarea name="reason" class="form-control" rows="4" required 
+                                  placeholder="Please explain why this employee should be deleted..."></textarea>
+                        <small class="text-muted">Provide a clear reason for the deletion request.</small>
+                    </div>
+                    
+                    <div class="alert alert-warning small">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Note:</strong> This request will be reviewed by Super Admin. You will be notified of the decision.
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-send"></i> Submit Delete Request
+                        </button>
+                        <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

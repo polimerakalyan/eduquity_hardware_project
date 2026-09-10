@@ -1,0 +1,875 @@
+{% extends 'base.html' %}
+{% block title %}Asset Entries - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Asset Number Verification{% endblock %}
+{% block page_subtitle %}Employee-wise asset verification status - Match with Asset Number only{% endblock %}
+
+{% block content %}
+<!-- Actions Bar -->
+<div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+    <div>
+        <!-- <a href="{% url 'export_employees_hardware' %}" class="btn btn-success">
+            <i class="bi bi-file-excel me-2"></i>Export All Employees Hardware
+        </a> -->
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{% url 'manager_verification_status' %}" class="btn btn-outline-primary">
+            <i class="bi bi-shield-check me-2"></i>Verification Dashboard
+        </a>
+        <a href="{% url 'view_assignments' %}" class="btn btn-outline-secondary">
+            <i class="bi bi-arrow-left me-2"></i>Back
+        </a>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-3 mb-4">
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-semibold">Active Employees</span>
+                        <h2 class="mb-0 fw-bold mt-2">{{ total_assignments }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(108, 117, 125, 0.1);">
+                        <i class="bi bi-people fs-4 text-secondary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">With assignments</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-semibold">Verified</span>
+                        <h2 class="mb-0 fw-bold mt-2 text-success">{{ total_verified }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(25, 135, 84, 0.1);">
+                        <i class="bi bi-check-circle fs-4 text-success"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Approved by manager</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-semibold">Matched</span>
+                        <h2 class="mb-0 fw-bold mt-2 text-info">{{ total_matched }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(13, 202, 240, 0.1);">
+                        <i class="bi bi-check2 fs-4 text-info"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Ready to verify</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-semibold">Mismatch</span>
+                        <h2 class="mb-0 fw-bold mt-2 text-danger">{{ total_mismatch }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(220, 53, 69, 0.1);">
+                        <i class="bi bi-x-circle fs-4 text-danger"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">Asset mismatch</span>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-xl-2 col-lg-3 col-md-4 col-sm-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-body">
+                <div class="d-flex align-items-center">
+                    <div class="flex-grow-1">
+                        <span class="text-muted text-uppercase small fw-semibold">Pending</span>
+                        <h2 class="mb-0 fw-bold mt-2 text-secondary">{{ total_pending }}</h2>
+                    </div>
+                    <div class="stat-icon rounded-circle d-flex align-items-center justify-content-center" style="width: 52px; height: 52px; background: rgba(108, 117, 125, 0.1);">
+                        <i class="bi bi-clock fs-4 text-secondary"></i>
+                    </div>
+                </div>
+                <div class="mt-3">
+                    <span class="text-muted small">No entry yet</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Employee Verification Summary Table -->
+<div class="card border-0 shadow-sm mb-4">
+    <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center py-3 gap-2">
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-people me-2 text-primary"></i>Employee Verification Summary
+        </h5>
+        <span class="badge bg-light text-dark border px-3 py-2">
+            Total: {{ assignments|length }}
+        </span>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="px-3 py-3">Employee</th>
+                        <th class="py-3">Exam City</th>
+                        <th class="py-3">Assigned Date</th>
+                        <th class="py-3">Hardware</th>
+                        <th class="py-3" style="min-width: 200px;">Progress</th>
+                        <th class="py-3">Status Summary</th>
+                        <th class="py-3">Return Status</th>
+                        <th class="px-3 py-3 text-center">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for assignment in assignments %}
+                    <tr>
+                        <td class="px-3">
+                            <div class="d-flex align-items-center">
+                                <div class="employee-avatar rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 36px; height: 36px; background: #E04D00;">
+                                    <span class="fw-bold text-white">{{ assignment.employee.get_full_name|default:assignment.employee.username|first|upper }}</span>
+                                </div>
+                                <div>
+                                    <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                                    <br>
+                                    <small class="text-muted">{{ assignment.employee.email|truncatechars:20 }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="badge bg-info text-white px-3 py-2">
+                                <i class="bi bi-geo-alt me-1"></i>{{ assignment.exam_city|truncatechars:12 }}
+                            </span>
+                        </td>
+                        <td>
+                            <small class="text-muted">{{ assignment.assigned_date|date:"d/m/y" }}</small>
+                        </td>
+                        <td>
+                            <span class="badge bg-secondary text-white px-3 py-2">{{ assignment.total_items }}</span>
+                        </td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="progress flex-grow-1" style="height: 8px;">
+                                    {% if assignment.verified_count > 0 %}
+                                    <div class="progress-bar bg-success" role="progressbar" 
+                                         style="width: {% widthratio assignment.verified_count assignment.total_items 100 %}%"
+                                         title="Verified: {{ assignment.verified_count }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.matched_count > 0 %}
+                                    <div class="progress-bar bg-info" role="progressbar" 
+                                         style="width: {% widthratio assignment.matched_count assignment.total_items 100 %}%"
+                                         title="Matched: {{ assignment.matched_count }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.mismatch_count > 0 %}
+                                    <div class="progress-bar bg-danger" role="progressbar" 
+                                         style="width: {% widthratio assignment.mismatch_count assignment.total_items 100 %}%"
+                                         title="Mismatch: {{ assignment.mismatch_count }}">
+                                    </div>
+                                    {% endif %}
+                                    {% if assignment.pending_count > 0 %}
+                                    <div class="progress-bar bg-secondary" role="progressbar" 
+                                         style="width: {% widthratio assignment.pending_count assignment.total_items 100 %}%"
+                                         title="Pending: {{ assignment.pending_count }}">
+                                    </div>
+                                    {% endif %}
+                                </div>
+                                <small class="fw-semibold text-dark" style="min-width: 36px;">{% widthratio assignment.verified_count assignment.total_items 100 %}%</small>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex gap-1 flex-wrap">
+                                {% if assignment.verified_count > 0 %}
+                                <span class="badge bg-success text-white px-2 py-1" title="Verified by manager">
+                                    <i class="bi bi-check-circle me-1"></i>{{ assignment.verified_count }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.matched_count > 0 %}
+                                <span class="badge bg-info text-white px-2 py-1" title="Asset numbers match - Ready to verify">
+                                    <i class="bi bi-check2 me-1"></i>{{ assignment.matched_count }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.mismatch_count > 0 %}
+                                <span class="badge bg-danger text-white px-2 py-1" title="Entered asset number doesn't match">
+                                    <i class="bi bi-x-circle me-1"></i>{{ assignment.mismatch_count }}
+                                </span>
+                                {% endif %}
+                                {% if assignment.pending_count > 0 %}
+                                <span class="badge bg-secondary text-white px-2 py-1" title="No asset number entered yet">
+                                    <i class="bi bi-clock me-1"></i>{{ assignment.pending_count }}
+                                </span>
+                                {% endif %}
+                            </div>
+                        </td>
+                        <td>
+                            {% if assignment.returned_count > 0 and assignment.returned_count < assignment.total_items %}
+                                <span class="badge bg-warning text-dark px-3 py-2">
+                                    <i class="bi bi-arrow-return-left me-1"></i>Partial Return
+                                    <small class="d-block" style="font-size: 0.6rem;">
+                                        {{ assignment.returned_count }}/{{ assignment.total_items }}
+                                    </small>
+                                </span>
+                            {% elif assignment.returned_count == assignment.total_items and assignment.total_items > 0 %}
+                                <span class="badge bg-success text-white px-3 py-2">
+                                    <i class="bi bi-check-circle-fill me-1"></i> All Returned
+                                </span>
+                            {% else %}
+                                <span class="badge bg-secondary text-white px-3 py-2">
+                                    <i class="bi bi-clock me-1"></i> Not Returned
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-3 text-center">
+                            <div class="btn-group btn-group-sm" role="group">
+                                {% if assignment.matched_count > 0 %}
+                                <a href="{% url 'verify_all_employee_entries' assignment.id %}" 
+                                   class="btn btn-sm {% if assignment.mismatch_count == 0 and assignment.pending_count == 0 %}btn-success{% else %}btn-warning{% endif %} action-btn"
+                                   title="Verify matched items"
+                                   onclick="return confirm('Verify {{ assignment.matched_count }} matched item(s) for {{ assignment.employee.get_full_name|default:assignment.employee.username }}?')">
+                                    <i class="bi bi-check-all me-1"></i>
+                                    {% if assignment.mismatch_count == 0 and assignment.pending_count == 0 %}
+                                        Verify All
+                                    {% else %}
+                                        Verify ({{ assignment.matched_count }})
+                                    {% endif %}
+                                </a>
+                                {% endif %}
+                                <button type="button" 
+                                        class="btn btn-sm btn-outline-primary action-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#assignmentModal{{ assignment.id }}"
+                                        title="View Hardware Items">
+                                    <i class="bi bi-eye me-1"></i>Details
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center py-5">
+                            <div class="empty-state">
+                                <i class="bi bi-upc-scan display-1 text-muted"></i>
+                                <h5 class="mt-3 text-muted">No Asset Entries Found</h5>
+                                <p class="text-muted mb-0">Employees will enter asset numbers after receiving hardware assignments.</p>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Modals for each assignment -->
+{% for assignment in assignments %}
+<div class="modal fade" id="assignmentModal{{ assignment.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header bg-dark text-white py-3">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bi bi-laptop me-2"></i>Hardware Items - {{ assignment.employee.get_full_name|default:assignment.employee.username }}
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <!-- Assignment Info Cards -->
+                <div class="row g-3 mb-4">
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="bi bi-person"></i>
+                            </div>
+                            <div class="info-content">
+                                <small class="text-muted text-uppercase fw-semibold d-block mb-1">Employee</small>
+                                <strong class="text-dark">{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="bi bi-geo-alt"></i>
+                            </div>
+                            <div class="info-content">
+                                <small class="text-muted text-uppercase fw-semibold d-block mb-1">Exam City</small>
+                                <strong class="text-dark">{{ assignment.exam_city }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="bi bi-calendar"></i>
+                            </div>
+                            <div class="info-content">
+                                <small class="text-muted text-uppercase fw-semibold d-block mb-1">Assigned Date</small>
+                                <strong class="text-dark">{{ assignment.assigned_date|date:"d M Y" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3">
+                        <div class="info-card">
+                            <div class="info-icon">
+                                <i class="bi bi-calendar-check"></i>
+                            </div>
+                            <div class="info-content">
+                                <small class="text-muted text-uppercase fw-semibold d-block mb-1">Expected Return</small>
+                                <strong class="text-dark">{{ assignment.expected_return_date|date:"d M Y" }}</strong>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Status Badges -->
+                <div class="d-flex gap-2 mb-4 flex-wrap">
+                    <span class="status-badge status-verified">
+                        <i class="bi bi-check-circle me-1"></i>Verified: {{ assignment.verified_count }}
+                    </span>
+                    <span class="status-badge status-matched">
+                        <i class="bi bi-check2 me-1"></i>Matched: {{ assignment.matched_count }}
+                    </span>
+                    <span class="status-badge status-mismatch">
+                        <i class="bi bi-x-circle me-1"></i>Mismatch: {{ assignment.mismatch_count }}
+                    </span>
+                    <span class="status-badge status-pending">
+                        <i class="bi bi-clock me-1"></i>Pending: {{ assignment.pending_count }}
+                    </span>
+                    <span class="status-badge status-returned">
+                        <i class="bi bi-arrow-return-left me-1"></i>Returned: {{ assignment.returned_count|default:0 }}
+                    </span>
+                </div>
+                
+                <!-- Hardware Items Table -->
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="bg-light">
+                            <tr>
+                                <th class="text-center" style="width: 50px;">#</th>
+                                <th>Hardware Type</th>
+                                <th>Model</th>
+                                <th>Expected Asset Number</th>
+                                <th>Entered Asset Number</th>
+                                <th>Return Status</th>
+                                <th>Status</th>
+                                <th class="text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for entry in assignment.asset_entries %}
+                            <tr class="
+                                {% if entry.verified %}table-row-verified
+                                {% elif entry.is_match and entry.entered_asset_number %}table-row-matched
+                                {% elif entry.entered_asset_number and not entry.is_match %}table-row-mismatch
+                                {% elif entry.returned_at %}table-row-returned
+                                {% endif %}">
+                                <td class="text-center fw-semibold">{{ forloop.counter }}</td>
+                                <td><strong>{{ entry.hardware_type }}</strong></td>
+                                <td class="text-muted">{{ entry.model }}</td>
+                                <td>
+                                    <code class="asset-badge">{{ entry.expected_asset }}</code>
+                                </td>
+                                <td>
+                                    {% if entry.entered_asset_number %}
+                                        <code class="asset-badge {% if entry.is_match %}text-success{% else %}text-danger{% endif %}">
+                                            {{ entry.entered_asset_number }}
+                                        </code>
+                                    {% else %}
+                                        <span class="text-muted">—</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if entry.returned_at %}
+                                        <span class="badge bg-success text-white px-3 py-2">Returned</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark px-3 py-2">Pending Return</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    {% if entry.verified %}
+                                        <span class="badge bg-success text-white px-3 py-2">Verified</span>
+                                    {% elif entry.is_match and entry.entered_asset_number %}
+                                        <span class="badge bg-info text-white px-3 py-2">Matched</span>
+                                    {% elif entry.entered_asset_number %}
+                                        <span class="badge bg-danger text-white px-3 py-2">Mismatch</span>
+                                    {% else %}
+                                        <span class="badge bg-secondary text-white px-3 py-2">Pending</span>
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-1 justify-content-center">
+                                        {% if entry.entered_asset_number and not entry.verified %}
+                                            {% if entry.is_match %}
+                                            <a href="{% url 'verify_asset_entry' entry.id %}" 
+                                               class="btn btn-sm btn-success action-btn" title="Verify">
+                                                <i class="bi bi-check-circle"></i>
+                                            </a>
+                                            {% endif %}
+                                            <button class="btn btn-sm btn-outline-info action-btn" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#itemModal{{ entry.id }}"
+                                                    title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                        {% endif %}
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-2">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Item Detail Modals -->
+{% for entry in assignment.asset_entries %}
+{% if entry.entered_asset_number %}
+<div class="modal fade" id="itemModal{{ entry.id }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow-lg">
+            <div class="modal-header py-3
+                {% if entry.verified %}bg-success text-white
+                {% elif entry.is_match %}bg-info text-white
+                {% else %}bg-danger text-white{% endif %}">
+                <h5 class="modal-title fw-semibold">
+                    <i class="bi bi-info-circle me-2"></i>Asset Verification Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body p-4">
+                <div class="text-center mb-4">
+                    <div class="asset-display">
+                        <code class="fs-4 fw-bold text-dark">{{ entry.entered_asset_number }}</code>
+                    </div>
+                    <span class="badge mt-3 px-3 py-2
+                        {% if entry.verified %}bg-success text-white
+                        {% elif entry.is_match %}bg-info text-white
+                        {% else %}bg-danger text-white{% endif %}">
+                        {% if entry.verified %}
+                            <i class="bi bi-check-circle me-1"></i>Verified
+                        {% elif entry.is_match %}
+                            <i class="bi bi-check2 me-1"></i>Matched - Ready to Verify
+                        {% else %}
+                            <i class="bi bi-x-circle me-1"></i>Mismatch
+                        {% endif %}
+                    </span>
+                </div>
+                
+                <div class="row g-3">
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Employee</small>
+                            <div class="fw-semibold text-dark">{{ assignment.employee.get_full_name|default:assignment.employee.username }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Exam City</small>
+                            <div class="fw-semibold text-dark">{{ assignment.exam_city }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Hardware</small>
+                            <div class="fw-semibold text-dark">{{ entry.hardware_type }} - {{ entry.model }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Expected Asset Number</small>
+                            <code class="text-dark">{{ entry.expected_asset }}</code>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Entered Asset Number</small>
+                            <code class="{% if entry.is_match %}text-success{% else %}text-danger{% endif %} fw-semibold">{{ entry.entered_asset_number }}</code>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Return Status</small>
+                            <div class="fw-semibold">
+                                {% if entry.returned_at %}
+                                    <span class="badge bg-success text-white px-3 py-2">Returned</span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark px-3 py-2">Pending Return</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Entered By</small>
+                            <div class="fw-semibold text-dark">{{ entry.entered_by.get_full_name|default:entry.entered_by.username }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Entered On</small>
+                            <div class="text-dark">{{ entry.entered_at|date:"d M Y H:i" }}</div>
+                        </div>
+                    </div>
+                    {% if entry.verified %}
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Verified By</small>
+                            <div class="fw-semibold text-dark">{{ entry.verified_by.get_full_name|default:entry.verified_by.username }}</div>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="detail-card">
+                            <small class="text-muted text-uppercase fw-semibold d-block mb-1">Verified On</small>
+                            <div class="text-dark">{{ entry.verified_at|date:"d M Y H:i" }}</div>
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+                
+                <div class="mt-4">
+                    {% if entry.returned_at %}
+                        <div class="alert alert-success border-0">
+                            <i class="bi bi-check-circle-fill me-2"></i> This item has been returned and marked as available.
+                        </div>
+                    {% elif not entry.verified %}
+                        {% if entry.is_match %}
+                        <div class="alert alert-info border-0">
+                            <i class="bi bi-check2-circle me-2"></i> The entered Asset Number matches the expected Asset Number and is ready for verification.
+                        </div>
+                        {% else %}
+                        <div class="alert alert-danger border-0">
+                            <i class="bi bi-exclamation-triangle-fill me-2"></i> The entered Asset Number does not match the expected Asset Number.
+                        </div>
+                        {% endif %}
+                    {% else %}
+                        <div class="alert alert-success border-0">
+                            <i class="bi bi-check-circle-fill me-2"></i> This asset has been verified and is marked as in use.
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer bg-light border-top py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                {% if entry.entered_asset_number and not entry.verified and entry.is_match and not entry.returned_at %}
+                <a href="{% url 'verify_asset_entry' entry.id %}" class="btn btn-success btn-sm px-3">
+                    <i class="bi bi-check-circle me-1"></i>Verify Now
+                </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+{% endfor %}
+
+<style>
+    /* Employee Avatar */
+    .employee-avatar {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #fff;
+        border-radius: 50%;
+        flex-shrink: 0;
+        font-size: 0.8rem;
+        font-weight: 600;
+    }
+    
+    /* Info Cards */
+    .info-card {
+        background: #f8f9fa;
+        border-radius: 12px;
+        padding: 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+    
+    .info-icon {
+        width: 44px;
+        height: 44px;
+        background: white;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: #E04D00;
+        font-size: 20px;
+        flex-shrink: 0;
+        box-shadow: 0 2px 6px rgba(0,0,0,0.04);
+    }
+    
+    .info-content {
+        flex: 1;
+        min-width: 0;
+    }
+    
+    .info-content small {
+        font-size: 11px;
+        letter-spacing: 0.3px;
+    }
+    
+    /* Status Badges */
+    .status-badge {
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 13px;
+        display: inline-flex;
+        align-items: center;
+    }
+    
+    .status-verified { background: rgba(25, 135, 84, 0.1); color: #198754; border: 1px solid rgba(25, 135, 84, 0.2); }
+    .status-matched { background: rgba(13, 202, 240, 0.1); color: #0c5460; border: 1px solid rgba(13, 202, 240, 0.2); }
+    .status-mismatch { background: rgba(220, 53, 69, 0.1); color: #842029; border: 1px solid rgba(220, 53, 69, 0.2); }
+    .status-pending { background: rgba(108, 117, 125, 0.1); color: #495057; border: 1px solid rgba(108, 117, 125, 0.2); }
+    .status-returned { background: rgba(25, 135, 84, 0.1); color: #198754; border: 1px solid rgba(25, 135, 84, 0.2); }
+    
+    /* Table Row Styles */
+    .table-row-verified { background-color: rgba(25, 135, 84, 0.04) !important; }
+    .table-row-matched { background-color: rgba(13, 202, 240, 0.04) !important; }
+    .table-row-mismatch { background-color: rgba(220, 53, 69, 0.04) !important; }
+    .table-row-returned { background-color: rgba(25, 135, 84, 0.08) !important; }
+    
+    /* Badge Styles */
+    .asset-badge {
+        background: #f1f5f9;
+        padding: 5px 10px;
+        border-radius: 8px;
+        font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+        font-size: 0.8rem;
+        font-weight: 500;
+        color: #334155;
+        border: 1px solid #e2e8f0;
+    }
+    
+    .asset-badge.text-success {
+        background: #ecfdf5;
+        color: #065f46;
+        border-color: #a7f3d0;
+    }
+    
+    .asset-badge.text-danger {
+        background: #fef2f2;
+        color: #991b1b;
+        border-color: #fecaca;
+    }
+    
+    /* Asset Display */
+    .asset-display {
+        background: #f8fafc;
+        padding: 20px;
+        border-radius: 12px;
+        display: inline-block;
+        border: 2px dashed #e2e8f0;
+    }
+    
+    /* Detail Card */
+    .detail-card {
+        background: #f8f9fa;
+        padding: 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(0,0,0,0.04);
+    }
+    
+    .detail-card small {
+        font-size: 10px;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Empty State */
+    .empty-state {
+        padding: 40px 20px;
+    }
+    
+    /* Table */
+    .table th {
+        font-weight: 600;
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        color: #64748b;
+        border-bottom: 2px solid #e2e8f0;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 14px 8px;
+        border-bottom: 1px solid #f1f5f9;
+    }
+    
+    .table tbody tr {
+        transition: background-color 0.15s ease;
+    }
+    
+    .table tbody tr:hover {
+        background-color: #f8fafc;
+    }
+    
+    /* Action Buttons */
+    .action-btn {
+        transition: all 0.2s;
+        border-radius: 8px;
+        min-width: 32px;
+    }
+    
+    .action-btn:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Progress */
+    .progress {
+        background-color: #e9ecef;
+        border-radius: 20px;
+        overflow: hidden;
+        height: 8px;
+    }
+    
+    .progress-bar {
+        transition: width 0.4s ease;
+    }
+    
+    /* Cards */
+    .card {
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.08) !important;
+    }
+    
+    /* Modal */
+    .modal-content {
+        border-radius: 12px;
+    }
+    
+    .modal-header {
+        border-radius: 12px 12px 0 0;
+    }
+    
+    /* Alerts */
+    .alert {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    /* Responsive */
+    @media (max-width: 992px) {
+        .table td, .table th { 
+            padding: 10px 6px !important; 
+            font-size: 0.8rem !important; 
+        }
+        .btn-group .btn { 
+            padding: 0.25rem 0.5rem !important; 
+            font-size: 0.75rem !important; 
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-card .stat-icon {
+            width: 44px !important;
+            height: 44px !important;
+        }
+        .stat-card .stat-icon i {
+            font-size: 1.2rem !important;
+        }
+        .info-card {
+            padding: 10px;
+        }
+        .info-icon {
+            width: 36px;
+            height: 36px;
+            font-size: 16px;
+        }
+        .table td, .table th { 
+            padding: 8px 4px !important; 
+            font-size: 0.75rem !important; 
+        }
+        .btn-group .btn { 
+            padding: 0.2rem 0.4rem !important; 
+            font-size: 0.7rem !important; 
+        }
+        .status-badge {
+            font-size: 11px;
+            padding: 6px 12px;
+        }
+        .asset-display {
+            padding: 12px;
+        }
+        .asset-display code {
+            font-size: 1rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th { 
+            font-size: 0.7rem !important; 
+            padding: 6px 2px !important; 
+        }
+        .btn { 
+            font-size: 0.7rem !important; 
+            padding: 0.3rem 0.6rem !important; 
+        }
+        .badge { 
+            font-size: 0.65rem !important; 
+        }
+        .progress { 
+            height: 6px !important; 
+        }
+        .employee-avatar {
+            width: 28px; 
+            height: 28px; 
+            font-size: 0.7rem; 
+        }
+        .btn-group {
+            flex-direction: column;
+            gap: 2px;
+        }
+        .btn-group .btn {
+            width: 100%;
+        }
+    }
+</style>
+
+<script>
+    $(document).ready(function() {
+        // Initialize tooltips
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+            return new bootstrap.Tooltip(tooltipTriggerEl)
+        });
+    });
+</script>
+{% endblock %}

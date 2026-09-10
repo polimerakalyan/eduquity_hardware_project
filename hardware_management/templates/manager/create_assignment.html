@@ -1,0 +1,1004 @@
+{% extends 'base.html' %}
+{% block title %}Create Assignment - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h2 class="h4 h-md-3"><i class="bi bi-clipboard-check"></i> Create Hardware Assignment</h2>
+                <p class="text-muted small mb-0">Assign hardware items to employees using Asset Number</p>
+                {% if has_draft %}
+                <span class="badge bg-info mt-1">
+                    <i class="bi bi-clock-history"></i> Draft saved at {{ draft_last_saved|date:"h:i A" }}
+                </span>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{% url 'view_assignments' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Assignments
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-2 py-md-3">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                    <h4 class="mb-0 h5 h-md-4">
+                        <i class="bi bi-clipboard-check"></i> Assignment Details
+                    </h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark" id="autoSaveStatus">
+                            <i class="bi bi-cloud-check text-success"></i> Auto-save
+                        </span>
+                        {% if has_draft %}
+                        <span class="badge bg-warning text-dark" id="draftIndicator">
+                            <i class="bi bi-file-earmark-text"></i> Draft
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <!-- Auto-save status messages - Removed toast messages -->
+                <div id="autoSaveMessages" class="mb-3"></div>
+                
+                <form method="POST" action="{% url 'create_assignment' %}" id="assignmentForm">
+                    {% csrf_token %}
+                    
+                    <!-- Employee & Project -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-6">
+                            <label for="employee" class="form-label small fw-bold">Employee <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="employee" name="employee">
+                                <option value="">Select employee</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}" {% if draft_data.employee_id|stringformat:"s" == emp.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ emp.get_full_name|default:emp.username }} ({{ emp.email }})
+                                </option>
+                                {% empty %}
+                                <option value="" disabled>No employees available</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">Select the employee who will receive this hardware</small>
+                        </div>
+                        
+                        <div class="col-12 col-md-6">
+                            <label for="project" class="form-label small fw-bold">Project <span class="text-danger">*</span></label>
+                            <select class="form-select form-select-sm" id="project" name="project">
+                                <option value="">Select project</option>
+                                {% for proj in projects %}
+                                <option value="{{ proj.id }}" {% if draft_data.project_id|stringformat:"s" == proj.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ proj.project_id }} - {{ proj.project_name }}
+                                    {% if proj.assigned_manager is None %}
+                                    <span class="badge bg-info">Global</span>
+                                    {% elif proj.assigned_manager.id == user.id %}
+                                    <span class="badge bg-primary">Assigned to you</span>
+                                    {% elif proj.created_by.id == user.id %}
+                                    <span class="badge bg-secondary">Created by you</span>
+                                    {% endif %}
+                                </option>
+                                {% empty %}
+                                <option value="" disabled>No projects available</option>
+                                {% endfor %}
+                            </select>
+                            <small class="text-muted">
+                                <i class="bi bi-info-circle"></i> 
+                                Shows: Global projects, projects assigned to you, and projects you created
+                            </small>
+                        </div>
+                    </div>
+                    
+                    <!-- Exam Details -->
+                    <div class="row g-3 mb-4">
+                        <div class="col-12 col-md-4">
+                            <label for="exam_city" class="form-label small fw-bold">Exam City <span class="text-danger">*</span></label>
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   id="exam_city" 
+                                   name="exam_city" 
+                                   placeholder="Enter exam city"
+                                   value="{{ draft_data.exam_city|default:'' }}">
+                            <small class="text-muted">City where the exam will take place</small>
+                        </div>
+                        
+                        <div class="col-12 col-md-4">
+                            <label for="exam_center_name" class="form-label small fw-bold">Exam Center Name</label>
+                            <input type="text" 
+                                   class="form-control form-control-sm" 
+                                   id="exam_center_name" 
+                                   name="exam_center_name" 
+                                   placeholder="Enter exam center name"
+                                   value="{{ draft_data.exam_center_name|default:'' }}">
+                            <small class="text-muted">Specific center name (optional)</small>
+                        </div>
+                        
+                        <div class="col-12 col-md-4">
+                            <label for="expected_return_date" class="form-label small fw-bold">Expected Return Date <span class="text-danger">*</span></label>
+                            <input type="date" 
+                                   class="form-control form-control-sm" 
+                                   id="expected_return_date" 
+                                   name="expected_return_date" 
+                                   min="{{ today|date:'Y-m-d' }}"
+                                   value="{{ draft_data.expected_return_date|default:'' }}">
+                            <small class="text-muted">When the hardware should be returned</small>
+                        </div>
+                    </div>
+                    
+                    <!-- Hardware Selection -->
+                    <div class="mb-4">
+                        <h5 class="small fw-bold"><i class="bi bi-laptop"></i> Add Hardware Items</h5>
+                        <p class="text-muted small">Select hardware type then enter Asset Number</p>
+                        
+                        <!-- Hardware Type & Asset Input -->
+                        <div class="card bg-light border-0 mb-3">
+                            <div class="card-body p-3 p-md-4">
+                                <div class="row g-3">
+                                    <div class="col-12 col-md-4">
+                                        <label for="hardwareTypeSelect" class="form-label small fw-bold">Hardware Type <span class="text-danger">*</span></label>
+                                        <select class="form-select form-select-sm" id="hardwareTypeSelect">
+                                            <option value="">Select hardware type</option>
+                                            {% for hw_type in hardware_types %}
+                                            <option value="{{ hw_type.id }}" data-name="{{ hw_type.name }}">
+                                                {{ hw_type.name }}
+                                            </option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                    <div class="col-12 col-md-8">
+                                        <label for="assetInput" class="form-label small fw-bold">Asset Number <span class="text-danger">*</span></label>
+                                        <div class="input-group input-group-sm">
+                                            <span class="input-group-text bg-white">
+                                                <i class="bi bi-upc-scan"></i>
+                                            </span>
+                                            <input type="text" 
+                                                   class="form-control" 
+                                                   id="assetInput" 
+                                                   placeholder="Enter Asset Number"
+                                                   autocomplete="off"
+                                                   style="font-family: monospace; text-transform: uppercase;">
+                                            <button class="btn btn-primary" type="button" id="addAssetBtn">
+                                                <i class="bi bi-plus-circle"></i> Add
+                                            </button>
+                                        </div>
+                                        <small class="text-muted" id="availableCount"></small>
+                                        <datalist id="assetSuggestions"></datalist>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Added Items Tags -->
+                        <div class="card border-0 shadow-sm mb-3">
+                            <div class="card-body p-3 p-md-4">
+                                <h6 class="card-title small fw-bold mb-3">
+                                    <i class="bi bi-tags"></i> Added Hardware Items
+                                    <span id="itemCount" class="badge bg-secondary ms-2">0</span>
+                                </h6>
+                                <div id="tagsContainer" class="d-flex flex-wrap gap-2" style="min-height: 60px;">
+                                    <div class="text-muted small">No hardware items added yet. Select hardware type and enter Asset Number above.</div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Hidden field for JSON data -->
+                        <input type="hidden" name="hardware_items_json" id="hardwareItemsJson" value="[]">
+                        
+                        <!-- Hardware Summary -->
+                        <div class="card bg-light border-0">
+                            <div class="card-body p-3 p-md-4">
+                                <h6 class="card-title small fw-bold">
+                                    <i class="bi bi-clipboard-check"></i> Hardware Summary
+                                </h6>
+                                <div id="hardwareSummary" class="mt-2">
+                                    <p class="text-muted small mb-0">No hardware items added</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Notes -->
+                    <div class="mb-4">
+                        <label for="notes" class="form-label small fw-bold">Notes</label>
+                        <textarea class="form-control form-control-sm" 
+                                  id="notes" 
+                                  name="notes" 
+                                  rows="3" 
+                                  placeholder="Additional notes for the assignment...">{{ draft_data.notes|default:'' }}</textarea>
+                        <small class="text-muted">Any special instructions or information about this assignment</small>
+                    </div>
+                    
+                    <!-- Submit Buttons -->
+                    <div class="d-flex flex-wrap gap-2">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="saveDraftBtn">
+                            <i class="bi bi-cloud-arrow-down"></i> Save Draft
+                        </button>
+                        {% if has_draft %}
+                        <button type="button" class="btn btn-outline-danger btn-sm" id="clearDraftBtn">
+                            <i class="bi bi-trash"></i> Clear Draft
+                        </button>
+                        {% endif %}
+                        <button type="submit" class="btn btn-primary btn-sm" id="submitBtn" disabled>
+                            <i class="bi bi-clipboard-check"></i> Create Assignment
+                        </button>
+                        <a href="{% url 'view_assignments' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Draft Confirmation Modal -->
+<div class="modal fade" id="clearDraftModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle text-warning"></i> Clear Draft</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear this draft?</p>
+                <p class="text-muted small">This will remove all saved data including:</p>
+                <ul class="text-muted small">
+                    <li>Employee selection</li>
+                    <li>Project selection</li>
+                    <li>Exam details</li>
+                    <li>All added hardware items</li>
+                    <li>Notes</li>
+                </ul>
+                <p class="text-danger small"><i class="bi bi-exclamation-circle"></i> This action cannot be undone!</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-danger btn-sm" id="confirmClearDraft">
+                    <i class="bi bi-trash"></i> Clear Draft
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .badge {
+        transition: all 0.2s ease;
+        cursor: default;
+    }
+    
+    .badge:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    
+    .badge code {
+        background: rgba(255,255,255,0.2);
+        padding: 1px 4px;
+        border-radius: 3px;
+        color: white;
+        font-size: 0.7rem;
+    }
+    
+    .badge small {
+        font-size: 0.65rem;
+        opacity: 0.9;
+    }
+    
+    #assetInput {
+        font-family: monospace;
+        text-transform: uppercase;
+    }
+    
+    #assetInput.is-invalid {
+        border-color: #dc3545;
+    }
+    
+    .btn-close-white {
+        filter: brightness(0) invert(1);
+        opacity: 0.8;
+        cursor: pointer;
+    }
+    
+    .btn-close-white:hover {
+        opacity: 1;
+    }
+    
+    .position-fixed {
+        position: fixed !important;
+    }
+    
+    .top-0 {
+        top: 0 !important;
+    }
+    
+    .end-0 {
+        right: 0 !important;
+    }
+    
+    #autoSaveMessages {
+        position: sticky;
+        top: 10px;
+        z-index: 100;
+    }
+    
+    .auto-save-toast {
+        background: #28a745;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 8px;
+        font-size: 0.85rem;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        animation: slideDown 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-20px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    /* Mobile responsiveness */
+    @media (max-width: 576px) {
+        .badge {
+            font-size: 0.7rem;
+            padding: 0.3rem 0.6rem;
+        }
+        
+        .badge code {
+            font-size: 0.6rem;
+        }
+        
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+        
+        .btn-group-sm .btn {
+            font-size: 0.65rem;
+        }
+        
+        .auto-save-toast {
+            font-size: 0.7rem;
+            padding: 6px 12px;
+        }
+    }
+</style>
+
+<script>
+    // Inventory data from backend with asset numbers
+    const inventoryData = {
+        {% for hw_type in hardware_types %}
+        '{{ hw_type.id }}': {
+            name: '{{ hw_type.name }}',
+            items: [
+                {% for hardware in hw_type.hardware_list %}
+                {
+                    asset_number: '{{ hardware.asset_number|escapejs }}',
+                    serial_number: '{{ hardware.serial_number|escapejs }}'
+                }{% if not forloop.last %},{% endif %}
+                {% endfor %}
+            ]
+        }{% if not forloop.last %},{% endif %}
+        {% endfor %}
+    };
+    
+    // Draft data
+    const draftData = {{ draft_data|safe }};
+    
+    document.addEventListener('DOMContentLoaded', function() {
+        let hardwareItems = [];
+        let currentHardwareTypeId = null;
+        let currentHardwareTypeName = null;
+        let availableItems = [];
+        let isSaving = false;
+        let autoSaveInterval = null;
+        let isClearingDraft = false;
+        let lastSaveTime = 0;
+        let saveTimeout = null;
+        let hasUnsavedChanges = false;
+        let lastSavedData = '';
+        
+        const hardwareTypeSelect = document.getElementById('hardwareTypeSelect');
+        const assetInput = document.getElementById('assetInput');
+        const addAssetBtn = document.getElementById('addAssetBtn');
+        const tagsContainer = document.getElementById('tagsContainer');
+        const hardwareSummary = document.getElementById('hardwareSummary');
+        const hardwareItemsJson = document.getElementById('hardwareItemsJson');
+        const itemCountSpan = document.getElementById('itemCount');
+        const submitBtn = document.getElementById('submitBtn');
+        const availableCountSpan = document.getElementById('availableCount');
+        const autoSaveMessages = document.getElementById('autoSaveMessages');
+        const saveDraftBtn = document.getElementById('saveDraftBtn');
+        const autoSaveStatus = document.getElementById('autoSaveStatus');
+        const clearDraftBtn = document.getElementById('clearDraftBtn');
+        const draftIndicator = document.getElementById('draftIndicator');
+        
+        // ========== DRAFT FUNCTIONS ==========
+        
+        function getFormData() {
+            return {
+                employee_id: document.getElementById('employee').value,
+                project_id: document.getElementById('project').value,
+                exam_city: document.getElementById('exam_city').value,
+                exam_center_name: document.getElementById('exam_center_name').value,
+                expected_return_date: document.getElementById('expected_return_date').value,
+                notes: document.getElementById('notes').value,
+                hardware_items: hardwareItems
+            };
+        }
+        
+        function hasFormChanged() {
+            const currentData = JSON.stringify(getFormData());
+            const hasChanged = currentData !== lastSavedData;
+            return hasChanged;
+        }
+        
+        function saveDraft(showToast = false) {
+            // Check if enough time has passed since last save (minimum 2 seconds)
+            const now = Date.now();
+            if (now - lastSaveTime < 2000 && !showToast) {
+                return;
+            }
+            
+            // Check if data has actually changed
+            if (!hasFormChanged() && lastSaveTime > 0) {
+                return;
+            }
+            
+            if (isSaving || isClearingDraft) return;
+            isSaving = true;
+            
+            if (autoSaveStatus) {
+                autoSaveStatus.innerHTML = '<i class="bi bi-cloud-upload text-warning"></i> Saving...';
+            }
+            
+            const formData = {
+                action: 'save_draft',
+                ...getFormData()
+            };
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify(formData)
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                isSaving = false;
+                lastSaveTime = Date.now();
+                
+                if (data.success) {
+                    // Update last saved data
+                    lastSavedData = JSON.stringify(getFormData());
+                    hasUnsavedChanges = false;
+                    
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-cloud-check text-success"></i> Auto-save';
+                    }
+                    
+                    // Show draft indicator
+                    if (draftIndicator) {
+                        draftIndicator.style.display = 'inline-block';
+                    }
+                    
+                    // Only show toast if explicitly requested - removed
+                    if (showToast) {
+                        // Toast messages removed
+                    }
+                } else {
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Auto-save failed';
+                    }
+                    if (showToast) {
+                        // Error toast removed
+                    }
+                }
+            })
+            .catch(function(error) {
+                isSaving = false;
+                if (autoSaveStatus) {
+                    autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Auto-save failed';
+                }
+                if (showToast) {
+                    // Error toast removed
+                }
+            });
+        }
+        
+        function clearDraft() {
+            if (isClearingDraft) return;
+            isClearingDraft = true;
+            
+            if (autoSaveStatus) {
+                autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-warning"></i> Clearing...';
+            }
+            
+            fetch(window.location.href, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                },
+                body: JSON.stringify({
+                    action: 'clear_draft'
+                })
+            })
+            .then(function(response) {
+                return response.json();
+            })
+            .then(function(data) {
+                isClearingDraft = false;
+                if (data.success) {
+                    // Clear all form fields
+                    document.getElementById('employee').value = '';
+                    document.getElementById('project').value = '';
+                    document.getElementById('exam_city').value = '';
+                    document.getElementById('exam_center_name').value = '';
+                    document.getElementById('expected_return_date').value = '';
+                    document.getElementById('notes').value = '';
+                    
+                    // Clear hardware items
+                    hardwareItems = [];
+                    updateTags();
+                    updateSummary();
+                    updateHiddenField();
+                    updateAvailableItems();
+                    
+                    // Update last saved data
+                    lastSavedData = JSON.stringify(getFormData());
+                    hasUnsavedChanges = false;
+                    
+                    // Hide draft indicator
+                    if (draftIndicator) {
+                        draftIndicator.style.display = 'none';
+                    }
+                    
+                    // Hide clear draft button
+                    if (clearDraftBtn) {
+                        clearDraftBtn.style.display = 'none';
+                    }
+                    
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-cloud-check text-success"></i> Auto-save';
+                    }
+                    
+                    // Close modal
+                    const modal = bootstrap.Modal.getInstance(document.getElementById('clearDraftModal'));
+                    if (modal) {
+                        modal.hide();
+                    }
+                } else {
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Clear failed';
+                    }
+                }
+            })
+            .catch(function(error) {
+                isClearingDraft = false;
+                if (autoSaveStatus) {
+                    autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Clear failed';
+                }
+            });
+        }
+        
+        // ========== RESTORE DRAFT DATA ==========
+        function restoreDraft() {
+            if (draftData && draftData.hardware_items && draftData.hardware_items.length > 0) {
+                hardwareItems = draftData.hardware_items;
+                updateTags();
+                updateSummary();
+                updateHiddenField();
+                updateAvailableItems();
+            }
+            
+            // Set initial saved data
+            lastSavedData = JSON.stringify(getFormData());
+        }
+        
+        // ========== INVENTORY FUNCTIONS ==========
+        
+        function updateAvailableItems() {
+            if (currentHardwareTypeId && inventoryData[currentHardwareTypeId]) {
+                const allItems = inventoryData[currentHardwareTypeId].items || [];
+                const addedAssets = hardwareItems
+                    .filter(item => item.hardware_type_id === currentHardwareTypeId)
+                    .map(item => item.asset_number);
+                
+                availableItems = allItems.filter(function(item) {
+                    return !addedAssets.includes(item.asset_number);
+                });
+                
+                const count = availableItems.length;
+                const totalCount = allItems.length;
+                const usedCount = addedAssets.length;
+                
+                if (count === 0 && totalCount > 0 && usedCount === totalCount) {
+                    availableCountSpan.innerHTML = `<span class="text-success small">✓ All ${totalCount} items have been added.</span>`;
+                    assetInput.disabled = true;
+                    assetInput.placeholder = `All ${currentHardwareTypeName}s added`;
+                } else if (count === 0 && totalCount === 0) {
+                    availableCountSpan.innerHTML = `<span class="text-warning small">⚠️ No ${currentHardwareTypeName}s available in this branch!</span>`;
+                    assetInput.disabled = true;
+                    assetInput.placeholder = `No ${currentHardwareTypeName}s available`;
+                } else {
+                    availableCountSpan.innerHTML = `<span class="text-info small">✓ ${count} available item(s) out of ${totalCount}. ${usedCount} added.</span>`;
+                    assetInput.disabled = false;
+                    assetInput.placeholder = `Enter Asset Number (${count} available)`;
+                }
+                
+                const datalist = document.getElementById('assetSuggestions');
+                datalist.innerHTML = '';
+                availableItems.forEach(function(item) {
+                    const option = document.createElement('option');
+                    option.value = item.asset_number;
+                    document.getElementById('assetSuggestions').appendChild(option);
+                });
+                
+            } else {
+                availableItems = [];
+                availableCountSpan.innerHTML = '';
+                assetInput.disabled = true;
+                assetInput.placeholder = 'Select hardware type first';
+            }
+        }
+        
+        function findHardwareItem(assetNumber) {
+            assetNumber = assetNumber.trim().toUpperCase();
+            
+            if (!currentHardwareTypeId) {
+                return { valid: false, message: 'Please select a hardware type first' };
+            }
+            
+            if (!assetNumber) {
+                return { valid: false, message: 'Please enter Asset Number' };
+            }
+            
+            const foundItem = availableItems.find(function(item) {
+                return item.asset_number.toUpperCase() === assetNumber;
+            });
+            
+            if (!foundItem) {
+                return { valid: false, message: `Asset '${assetNumber}' is not available in your branch` };
+            }
+            
+            return { valid: true, item: foundItem, message: 'Valid hardware item' };
+        }
+        
+        function addHardwareItem(assetNumber) {
+            const validation = findHardwareItem(assetNumber);
+            
+            if (!validation.valid) {
+                showNotification(validation.message, 'danger');
+                return false;
+            }
+            
+            const item = validation.item;
+            
+            hardwareItems.push({
+                hardware_type_id: currentHardwareTypeId,
+                hardware_type_name: currentHardwareTypeName,
+                asset_number: item.asset_number,
+                serial_number: item.serial_number
+            });
+            
+            updateTags();
+            updateSummary();
+            updateHiddenField();
+            updateAvailableItems();
+            
+            assetInput.value = '';
+            assetInput.focus();
+            
+            showNotification(`✓ Added ${item.asset_number} - ${currentHardwareTypeName}`, 'success');
+            
+            // Auto-save after adding (no toast)
+            saveDraft(false);
+            
+            return true;
+        }
+        
+        function removeHardwareItem(index) {
+            const removed = hardwareItems[index];
+            if (removed) {
+                hardwareItems.splice(index, 1);
+                
+                updateTags();
+                updateSummary();
+                updateHiddenField();
+                updateAvailableItems();
+                
+                showNotification(`Removed ${removed.asset_number}`, 'info');
+                
+                if (currentHardwareTypeId) {
+                    assetInput.disabled = false;
+                }
+                
+                // Auto-save after removing (no toast)
+                saveDraft(false);
+            }
+        }
+        
+        // ========== UI UPDATE FUNCTIONS ==========
+        
+        function updateTags() {
+            if (hardwareItems.length === 0) {
+                tagsContainer.innerHTML = '<div class="text-muted small">No hardware items added yet. Select hardware type and enter Asset Number above.</div>';
+                itemCountSpan.textContent = '0';
+                return;
+            }
+            
+            let html = '';
+            hardwareItems.forEach(function(item, index) {
+                html += `
+                    <div class="badge bg-primary p-2 d-inline-flex align-items-center gap-2" style="font-size: 0.8rem;" data-index="${index}">
+                        <i class="bi bi-laptop"></i>
+                        <span>
+                            <strong>${escapeHtml(item.hardware_type_name)}</strong>
+                            <small>Asset: <code class="text-white">${escapeHtml(item.asset_number)}</code></small>
+                        </span>
+                        <button type="button" class="btn-close btn-close-white remove-item-btn" style="font-size: 0.5rem; width: 0.5rem; height: 0.5rem;" data-index="${index}" aria-label="Remove"></button>
+                    </div>
+                `;
+            });
+            
+            tagsContainer.innerHTML = html;
+            itemCountSpan.textContent = hardwareItems.length;
+            
+            document.querySelectorAll('.remove-item-btn').forEach(function(btn) {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    const index = parseInt(this.getAttribute('data-index'));
+                    if (!isNaN(index)) {
+                        removeHardwareItem(index);
+                    }
+                });
+            });
+        }
+        
+        function updateSummary() {
+            if (hardwareItems.length === 0) {
+                hardwareSummary.innerHTML = '<p class="text-muted small mb-0">No hardware items added</p>';
+                submitBtn.disabled = true;
+                return;
+            }
+            
+            const grouped = {};
+            hardwareItems.forEach(function(item) {
+                if (!grouped[item.hardware_type_name]) {
+                    grouped[item.hardware_type_name] = [];
+                }
+                grouped[item.hardware_type_name].push({
+                    asset: item.asset_number,
+                    serial: item.serial_number
+                });
+            });
+            
+            let html = '<div class="table-responsive"><table class="table table-sm table-borderless mb-0">';
+            html += '<thead><tr><th class="small">Hardware Type</th><th class="small">Asset Number</th><th class="small">Serial Number (Ref)</th></tr></thead><tbody>';
+            
+            for (const [type, items] of Object.entries(grouped)) {
+                for (const item of items) {
+                    html += `
+                        <tr>
+                            <td><strong class="small">${escapeHtml(type)}</strong></td>
+                            <td><code class="small">${escapeHtml(item.asset)}</code></td>
+                            <td><small class="text-muted">${escapeHtml(item.serial)}</small></td>
+                        </tr>
+                    `;
+                }
+            }
+            
+            html += `</tbody></table></div>`;
+            html += `<p class="mt-2 mb-0 fw-bold text-success small">Total items: ${hardwareItems.length}</p>`;
+            
+            hardwareSummary.innerHTML = html;
+            submitBtn.disabled = false;
+        }
+        
+        function updateHiddenField() {
+            hardwareItemsJson.value = JSON.stringify(hardwareItems);
+        }
+        
+        function showNotification(message, type) {
+            type = type || 'info';
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed top-0 end-0 m-3`;
+            alertDiv.style.zIndex = '9999';
+            alertDiv.style.minWidth = '250px';
+            alertDiv.style.maxWidth = '350px';
+            alertDiv.style.fontSize = '0.85rem';
+            alertDiv.innerHTML = `
+                <i class="bi bi-${type === 'success' ? 'check-circle' : type === 'danger' ? 'exclamation-triangle' : 'info-circle'} me-2"></i>
+                ${escapeHtml(message)}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" style="font-size: 0.7rem;"></button>
+            `;
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(function() {
+                if (alertDiv && alertDiv.remove) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
+        
+        function escapeHtml(text) {
+            if (!text) return '';
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        // ========== EVENT LISTENERS ==========
+        
+        addAssetBtn.addEventListener('click', function() {
+            const value = assetInput.value.trim();
+            if (value) {
+                addHardwareItem(value);
+            } else {
+                showNotification('Please enter an Asset Number', 'warning');
+            }
+        });
+        
+        assetInput.addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const value = this.value.trim();
+                if (value) {
+                    addHardwareItem(value);
+                }
+            }
+        });
+        
+        hardwareTypeSelect.addEventListener('change', function() {
+            const selectedOption = this.options[this.selectedIndex];
+            currentHardwareTypeId = this.value;
+            currentHardwareTypeName = selectedOption.dataset.name;
+            
+            updateAvailableItems();
+            
+            if (currentHardwareTypeId && availableItems.length > 0) {
+                assetInput.disabled = false;
+                assetInput.focus();
+            } else if (currentHardwareTypeId) {
+                assetInput.disabled = true;
+            } else {
+                assetInput.disabled = true;
+                assetInput.placeholder = 'Select hardware type first';
+            }
+        });
+        
+        // Save Draft button - show brief notification
+        saveDraftBtn.addEventListener('click', function() {
+            saveDraft(true);
+            showNotification('💾 Draft saved', 'success');
+        });
+        
+        // Clear Draft button - show modal
+        if (clearDraftBtn) {
+            clearDraftBtn.addEventListener('click', function() {
+                const modal = new bootstrap.Modal(document.getElementById('clearDraftModal'));
+                modal.show();
+            });
+        }
+        
+        // Confirm clear draft
+        document.getElementById('confirmClearDraft').addEventListener('click', function() {
+            clearDraft();
+        });
+        
+        // Auto-save on form field changes with debounce
+        const formFields = ['employee', 'project', 'exam_city', 'exam_center_name', 'expected_return_date', 'notes'];
+        formFields.forEach(function(fieldId) {
+            const field = document.getElementById(fieldId);
+            if (field) {
+                field.addEventListener('change', function() {
+                    // Clear any existing timeout
+                    if (saveTimeout) {
+                        clearTimeout(saveTimeout);
+                    }
+                    // Save after 1 second delay (no toast)
+                    saveTimeout = setTimeout(function() {
+                        saveDraft(false);
+                    }, 1000);
+                });
+                
+                field.addEventListener('input', function() {
+                    // Mark that there are unsaved changes
+                    hasUnsavedChanges = true;
+                    
+                    // Update status
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-pencil text-warning"></i> Unsaved changes';
+                    }
+                    
+                    // Clear any existing timeout
+                    if (saveTimeout) {
+                        clearTimeout(saveTimeout);
+                    }
+                    // Save after 2 seconds of inactivity (no toast)
+                    saveTimeout = setTimeout(function() {
+                        saveDraft(false);
+                    }, 2000);
+                });
+            }
+        });
+        
+        // Auto-save on regular intervals (every 60 seconds) - no toast
+        autoSaveInterval = setInterval(function() {
+            if (hasUnsavedChanges) {
+                saveDraft(false);
+            }
+        }, 60000);
+        
+        // Auto-save when user is about to leave the page
+        window.addEventListener('beforeunload', function(e) {
+            if (hasUnsavedChanges || hardwareItems.length > 0) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
+        
+        // Keyboard shortcut: Ctrl+S to save draft
+        document.addEventListener('keydown', function(e) {
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveDraft(true);
+                showNotification('💾 Draft saved', 'success');
+            }
+        });
+        
+        // ========== FORM SUBMISSION ==========
+        const form = document.getElementById('assignmentForm');
+        form.addEventListener('submit', function(e) {
+            if (hardwareItems.length === 0) {
+                e.preventDefault();
+                showNotification('Please add at least one hardware item', 'danger');
+                return false;
+            }
+            
+            const submitBtn = document.querySelector('#submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<i class="bi bi-hourglass-split"></i> Creating Assignment...';
+        });
+        
+        // ========== INITIALIZATION ==========
+        assetInput.disabled = true;
+        assetInput.setAttribute('list', 'assetSuggestions');
+        
+        // Set min date for return date
+        const today = new Date().toISOString().split('T')[0];
+        const returnDateInput = document.getElementById('expected_return_date');
+        if (returnDateInput) {
+            returnDateInput.min = today;
+        }
+        
+        // Restore draft data
+        restoreDraft();
+        
+        // Update available items initially
+        updateAvailableItems();
+        
+        // Auto-save initial draft if has data (no toast)
+        if (hardwareItems.length > 0 || document.getElementById('employee').value || document.getElementById('project').value) {
+            setTimeout(function() {
+                saveDraft(false);
+            }, 500);
+        }
+    });
+</script>
+{% endblock %}

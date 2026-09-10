@@ -1,0 +1,31 @@
+🔔 NEW HARDWARE REQUEST - ACTION REQUIRED
+===============================================
+
+Dear Super Admin,
+
+A new {{ request_type|title }} request has been submitted for your review.
+
+📋 REQUEST DETAILS
+-----------------------------------------------
+Request ID: #{{ request.id }}
+Type: {{ request_type|title }}
+Status: Pending
+Hardware: {{ hardware.asset_number }} ({{ hardware.hardware_type.name }})
+Serial Number: {{ hardware.serial_number }}
+Model: {{ hardware.model_name|default:"Not specified" }}
+Requested By: {{ requested_by.get_full_name|default:requested_by.username }} ({{ requested_by.email }})
+Submitted: {{ created_at|date:"F d, Y H:i" }}
+
+Reason:
+{{ reason }}
+
+===============================================
+🔗 QUICK ACTIONS
+-----------------------------------------------
+Approve: {{ approve_url }}
+Reject: {{ reject_url }}
+View All Requests: {{ admin_url }}
+
+===============================================
+This is an automated notification from Eduquity Hardware Management System.
+© {% now "Y" %} Eduquity. All rights reserved.

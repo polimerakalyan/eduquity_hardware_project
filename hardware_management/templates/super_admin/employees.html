@@ -1,0 +1,760 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employees - Super Admin{% endblock %}
+
+{% block page_title %}All Employees{% endblock %}
+{% block page_subtitle %}View all employees across all branches{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Compact Delete Modal Styles */
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    .modal-header.bg-danger {
+        background: #dc3545 !important;
+    }
+    
+    .modal-header {
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 0.6rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8f9fa;
+    }
+    
+    .btn {
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    .delete-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .delete-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .delete-btn:disabled {
+        cursor: not-allowed;
+        opacity: 0.5;
+    }
+    
+    .edit-btn {
+        transition: all 0.2s ease;
+    }
+    
+    .edit-btn:hover {
+        transform: scale(1.05);
+    }
+    
+    .super-admin-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.4rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .employee-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        font-weight: bold;
+        font-size: 10px;
+        flex-shrink: 0;
+    }
+    
+    .employee-avatar.avatar-sm {
+        width: 24px;
+        height: 24px;
+        font-size: 9px;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+        padding: 0.15rem 0.4rem;
+        font-size: 0.6rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 0.4rem 0.3rem;
+        font-size: 0.75rem;
+    }
+    
+    .table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #1e293b;
+        padding: 0.4rem 0.3rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .cant-delete-badge {
+        font-size: 0.5rem;
+        padding: 1px 6px;
+        border-radius: 10px;
+        background: #fef3c7;
+        color: #92400e;
+        display: inline-block;
+    }
+    
+    .page-title-sm {
+        font-size: 1.1rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .page-subtitle-sm {
+        font-size: 0.7rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .btn-sm-custom {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.4rem !important;
+    }
+    
+    code {
+        font-size: 0.65rem;
+        padding: 1px 3px;
+    }
+    
+    .compact-text {
+        font-size: 0.7rem;
+    }
+    
+    .filter-card {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .filter-card .card-body {
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .stat-badge {
+        font-size: 0.55rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 20px;
+    }
+    
+    /* Action buttons group */
+    .action-group {
+        display: flex;
+        gap: 3px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.1rem 0.2rem;
+        font-size: 0.6rem;
+        transition: all 0.2s ease;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.1);
+    }
+    
+    .action-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        transform: none !important;
+    }
+    
+    /* Compact modal body */
+    .modal-body .row.g-2 {
+        --bs-gutter-y: 0.3rem;
+        --bs-gutter-x: 0.3rem;
+    }
+    
+    .modal-body .alert {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-body h5 {
+        font-size: 0.95rem;
+    }
+    
+    .modal-body .display-4 {
+        font-size: 2.5rem !important;
+    }
+    
+    .modal-body .bg-light {
+        padding: 0.5rem !important;
+    }
+    
+    .modal-body .bg-light .row .col-6 {
+        font-size: 0.7rem;
+    }
+    
+    @media (max-width: 768px) {
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+        
+        .table td, .table th {
+            padding: 0.3rem 0.2rem;
+            font-size: 0.65rem;
+        }
+        
+        .btn {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.3rem;
+        }
+        
+        .badge {
+            font-size: 0.55rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+        
+        .employee-avatar {
+            width: 22px;
+            height: 22px;
+            font-size: 8px;
+        }
+        
+        .page-title-sm {
+            font-size: 0.95rem !important;
+        }
+        
+        .page-subtitle-sm {
+            font-size: 0.65rem !important;
+        }
+        
+        .btn-sm-custom {
+            font-size: 0.55rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+        
+        .super-admin-badge {
+            font-size: 0.45rem;
+            padding: 0.05rem 0.3rem;
+        }
+        
+        .compact-text {
+            font-size: 0.6rem;
+        }
+        
+        code {
+            font-size: 0.55rem;
+        }
+        
+        .filter-card .card-body {
+            padding: 0.5rem !important;
+        }
+        
+        .action-btn {
+            font-size: 0.5rem;
+            padding: 0.08rem 0.15rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th {
+            padding: 0.2rem 0.15rem;
+            font-size: 0.6rem;
+        }
+        
+        .btn {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.25rem;
+        }
+        
+        .badge {
+            font-size: 0.5rem !important;
+            padding: 0.05rem 0.25rem !important;
+        }
+        
+        .employee-avatar {
+            width: 20px;
+            height: 20px;
+            font-size: 7px;
+        }
+        
+        .stat-badge {
+            font-size: 0.45rem;
+            padding: 0.1rem 0.3rem;
+        }
+        
+        .action-btn {
+            font-size: 0.45rem;
+            padding: 0.05rem 0.1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header -->
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+            <div>
+                <h4 class="fw-bold mb-0 page-title-sm"><i class="bi bi-person me-1 text-primary"></i>Employees</h4>
+                <p class="text-muted page-subtitle-sm">Total: {{ total_employees }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary btn-sm-custom">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <a href="{% url 'create_employee' %}" class="btn btn-primary btn-sm-custom">
+                    <i class="bi bi-person-plus me-1"></i> Add
+                </a>
+                <!-- Bulk Lock / Unlock Buttons -->
+                <button type="button" class="btn btn-warning btn-sm-custom" data-bs-toggle="modal" data-bs-target="#bulkLockModal">
+                    <i class="bi bi-lock-fill me-1"></i> Password Change disabled
+                </button>
+                <button type="button" class="btn btn-success btn-sm-custom" data-bs-toggle="modal" data-bs-target="#bulkUnlockModal">
+                    <i class="bi bi-unlock-fill me-1"></i> Password Change Enabled
+                </button>
+                <span class="super-admin-badge align-self-center">
+                    <i class="bi bi-shield-lock me-1"></i> Super Admin
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Badges -->
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="d-flex flex-wrap gap-1">
+            <span class="badge bg-secondary stat-badge">Total: {{ total_employees }}</span>
+            <span class="badge bg-success stat-badge">Active: {{ active_count }}</span>
+            <span class="badge bg-danger stat-badge">Inactive: {{ inactive_count }}</span>
+            <span class="badge bg-warning text-dark stat-badge">Has Active: {{ has_active_assignments }}</span>
+            <span class="badge bg-info stat-badge">No Active: {{ no_active_assignments }}</span>
+            <span class="badge bg-dark stat-badge">Locked: {{ locked_count|default:0 }}</span> <!-- ✅ New badge -->
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm filter-card">
+            <div class="card-body">
+                <form method="GET" class="row g-1 g-sm-2 align-items-end">
+                    <!-- Search -->
+                    <div class="col-12 col-sm-4 col-md-3">
+                        <label class="form-label small fw-bold mb-0" style="font-size: 0.6rem;">Search</label>
+                        <input type="text" name="search" class="form-control form-control-sm" 
+                               placeholder="Name, email, phone..." 
+                               value="{{ search_query|default:'' }}">
+                    </div>
+                    
+                    <!-- Branch Filter -->
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label class="form-label small fw-bold mb-0" style="font-size: 0.6rem;">Branch</label>
+                        <select name="branch" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            {% for branch in branches %}
+                            <option value="{{ branch }}" {% if branch_filter == branch %}selected{% endif %}>{{ branch }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Status Filter -->
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label class="form-label small fw-bold mb-0" style="font-size: 0.6rem;">Status</label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active</option>
+                            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Manager Filter -->
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label class="form-label small fw-bold mb-0" style="font-size: 0.6rem;">Manager</label>
+                        <select name="manager" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            {% for manager in managers %}
+                            <option value="{{ manager.id }}" {% if manager_filter == manager.id|stringformat:"s" %}selected{% endif %}>
+                                {{ manager.get_full_name|default:manager.username|truncatechars:15 }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <!-- Assignment Filter -->
+                    <div class="col-6 col-sm-3 col-md-2">
+                        <label class="form-label small fw-bold mb-0" style="font-size: 0.6rem;">Assignments</label>
+                        <select name="assignment" class="form-select form-select-sm">
+                            <option value="">All</option>
+                            <option value="has_active" {% if assignment_filter == 'has_active' %}selected{% endif %}>Has Active</option>
+                            <option value="no_active" {% if assignment_filter == 'no_active' %}selected{% endif %}>No Active</option>
+                        </select>
+                    </div>
+                    
+                    <!-- Buttons -->
+                    <div class="col-12 col-sm-3 col-md-1">
+                        <button type="submit" class="btn btn-primary btn-sm w-100" style="font-size: 0.65rem;">
+                            <i class="bi bi-search"></i> Filter
+                        </button>
+                    </div>
+                    <div class="col-12 col-sm-2 col-md-1">
+                        <a href="{% url 'super_admin_employees' %}" class="btn btn-outline-secondary btn-sm w-100" style="font-size: 0.65rem;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Active Filters Display -->
+{% if search_query or branch_filter or status_filter or manager_filter or assignment_filter %}
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="d-flex flex-wrap gap-1 align-items-center">
+            <span class="text-muted small" style="font-size: 0.6rem;">Active filters:</span>
+            {% if search_query %}
+            <span class="badge bg-primary" style="font-size: 0.55rem;">
+                Search: "{{ search_query }}"
+                <a href="?{% if branch_filter %}branch={{ branch_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if manager_filter %}manager={{ manager_filter }}&{% endif %}{% if assignment_filter %}assignment={{ assignment_filter }}&{% endif %}" 
+                   class="text-white ms-1 text-decoration-none">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>
+            {% endif %}
+            {% if branch_filter %}
+            <span class="badge bg-info" style="font-size: 0.55rem;">
+                Branch: {{ branch_filter }}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if manager_filter %}manager={{ manager_filter }}&{% endif %}{% if assignment_filter %}assignment={{ assignment_filter }}&{% endif %}" 
+                   class="text-white ms-1 text-decoration-none">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>
+            {% endif %}
+            {% if status_filter %}
+            <span class="badge bg-success" style="font-size: 0.55rem;">
+                Status: {{ status_filter|title }}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if branch_filter %}branch={{ branch_filter }}&{% endif %}{% if manager_filter %}manager={{ manager_filter }}&{% endif %}{% if assignment_filter %}assignment={{ assignment_filter }}&{% endif %}" 
+                   class="text-white ms-1 text-decoration-none">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>
+            {% endif %}
+            {% if manager_filter %}
+            <span class="badge bg-secondary" style="font-size: 0.55rem;">
+                Manager: {% for manager in managers %}{% if manager.id|stringformat:"s" == manager_filter %}{{ manager.get_full_name|default:manager.username }}{% endif %}{% endfor %}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if branch_filter %}branch={{ branch_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if assignment_filter %}assignment={{ assignment_filter }}&{% endif %}" 
+                   class="text-white ms-1 text-decoration-none">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>
+            {% endif %}
+            {% if assignment_filter %}
+            <span class="badge bg-warning text-dark" style="font-size: 0.55rem;">
+                {{ assignment_filter|title }}
+                <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if branch_filter %}branch={{ branch_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}{% if manager_filter %}manager={{ manager_filter }}&{% endif %}" 
+                   class="text-dark ms-1 text-decoration-none">
+                    <i class="bi bi-x"></i>
+                </a>
+            </span>
+            {% endif %}
+            <a href="{% url 'super_admin_employees' %}" class="btn btn-sm btn-outline-secondary" style="font-size: 0.55rem; padding: 0.1rem 0.4rem;">
+                <i class="bi bi-eraser"></i> Clear All
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Compact Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0" id="employeeTable">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Name</th>
+                        <th class="d-none d-sm-table-cell">Username</th>
+                        <th class="d-none d-md-table-cell">Email</th>
+                        <th>Branch</th>
+                        <th class="d-none d-lg-table-cell">Manager</th>
+                        <th class="d-none d-xl-table-cell">Phone</th>
+                        <th class="text-center">Asgn</th>
+                        <th class="text-center">Act</th>
+                        <th class="d-none d-sm-table-cell">Status</th>
+                        <th class="text-center" style="min-width: 60px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="employee-avatar avatar-sm">
+                                    {{ emp.get_full_name|default:emp.username|first|upper }}
+                                </div>
+                                <strong class="compact-text">{{ emp.get_full_name|default:emp.username|truncatechars:12 }}</strong>
+                            </div>
+                        </td>
+                        <td class="d-none d-sm-table-cell"><code>{{ emp.username|truncatechars:10 }}</code></td>
+                        <td class="d-none d-md-table-cell compact-text">{{ emp.email|truncatechars:20 }}</td>
+                        <td><span class="badge bg-info">{{ emp.branch_location|default:"-"|truncatechars:8 }}</span></td>
+                        <td class="d-none d-lg-table-cell compact-text">
+                            {% if emp.manager %}
+                                {{ emp.manager.get_full_name|default:emp.manager.username|truncatechars:12 }}
+                            {% else %}
+                                <span class="text-muted">-</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-xl-table-cell compact-text">{{ emp.phone|default:"-" }}</td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ emp.assignment_count|default:0 }}</span></td>
+                        <td class="text-center">
+                            {% if emp.active_assignment_count > 0 %}
+                                <span class="badge bg-warning text-dark">{{ emp.active_assignment_count }}</span>
+                            {% else %}
+                                <span class="badge bg-success">0</span>
+                            {% endif %}
+                        </td>
+                        <td class="d-none d-sm-table-cell">
+                            {% if emp.is_active %}
+                                <span class="badge bg-success">Active</span>
+                            {% else %}
+                                <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td class="text-center">
+                            <div class="action-group">
+                                <!-- Edit Button -->
+                                <a href="{% url 'super_admin_edit_employee' emp.id %}" 
+                                   class="btn btn-sm btn-outline-primary action-btn" 
+                                   title="Edit Employee">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                                
+                                <!-- Delete Button -->
+                                {% if emp.active_assignment_count == 0 %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger delete-btn action-btn" 
+                                            data-bs-toggle="modal" 
+                                            data-bs-target="#deleteModal{{ emp.id }}"
+                                            title="Delete Employee">
+                                        <i class="bi bi-trash"></i>
+                                    </button>
+                                {% else %}
+                                    <button type="button" class="btn btn-sm btn-outline-secondary action-btn" disabled 
+                                            title="Cannot delete - has {{ emp.active_assignment_count }} active assignment(s)">
+                                        <i class="bi bi-lock"></i>
+                                    </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    
+                    <!-- Delete Modal - Compact -->
+                    {% if emp.active_assignment_count == 0 %}
+                    <div class="modal fade" id="deleteModal{{ emp.id }}" tabindex="-1" data-bs-backdrop="static">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header bg-danger text-white py-1">
+                                    <h6 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-1"></i>Delete Employee</h6>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size: 0.6rem;"></button>
+                                </div>
+                                <div class="modal-body py-2">
+                                    <div class="text-center mb-1">
+                                        <i class="bi bi-person-x display-4 text-danger"></i>
+                                    </div>
+                                    <h6 class="text-center mb-1">Delete: {{ emp.get_full_name|default:emp.username }}?</h6>
+                                    <div class="alert alert-warning py-1">
+                                        <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                        <strong>Warning:</strong> Cannot be undone.
+                                    </div>
+                                    <div class="bg-light p-1 rounded compact-text">
+                                        <div class="row g-1">
+                                            <div class="col-6"><strong>Username:</strong></div>
+                                            <div class="col-6">{{ emp.username }}</div>
+                                            <div class="col-6"><strong>Email:</strong></div>
+                                            <div class="col-6">{{ emp.email|truncatechars:20 }}</div>
+                                            <div class="col-6"><strong>Branch:</strong></div>
+                                            <div class="col-6">{{ emp.branch_location|default:"-" }}</div>
+                                            <div class="col-6"><strong>Manager:</strong></div>
+                                            <div class="col-6">
+                                                {% if emp.manager %}
+                                                    {{ emp.manager.get_full_name|default:emp.manager.username|truncatechars:15 }}
+                                                {% else %}
+                                                    <span class="text-muted">-</span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-6"><strong>Active:</strong></div>
+                                            <div class="col-6 text-success fw-bold">{{ emp.active_assignment_count|default:0 }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer py-1">
+                                    <button type="button" class="btn btn-secondary btn-sm-custom" data-bs-dismiss="modal">Cancel</button>
+                                    <form method="POST" action="{% url 'super_admin_delete_employee' emp.id %}" style="display: inline;">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-danger btn-sm-custom">
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% empty %}
+                    <tr>
+                        <td colspan="10" class="text-center py-3">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <h6 class="mt-2">No Employees Found</h6>
+                            <p class="text-muted compact-text">No employees match your filters.</p>
+                            <a href="{% url 'super_admin_employees' %}" class="btn btn-primary btn-sm-custom">
+                                <i class="bi bi-arrow-counterclockwise"></i> Clear Filters
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Lock Modal -->
+<div class="modal fade" id="bulkLockModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark py-1">
+                <h6 class="modal-title"><i class="bi bi-lock-fill me-1"></i>Bulk Lock Password Change</h6>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" style="font-size: 0.6rem;"></button>
+            </div>
+            <div class="modal-body py-2 text-center">
+                <i class="bi bi-exclamation-triangle display-4 text-warning"></i>
+                <h6 class="mt-1">Are you sure?</h6>
+                <p class="compact-text text-muted mb-1">
+                    This will <strong>lock</strong> password change for ALL <strong>active employees</strong>.
+                </p>
+                <div class="alert alert-warning py-1 compact-text">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Employees will not be able to change their own passwords.
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary btn-sm-custom" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'bulk_lock_employees' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-warning btn-sm-custom">
+                        <i class="bi bi-lock-fill"></i> Lock All
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Bulk Unlock Modal -->
+<div class="modal fade" id="bulkUnlockModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white py-1">
+                <h6 class="modal-title"><i class="bi bi-unlock-fill me-1"></i>Bulk Unlock Password Change</h6>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size: 0.6rem;"></button>
+            </div>
+            <div class="modal-body py-2 text-center">
+                <i class="bi bi-exclamation-triangle display-4 text-success"></i>
+                <h6 class="mt-1">Are you sure?</h6>
+                <p class="compact-text text-muted mb-1">
+                    This will <strong>unlock</strong> password change for ALL <strong>active employees</strong>.
+                </p>
+                <div class="alert alert-info py-1 compact-text">
+                    <i class="bi bi-info-circle me-1"></i>
+                    Employees will be able to change their passwords again.
+                </div>
+            </div>
+            <div class="modal-footer py-1">
+                <button type="button" class="btn btn-secondary btn-sm-custom" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'bulk_unlock_employees' %}">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-success btn-sm-custom">
+                        <i class="bi bi-unlock-fill"></i> Unlock All
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Info - Compact -->
+<div class="mt-2 text-muted compact-text d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-info-circle me-1"></i>
+        Showing {{ employees|length }} employees
+    </div>
+    <div class="d-flex gap-1">
+        <span class="badge bg-warning text-dark" style="font-size: 0.5rem;">
+            <i class="bi bi-clock"></i> Active prevents deletion
+        </span>
+        <span class="super-admin-badge">
+            <i class="bi bi-shield-lock me-1"></i> Super Admin
+        </span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Modal scroll fix
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                document.body.style.overflow = 'hidden';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Prevent modal from closing when clicking outside on mobile
+        var modalDialogs = document.querySelectorAll('.modal-dialog');
+        modalDialogs.forEach(function(dialog) {
+            dialog.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>
+{% endblock %}

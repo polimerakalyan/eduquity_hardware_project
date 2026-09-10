@@ -1,0 +1,365 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Request Employee Update - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Request Employee Update{% endblock %}
+{% block page_subtitle %}Submit a request to update employee details{% endblock %}
+
+{% block extra_css %}
+<style>
+    .request-card {
+        border-radius: 12px;
+        overflow: hidden;
+        border: none;
+    }
+    
+    .employee-info-box {
+        background: #f8fafc;
+        border-radius: 10px;
+        padding: 1rem;
+        border-left: 4px solid #E04D00;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        padding: 0.5rem 0.75rem;
+        font-size: 0.9rem;
+        transition: all 0.2s ease;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 3px rgba(224, 77, 0, 0.08);
+    }
+    
+    .form-label {
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 0.3rem;
+    }
+    
+    .form-text {
+        font-size: 0.7rem;
+        color: #94a3b8;
+    }
+    
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    .field-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 500;
+        background: #eef2ff;
+        color: #4f46e5;
+    }
+    
+    .current-value-box {
+        background: #f1f5f9;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        color: #475569;
+        border: 1px dashed #cbd5e1;
+    }
+    
+    .proposed-value-box {
+        background: #ecfdf5;
+        padding: 0.5rem 0.75rem;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    
+    @media (max-width: 576px) {
+        .employee-info-box {
+            padding: 0.75rem;
+        }
+        .form-control, .form-select {
+            font-size: 0.8rem;
+            padding: 0.4rem 0.6rem;
+        }
+        .btn {
+            font-size: 0.8rem;
+            padding: 0.3rem 0.6rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h4 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Request Employee Update
+                </h4>
+                <p class="text-muted small mb-0">Submit a request to update employee details to Super Admin</p>
+            </div>
+            <div>
+                <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Employees
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-8">
+        <div class="card request-card shadow-sm">
+            <div class="card-header bg-primary text-white py-2 py-md-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-person me-2"></i>Employee Update Request
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <!-- Employee Info -->
+                <div class="employee-info-box mb-4">
+                    <div class="d-flex align-items-start gap-3">
+                        <div class="employee-avatar" style="width: 50px; height: 50px; background: linear-gradient(135deg, #667eea, #764ba2); border-radius: 50%; display: flex; align-items: center; justify-content: center; flex-shrink: 0;">
+                            <span style="font-size: 20px; font-weight: bold; color: white;">{{ employee.get_full_name|default:employee.username|first|upper }}</span>
+                        </div>
+                        <div class="flex-grow-1">
+                            <h6 class="mb-0 fw-bold">{{ employee.get_full_name|default:employee.username }}</h6>
+                            <small class="text-muted">
+                                <i class="bi bi-envelope me-1"></i>{{ employee.email }}
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-person-badge me-1"></i>{{ employee.username }}
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-geo-alt me-1"></i>{{ employee.branch_location|default:"No Branch" }}
+                            </small>
+                            <br>
+                            <small class="text-muted">
+                                <i class="bi bi-telephone me-1"></i>{{ employee.phone|default:"No Phone" }}
+                                <span class="mx-2">|</span>
+                                <i class="bi bi-person-badge me-1"></i>Manager: {{ employee.manager.get_full_name|default:employee.manager.username|default:"None" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <!-- Field to Update -->
+                    <div class="mb-3">
+                        <label for="field_updated" class="form-label">Field to Update <span class="text-danger">*</span></label>
+                        <select class="form-select" id="field_updated" name="field_updated" required>
+                            <option value="">Select field to update</option>
+                            <option value="name">Name</option>
+                            <option value="email">Email</option>
+                            <option value="phone">Phone</option>
+                            <option value="branch">Branch</option>
+                            <option value="manager">Manager</option>
+                            <option value="multiple">Multiple Fields</option>
+                        </select>
+                        <div class="form-text">Select the field you want to update</div>
+                    </div>
+                    
+                    <!-- Current Value (Auto-filled) -->
+                    <div class="mb-3">
+                        <label class="form-label">Current Value</label>
+                        <div class="current-value-box" id="currentValueDisplay">
+                            <i class="bi bi-info-circle me-1"></i>
+                            Select a field above to see current value
+                        </div>
+                    </div>
+                    
+                    <!-- Proposed Value -->
+                    <div class="mb-3">
+                        <label for="proposed_value" class="form-label">Proposed Value <span class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="proposed_value" name="proposed_value" 
+                               placeholder="Enter the proposed new value" required>
+                        <div class="form-text">Enter the new value you want to set for this field</div>
+                    </div>
+                    
+                    <!-- Reason -->
+                    <div class="mb-3">
+                        <label for="reason" class="form-label">Reason for Update <span class="text-danger">*</span></label>
+                        <textarea class="form-control" id="reason" name="reason" rows="3" 
+                                  placeholder="Please explain why this update is needed..." required></textarea>
+                        <div class="form-text">Provide a clear reason for the update request</div>
+                    </div>
+                    
+                    <!-- Summary Preview -->
+                    <div class="alert alert-info py-2 small" id="summaryPreview" style="display: none;">
+                        <i class="bi bi-info-circle me-1"></i>
+                        <strong>Summary:</strong>
+                        <span id="summaryText">No selection yet</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-send me-1"></i> Submit Request
+                        </button>
+                        <a href="{% url 'employee_list' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Information Card -->
+        <div class="card shadow-sm mt-3">
+            <div class="card-header bg-light">
+                <h6 class="mb-0"><i class="bi bi-lightbulb text-warning me-2"></i>What happens next?</h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="d-flex align-items-start mb-2">
+                    <span class="badge bg-primary me-2">1</span>
+                    <span class="small">Your request will be sent to the <strong>Super Admin</strong> for review</span>
+                </div>
+                <div class="d-flex align-items-start mb-2">
+                    <span class="badge bg-primary me-2">2</span>
+                    <span class="small">Super Admin will review the request and approve or reject it</span>
+                </div>
+                <div class="d-flex align-items-start">
+                    <span class="badge bg-primary me-2">3</span>
+                    <span class="small">You will receive an <strong>email notification</strong> about the decision</span>
+                </div>
+                <div class="mt-2 pt-2 border-top">
+                    <small class="text-muted">
+                        <i class="bi bi-clock me-1"></i>
+                        Pending requests can be tracked in the employee list
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const fieldSelect = document.getElementById('field_updated');
+        const proposedValue = document.getElementById('proposed_value');
+        const currentDisplay = document.getElementById('currentValueDisplay');
+        const summaryText = document.getElementById('summaryText');
+        const summaryPreview = document.getElementById('summaryPreview');
+        
+        // Current values for each field
+        const currentValues = {
+            'name': "{{ employee.get_full_name|default:employee.username|escapejs }}",
+            'email': "{{ employee.email|escapejs }}",
+            'phone': "{{ employee.phone|default:'Not set'|escapejs }}",
+            'branch': "{{ employee.branch_location|default:'Not set'|escapejs }}",
+            'manager': "{{ employee.manager.get_full_name|default:employee.manager.username|default:'Unassigned'|escapejs }}",
+            'multiple': 'Multiple fields to update'
+        };
+        
+        // Field labels
+        const fieldLabels = {
+            'name': 'Name',
+            'email': 'Email',
+            'phone': 'Phone',
+            'branch': 'Branch',
+            'manager': 'Manager',
+            'multiple': 'Multiple Fields'
+        };
+        
+        // Update current value display when field changes
+        fieldSelect.addEventListener('change', function() {
+            const field = this.value;
+            const employeeName = "{{ employee.get_full_name|default:employee.username|escapejs }}";
+            
+            if (field && currentValues[field]) {
+                currentDisplay.innerHTML = `
+                    <i class="bi bi-info-circle me-1"></i>
+                    <strong>Current ${fieldLabels[field]}:</strong> 
+                    <span class="fw-bold">${currentValues[field]}</span>
+                `;
+                currentDisplay.className = 'current-value-box';
+                
+                // Update placeholder for proposed value
+                proposedValue.placeholder = `Enter new ${fieldLabels[field].toLowerCase()}`;
+                
+                // Update summary
+                summaryText.textContent = `Update ${fieldLabels[field]} for ${employeeName} from "${currentValues[field]}" to new value`;
+                summaryPreview.style.display = 'block';
+                
+                // Enable proposed value field
+                proposedValue.disabled = false;
+                proposedValue.focus();
+            } else {
+                currentDisplay.innerHTML = `
+                    <i class="bi bi-info-circle me-1"></i>
+                    Select a field above to see current value
+                `;
+                currentDisplay.className = 'current-value-box';
+                proposedValue.placeholder = 'Enter the proposed new value';
+                summaryPreview.style.display = 'none';
+                proposedValue.disabled = true;
+            }
+        });
+        
+        // Update summary when proposed value changes
+        proposedValue.addEventListener('input', function() {
+            const field = fieldSelect.value;
+            const employeeName = "{{ employee.get_full_name|default:employee.username|escapejs }}";
+            
+            if (field && currentValues[field] && this.value) {
+                summaryText.textContent = `Update ${fieldLabels[field]} for ${employeeName} from "${currentValues[field]}" to "${this.value}"`;
+                summaryPreview.style.display = 'block';
+            } else if (field && currentValues[field]) {
+                summaryText.textContent = `Update ${fieldLabels[field]} for ${employeeName} from "${currentValues[field]}" to new value`;
+                summaryPreview.style.display = 'block';
+            }
+        });
+        
+        // Form validation
+        document.querySelector('form').addEventListener('submit', function(e) {
+            const field = fieldSelect.value;
+            const proposed = proposedValue.value.trim();
+            const reason = document.getElementById('reason').value.trim();
+            
+            if (!field) {
+                e.preventDefault();
+                alert('Please select a field to update.');
+                fieldSelect.focus();
+                return false;
+            }
+            
+            if (!proposed) {
+                e.preventDefault();
+                alert('Please enter the proposed value.');
+                proposedValue.focus();
+                return false;
+            }
+            
+            if (!reason) {
+                e.preventDefault();
+                alert('Please provide a reason for the update.');
+                document.getElementById('reason').focus();
+                return false;
+            }
+            
+            // Confirm with user
+            const employeeName = "{{ employee.get_full_name|default:employee.username|escapejs }}";
+            return confirm(
+                `📋 Confirm Update Request\n\n` +
+                `Employee: ${employeeName}\n` +
+                `Field: ${fieldLabels[field]}\n` +
+                `Current Value: ${currentValues[field]}\n` +
+                `Proposed Value: ${proposed}\n\n` +
+                `⚠️ This request will be sent to Super Admin for approval.`
+            );
+        });
+    });
+</script>
+{% endblock %}

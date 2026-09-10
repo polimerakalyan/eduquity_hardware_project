@@ -1,0 +1,730 @@
+{% extends 'base.html' %}
+{% block title %}Return Assignment - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-check-circle"></i> Return Assignment</h2>
+                <p class="text-muted">Enter the Asset Number of each hardware item you want to return</p>
+            </div>
+            <!-- ✅ Fixed: Missing closing > -->
+            <a href="{% url 'assignment_details' assignment.assignment_id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Details
+            </a>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-check-circle"></i> Return Verification
+                </h4>
+            </div>
+            <div class="card-body">
+                <!-- EMPLOYEE DETAILS SECTION -->
+                <div class="employee-details-card mb-4">
+                    <div class="card border-0 shadow-sm bg-gradient-info">
+                        <div class="card-body py-3">
+                            <div class="row align-items-center">
+                                <div class="col-md-12">
+                                    <div class="d-flex align-items-center mb-3">
+                                        <div class="avatar-circle me-3">
+                                            <span class="avatar-text">{{ assignment.employee.get_full_name|default:assignment.employee.username|first|upper }}</span>
+                                        </div>
+                                        <div>
+                                            <h5 class="mb-0">{{ assignment.employee.get_full_name|default:assignment.employee.username }}</h5>
+                                            <small class="text-muted">
+                                                <i class="bi bi-envelope"></i> {{ assignment.employee.email }} | 
+                                                <i class="bi bi-telephone"></i> {{ assignment.employee.phone|default:"Not provided" }}
+                                            </small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="row">
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="info-item">
+                                        <i class="bi bi-geo-alt text-primary"></i>
+                                        <span class="info-label">Exam City:</span>
+                                        <strong class="info-value">{{ assignment.exam_city }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="info-item">
+                                        <i class="bi bi-calendar text-primary"></i>
+                                        <span class="info-label">Assigned Date:</span>
+                                        <strong class="info-value">{{ assignment.assigned_date|date:"d M Y" }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="info-item">
+                                        <i class="bi bi-calendar-check text-primary"></i>
+                                        <span class="info-label">Expected Return:</span>
+                                        <strong class="info-value">{{ assignment.expected_return_date|date:"d M Y"|default:"Not specified" }}</strong>
+                                    </div>
+                                </div>
+                                <div class="col-md-3 col-sm-6 mb-2">
+                                    <div class="info-item">
+                                        <i class="bi bi-folder text-primary"></i>
+                                        <span class="info-label">Project:</span>
+                                        <strong class="info-value">{{ assignment.project.project_name|default:"N/A" }}</strong>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Alert for already returned items -->
+                {% if already_returned_items %}
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>Note:</strong> Some items in this assignment have already been returned.
+                    <ul class="mb-0 mt-2">
+                        {% for item in already_returned_items %}
+                        <li>{{ item.hardware.hardware_type.name }} (Asset: {{ item.hardware.asset_number }}) - Returned on {{ item.returned_at|date:"d M Y" }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <!-- Alert for unverified items -->
+                {% if unverified_items_count > 0 %}
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Note:</strong> {{ unverified_items_count }} item(s) are not verified yet and cannot be returned.
+                    Please verify them first in the Asset Verification section.
+                </div>
+                {% endif %}
+                
+                {% if verification_status %}
+                <div class="alert alert-danger">
+                    <h5 class="alert-heading"><i class="bi bi-exclamation-triangle"></i> Verification Failed</h5>
+                    <ul class="mb-0">
+                        {% for status in verification_status %}
+                        <li>{{ status.message }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+                {% endif %}
+                
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    <strong>How to Return:</strong> Enter the Asset Number for each hardware item you want to return. 
+                    Items left blank will remain in the assignment. Only entered asset numbers will be verified and returned.
+                    <br><br>
+                    <strong>Note:</strong> Only <span class="text-success fw-bold">verified items</span> can be returned. 
+                    Unverified items are disabled.
+                </div>
+                
+                <!-- ✅ Fixed: Form action uses assignment.assignment_id -->
+                <form method="POST" action="{% url 'return_assignment' assignment.assignment_id %}" id="returnForm">
+                    {% csrf_token %}
+                    
+                    <div class="table-responsive">
+                        <table class="table table-hover table-bordered">
+                            <thead class="table-light">
+                                <tr>
+                                    <th width="5%">#</th>
+                                    <th width="12%">Hardware Type</th>
+                                    <th width="10%">Expected Asset</th>
+                                    <th width="10%">Serial Number</th>
+                                    <th width="10%">Verification Status</th>
+                                    <th width="18%">Enter Return Asset *</th>
+                                    <th width="20%">Condition Notes</th>
+                                    <th width="10%">Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for item in items %}
+                                {% if item.returned_at %}
+                                <tr class="table-secondary" id="row_{{ item.id }}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ item.hardware.hardware_type.name }}</strong></td>
+                                    <td>
+                                        <code class="asset-number" data-asset="{{ item.asset_number }}">
+                                            {{ item.asset_number }}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <code class="serial-number" data-serial="{{ item.serial_number }}">
+                                            {{ item.serial_number }}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Verified</span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success">Already Returned</span>
+                                        <small class="text-muted d-block mt-1">
+                                            Returned: {{ item.returned_at|date:"d M Y" }}
+                                        </small>
+                                    </td>
+                                    <td>{{ item.condition_at_return|default:"-" }}</td>
+                                    <td>
+                                        <span class="badge bg-success">Returned</span>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr id="row_{{ item.id }}" 
+                                    class="{% if not item.is_verified %}table-warning{% endif %}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td><strong>{{ item.hardware.hardware_type.name }}</strong></td>
+                                    <td>
+                                        <code class="asset-number" data-asset="{{ item.asset_number }}">
+                                            {{ item.asset_number }}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        <code class="serial-number" data-serial="{{ item.serial_number }}">
+                                            {{ item.serial_number }}
+                                        </code>
+                                    </td>
+                                    <td>
+                                        {% if item.is_verified %}
+                                            <span class="badge bg-success">
+                                                <i class="bi bi-check-circle"></i> Verified
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock"></i> Not Verified
+                                            </span>
+                                            <br>
+                                            <small class="text-muted">Cannot return</small>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        {% if item.is_verified %}
+                                            <input type="text" 
+                                                   class="form-control form-control-sm return-asset" 
+                                                   name="returned_asset_{{ item.id }}" 
+                                                   id="return_asset_{{ item.id }}"
+                                                   placeholder="Scan or enter Asset Number to return"
+                                                   autocomplete="off">
+                                            <div class="verification-badge mt-1" id="badge_{{ item.id }}"></div>
+                                            <small class="text-muted d-block mt-1">
+                                                <i class="bi bi-upc-scan"></i> Enter Asset Number to return this item
+                                            </small>
+                                        {% else %}
+                                            <div class="text-muted small">
+                                                <i class="bi bi-lock"></i> Cannot return - Not verified
+                                                <br>
+                                                <a href="{% url 'view_serial_entries' %}" class="text-primary">Verify now</a>
+                                            </div>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <textarea class="form-control form-control-sm" 
+                                                  name="condition_notes_{{ item.id }}" 
+                                                  rows="2"
+                                                  placeholder="Any damage or issues?"
+                                                  {% if not item.is_verified %}disabled{% endif %}>{{ item.condition_at_return|default:'' }}</textarea>
+                                    </td>
+                                    <td class="status-cell" id="status_{{ item.id }}">
+                                        {% if item.is_verified %}
+                                            <span class="badge bg-secondary">Not Selected</span>
+                                        {% else %}
+                                            <span class="badge bg-secondary">Cannot Return</span>
+                                        {% endif %}
+                                    </td>
+                                </tr>
+                                {% endif %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- SUMMARY SECTION -->
+                    <div class="summary-section card mt-3">
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-5">
+                                    <h6 class="mb-3"><i class="bi bi-clipboard-check"></i> Return Summary</h6>
+                                    <div class="summary-stats">
+                                        <div class="stat-row">
+                                            <span class="stat-label">Total Items:</span>
+                                            <span class="badge bg-primary stat-badge" id="totalItems">{{ items|length }}</span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-label">Already Returned:</span>
+                                            <span class="badge bg-success stat-badge" id="alreadyReturned">{{ already_returned_items|length }}</span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-label">Verified Items:</span>
+                                            <span class="badge bg-success stat-badge" id="verifiedItems">{{ verified_items_count }}</span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-label">Selected to Return:</span>
+                                            <span class="badge bg-info stat-badge" id="selectedCount">0</span>
+                                        </div>
+                                        <div class="stat-row">
+                                            <span class="stat-label">Verified:</span>
+                                            <span class="badge bg-success stat-badge" id="verifiedCount">0</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="col-md-7">
+                                    <label class="form-label fw-semibold">Verification Progress</label>
+                                    <div class="progress" style="height: 30px;">
+                                        <div class="progress-bar bg-success progress-bar-striped progress-bar-animated" 
+                                             role="progressbar" 
+                                             style="width: 0%;" 
+                                             id="progressBar">
+                                            0%
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 text-muted small" id="progressMessage">
+                                        <i class="bi bi-info-circle"></i> Enter Asset Numbers to verify hardware for return
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-warning mt-3">
+                        <i class="bi bi-exclamation-triangle"></i>
+                        <strong>Important:</strong> 
+                        <ul class="mb-0 mt-2">
+                            <li>Only <strong class="text-success">verified items</strong> can be returned</li>
+                            <li>Enter the <strong>Asset Number</strong> for each item you want to return</li>
+                            <li>Items with blank Asset Number will <strong>NOT</strong> be returned</li>
+                            <li>Scan the Asset Number sticker on the physical device</li>
+                            <li>This action cannot be undone</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between mt-4">
+                        <!-- ✅ Fixed: Missing closing > -->
+                        <a href="{% url 'assignment_details' assignment.assignment_id %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success" id="submitBtn" disabled>
+                            <i class="bi bi-check-circle"></i> Return Selected Items
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* Employee Details Card */
+    .bg-gradient-info {
+        background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);
+        border-left: 4px solid #0d6efd;
+    }
+    
+    .avatar-circle {
+        width: 50px;
+        height: 50px;
+        background: linear-gradient(135deg, #E04D00, #FF6B1A);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    .avatar-text {
+        color: white;
+        font-size: 20px;
+        font-weight: bold;
+    }
+    
+    .info-item {
+        padding: 8px 12px;
+        background: white;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    
+    .info-item i {
+        font-size: 18px;
+    }
+    
+    .info-label {
+        color: #6c757d;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    
+    .info-value {
+        font-size: 13px;
+        color: #2c3e50;
+    }
+    
+    /* Return Asset Input */
+    .return-asset {
+        font-family: 'Courier New', monospace;
+        text-transform: uppercase;
+        font-size: 13px;
+        letter-spacing: 0.5px;
+        border-color: #0d6efd;
+    }
+    
+    .return-asset:focus {
+        border-color: #0d6efd;
+        box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    }
+    
+    .return-asset.is-valid {
+        border-color: #198754;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 8 8'%3e%3cpath fill='%23198754' d='M2.3 6.73L.6 4.53c-.4-1.04.46-1.4 1.1-.8l1.1 1.4 3.4-3.8c.6-.63 1.6-.27 1.2.7l-4 4.6c-.43.5-.8.4-1.1.1z'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        padding-right: calc(1.5em + 0.75rem);
+    }
+    
+    .return-asset.is-invalid {
+        border-color: #dc3545;
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 12' width='12' height='12' fill='none' stroke='%23dc3545'%3e%3ccircle cx='6' cy='6' r='4.5'/%3e%3cpath stroke-linejoin='round' d='M5.8 3.6h.4L6 6.5z'/%3e%3ccircle cx='6' cy='8.2' r='.6' fill='%23dc3545' stroke='none'/%3e%3c/svg%3e");
+        background-repeat: no-repeat;
+        background-position: right calc(0.375em + 0.1875rem) center;
+        background-size: calc(0.75em + 0.375rem) calc(0.75em + 0.375rem);
+        padding-right: calc(1.5em + 0.75rem);
+    }
+    
+    .verification-badge {
+        min-height: 28px;
+        margin-top: 5px;
+    }
+    
+    /* Summary Section */
+    .summary-section {
+        background: #f8f9fa;
+        border: 1px solid #e9ecef;
+        border-radius: 12px;
+    }
+    
+    .summary-stats {
+        display: flex;
+        gap: 15px;
+        flex-wrap: wrap;
+    }
+    
+    .stat-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    
+    .stat-label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #6c757d;
+    }
+    
+    .stat-badge {
+        font-size: 14px;
+        padding: 5px 12px;
+    }
+    
+    .progress {
+        border-radius: 20px;
+        overflow: hidden;
+        background-color: #e9ecef;
+    }
+    
+    .progress-bar {
+        transition: width 0.4s ease;
+        font-weight: 600;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    /* Table Styling */
+    .table td {
+        vertical-align: middle;
+        padding: 12px;
+    }
+    
+    .table th {
+        background-color: #f8f9fa;
+        font-weight: 600;
+        font-size: 0.8rem;
+        padding: 12px;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: 'Courier New', monospace;
+        font-weight: 600;
+    }
+    
+    .asset-number {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .serial-number {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .table-secondary {
+        opacity: 0.7;
+    }
+    
+    .table-secondary td {
+        background-color: #f8f9fa;
+    }
+    
+    .table-warning td {
+        background-color: #fff3cd;
+    }
+    
+    /* Button Pulse Animation */
+    .btn-pulse {
+        animation: pulse 1s infinite;
+    }
+    
+    @keyframes pulse {
+        0% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0.7);
+        }
+        70% {
+            transform: scale(1.02);
+            box-shadow: 0 0 0 10px rgba(25, 135, 84, 0);
+        }
+        100% {
+            transform: scale(1);
+            box-shadow: 0 0 0 0 rgba(25, 135, 84, 0);
+        }
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .table-responsive {
+            font-size: 0.8rem;
+        }
+        
+        .return-asset {
+            font-size: 0.75rem;
+        }
+        
+        .info-item {
+            font-size: 0.8rem;
+        }
+        
+        .avatar-circle {
+            width: 40px;
+            height: 40px;
+        }
+        
+        .avatar-text {
+            font-size: 16px;
+        }
+        
+        .table td, .table th {
+            padding: 8px;
+        }
+        
+        .summary-stats {
+            margin-bottom: 15px;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var assetInputs = document.querySelectorAll('.return-asset:not([disabled])');
+        var totalItems = document.querySelectorAll('tr:not(.table-secondary)').length;
+        var alreadyReturned = {{ already_returned_items|length|default:0 }};
+        var verifiedItems = {{ verified_items_count|default:0 }};
+        var selectedCount = 0;
+        var verifiedCount = 0;
+        var submitBtn = document.getElementById('submitBtn');
+        var progressBar = document.getElementById('progressBar');
+        var progressMessage = document.getElementById('progressMessage');
+        var selectedCountSpan = document.getElementById('selectedCount');
+        var verifiedCountSpan = document.getElementById('verifiedCount');
+        var verifiedItemsSpan = document.getElementById('verifiedItems');
+        
+        // Update verified items count
+        if (verifiedItemsSpan) {
+            verifiedItemsSpan.textContent = verifiedItems;
+        }
+        
+        // Update verification status
+        function updateVerificationStatus(input) {
+            var row = input.closest('tr');
+            var itemId = input.id.replace('return_asset_', '');
+            var expectedAsset = row.querySelector('.asset-number').getAttribute('data-asset');
+            var enteredValue = input.value.trim().toUpperCase();
+            var badge = document.getElementById('badge_' + itemId);
+            var statusCell = document.getElementById('status_' + itemId);
+            
+            var isMatch = (enteredValue === expectedAsset);
+            
+            if (enteredValue === '') {
+                if (badge) badge.innerHTML = '';
+                statusCell.innerHTML = '<span class="badge bg-secondary">Not Selected</span>';
+                input.classList.remove('is-valid', 'is-invalid');
+                
+                if (input.dataset && input.dataset.verified === 'true') {
+                    verifiedCount--;
+                    selectedCount--;
+                    input.dataset.verified = 'false';
+                }
+            } else if (isMatch) {
+                if (badge) badge.innerHTML = '<span class="badge bg-success"><i class="bi bi-check-circle"></i> Verified</span>';
+                statusCell.innerHTML = '<span class="badge bg-success">Verified</span>';
+                input.classList.add('is-valid');
+                input.classList.remove('is-invalid');
+                
+                if (input.dataset && input.dataset.verified !== 'true') {
+                    verifiedCount++;
+                    selectedCount++;
+                    input.dataset.verified = 'true';
+                }
+            } else {
+                if (badge) badge.innerHTML = '<span class="badge bg-danger"><i class="bi bi-exclamation-triangle"></i> Mismatch</span>';
+                statusCell.innerHTML = '<span class="badge bg-danger">Mismatch</span>';
+                input.classList.add('is-invalid');
+                input.classList.remove('is-valid');
+                
+                if (input.dataset && input.dataset.verified === 'true') {
+                    verifiedCount--;
+                    selectedCount--;
+                    input.dataset.verified = 'false';
+                }
+            }
+            
+            updateSummary();
+        }
+        
+        // Update summary
+        function updateSummary() {
+            var totalActive = totalItems;
+            
+            if (selectedCountSpan) selectedCountSpan.textContent = selectedCount;
+            if (verifiedCountSpan) verifiedCountSpan.textContent = verifiedCount;
+            
+            // Calculate progress based on selected items (not total items)
+            var progressPercent = selectedCount > 0 ? (verifiedCount / selectedCount * 100).toFixed(1) : 0;
+            
+            if (progressBar) {
+                progressBar.style.width = progressPercent + '%';
+                progressBar.textContent = progressPercent + '%';
+            }
+            
+            if (progressMessage) {
+                if (selectedCount === 0) {
+                    progressMessage.innerHTML = '<i class="bi bi-info-circle"></i> Enter Asset Numbers to verify hardware for return';
+                    progressMessage.classList.remove('text-success');
+                } else if (verifiedCount === selectedCount && selectedCount > 0) {
+                    progressMessage.innerHTML = '<i class="bi bi-check-circle-fill text-success"></i> All entered items verified! You can now complete the return.';
+                    progressMessage.classList.add('text-success');
+                } else if (verifiedCount > 0) {
+                    progressMessage.innerHTML = '<i class="bi bi-hourglass-split"></i> ' + verifiedCount + ' of ' + selectedCount + ' items verified. Continue scanning.';
+                    progressMessage.classList.remove('text-success');
+                } else {
+                    progressMessage.innerHTML = '<i class="bi bi-info-circle"></i> Enter Asset Numbers to verify hardware for return';
+                    progressMessage.classList.remove('text-success');
+                }
+            }
+            
+            if (submitBtn) {
+                // Enable submit if at least one item is verified
+                submitBtn.disabled = verifiedCount === 0;
+                
+                if (verifiedCount > 0) {
+                    submitBtn.classList.add('btn-pulse');
+                } else {
+                    submitBtn.classList.remove('btn-pulse');
+                }
+            }
+        }
+        
+        // Initialize all inputs
+        assetInputs.forEach(function(input) {
+            input.dataset.verified = 'false';
+            
+            input.addEventListener('input', function() {
+                updateVerificationStatus(this);
+            });
+            
+            input.addEventListener('blur', function() {
+                updateVerificationStatus(this);
+            });
+            
+            input.addEventListener('paste', function(e) {
+                var self = this;
+                setTimeout(function() {
+                    updateVerificationStatus(self);
+                }, 10);
+            });
+        });
+        
+        // Form submission validation
+        var returnForm = document.getElementById('returnForm');
+        if (returnForm) {
+            returnForm.addEventListener('submit', function(e) {
+                var anyEmpty = false;
+                var anyMismatch = false;
+                var anyVerified = false;
+                
+                assetInputs.forEach(function(input) {
+                    var enteredValue = input.value.trim().toUpperCase();
+                    var row = input.closest('tr');
+                    var expectedAsset = row.querySelector('.asset-number').getAttribute('data-asset');
+                    var isMatch = (enteredValue === expectedAsset);
+                    
+                    if (enteredValue && isMatch) {
+                        anyVerified = true;
+                    } else if (enteredValue && !isMatch) {
+                        anyMismatch = true;
+                        input.classList.add('is-invalid');
+                    }
+                });
+                
+                if (!anyVerified) {
+                    e.preventDefault();
+                    alert('⚠️ Please enter at least one valid Asset Number to return.');
+                } else if (anyMismatch) {
+                    e.preventDefault();
+                    alert('❌ Some Asset Numbers do not match. Please scan the correct Asset Number.');
+                } else {
+                    var selectedItems = document.querySelectorAll('.return-asset.is-valid').length;
+                    var confirmMessage = '⚠️ WARNING: This action cannot be undone!\n\n' +
+                                          'You are about to return ' + selectedItems + ' hardware item(s).\n\n' +
+                                          'Items without Asset Numbers will remain in the assignment.\n\n' +
+                                          'Please verify all Asset Numbers before proceeding.\n\n' +
+                                          'Do you want to continue?';
+                    
+                    if (!confirm(confirmMessage)) {
+                        e.preventDefault();
+                    }
+                }
+            });
+        }
+        
+        // Auto-focus on first non-disabled input
+        var firstInput = document.querySelector('.return-asset:not([disabled])');
+        if (firstInput) {
+            firstInput.focus();
+        }
+        
+        // Initial summary update
+        updateSummary();
+    });
+</script>
+{% endblock %}

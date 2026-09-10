@@ -1,0 +1,7 @@
+{% extends 'employee/enter_serial_numbers.html' %}
+
+{% block content %}
+{% with editing=True %}
+{{ block.super }}
+{% endwith %}
+{% endblock %}

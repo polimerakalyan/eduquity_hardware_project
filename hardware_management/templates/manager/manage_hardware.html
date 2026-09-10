@@ -1,0 +1,1156 @@
+{% extends 'base.html' %}
+{% block title %}Manage Hardware - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-2 py-md-4">
+    <!-- Header -->
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+                <div>
+                    <h2 class="h4 h-md-3 mb-1">Hardware Inventory</h2>
+                    <p class="text-muted small mb-0">View and manage all hardware items in your inventory</p>
+                </div>
+                <div class="d-flex flex-wrap gap-2 w-100 w-md-auto">
+                    <a href="{% url 'manager_dashboard' %}" class="btn btn-outline-secondary btn-sm flex-grow-1 flex-md-grow-0">
+                        <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Back to Dashboard</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Statistics Cards - Responsive -->
+    <div class="row g-2 g-md-3 mb-3 mb-md-4">
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-primary mb-0 h2 h-md-1">{{ paginator.count }}</h3>
+                    <p class="text-muted mb-0 small">Total</p>
+                    <small class="text-muted d-none d-sm-block">Items</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-success mb-0 h2 h-md-1">{{ available_count }}</h3>
+                    <p class="text-muted mb-0 small">Available</p>
+                    <small class="text-muted d-none d-sm-block">Ready to use</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-warning mb-0 h2 h-md-1">{{ assigned_count }}</h3>
+                    <p class="text-muted mb-0 small">Assigned</p>
+                    <small class="text-muted d-none d-sm-block">Pending pickup</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-info mb-0 h2 h-md-1">{{ in_use_count }}</h3>
+                    <p class="text-muted mb-0 small">In Use</p>
+                    <small class="text-muted d-none d-sm-block">Active usage</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-danger mb-0 h2 h-md-1">{{ maintenance_count }}</h3>
+                    <p class="text-muted mb-0 small">Maintenance</p>
+                    <small class="text-muted d-none d-sm-block">Under repair</small>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 col-md-2 col-sm-4">
+            <div class="card text-center border-0 shadow-sm hover-card h-100">
+                <div class="card-body p-2 p-md-3">
+                    <h3 class="fw-bold text-secondary mb-0 h2 h-md-1">{{ retired_count|default:0 }}</h3>
+                    <p class="text-muted mb-0 small">Retired</p>
+                    <small class="text-muted d-none d-sm-block">Decommissioned</small>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pending Requests Alert -->
+    {% if pending_requests > 0 %}
+    <div class="row mb-3">
+        <div class="col-12">
+            <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center">
+                <i class="bi bi-clock-history me-2 fs-5"></i>
+                <div>
+                    <strong>{{ pending_requests }} pending request(s)</strong> awaiting Super Admin review.
+                    <a href="#request-status" class="alert-link">View all requests</a>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Request Status Section -->
+    <div class="row mb-3 mb-md-4" id="request-status">
+        <div class="col-12">
+            <div class="card border-0 shadow-sm">
+                <div class="card-header bg-info text-white d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2 py-2 py-md-3">
+                    <h5 class="mb-0 h6 h-md-5">
+                        <i class="bi bi-clock-history me-2"></i>Request Status
+                    </h5>
+                    <div class="d-flex gap-2 flex-wrap">
+                        {% if pending_requests > 0 %}
+                        <span class="badge bg-warning text-dark">
+                            <i class="bi bi-clock"></i> {{ pending_requests }} Pending
+                        </span>
+                        {% endif %}
+                        {% if processed_requests %}
+                        <span class="badge bg-light text-dark">
+                            Last {{ processed_requests|length }} updates
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0 p-md-2">
+                    <!-- Pending Requests Table -->
+                    {% if pending_requests_list %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asset</th>
+                                    <th class="d-none d-sm-table-cell">Type</th>
+                                    <th>Request</th>
+                                    <th class="d-none d-md-table-cell">Reason</th>
+                                    <th class="d-none d-lg-table-cell">Submitted</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in pending_requests_list %}
+                                <tr>
+                                    <td>
+                                        <code class="small">{{ req.hardware.asset_number }}</code>
+                                        <br class="d-sm-none">
+                                        <span class="badge bg-warning text-dark d-inline d-sm-none">
+                                            Pending
+                                        </span>
+                                    </td>
+                                    <td class="d-none d-sm-table-cell">
+                                        <span class="badge bg-{% if req.request_type == 'update' %}warning{% else %}danger{% endif %}">
+                                            {{ req.get_request_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-warning text-dark d-none d-sm-inline">
+                                            <i class="bi bi-clock"></i> Pending
+                                        </span>
+                                        <span class="d-block d-sm-none">
+                                            <span class="badge bg-warning text-dark">
+                                                <i class="bi bi-clock"></i> Pending
+                                            </span>
+                                        </span>
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        <span title="{{ req.reason }}">
+                                            {{ req.reason|truncatechars:40 }}
+                                        </span>
+                                    </td>
+                                    <td class="d-none d-lg-table-cell">
+                                        <small>{{ req.created_at|date:"d M Y H:i" }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Processed Requests Table -->
+                    {% if processed_requests %}
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Asset</th>
+                                    <th class="d-none d-sm-table-cell">Type</th>
+                                    <th>Status</th>
+                                    <th class="d-none d-md-table-cell">Admin Response</th>
+                                    <th class="d-none d-lg-table-cell">Processed</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in processed_requests %}
+                                <tr>
+                                    <td>
+                                        <code class="small">{{ req.hardware.asset_number }}</code>
+                                        <br class="d-sm-none">
+                                        <span class="badge bg-{% if req.request_type == 'update' %}warning{% else %}danger{% endif %} d-inline d-sm-none">
+                                            {{ req.get_request_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="d-none d-sm-table-cell">
+                                        <span class="badge bg-{% if req.request_type == 'update' %}warning{% else %}danger{% endif %}">
+                                            {{ req.get_request_type_display }}
+                                        </span>
+                                    </td>
+                                    <td>
+                                        {% if req.status == 'approved' %}
+                                            <span class="badge bg-success">Approved</span>
+                                        {% elif req.status == 'rejected' %}
+                                            <span class="badge bg-danger">Rejected</span>
+                                        {% elif req.status == 'completed' %}
+                                            <span class="badge bg-info">Completed</span>
+                                        {% endif %}
+                                        <small class="d-block d-sm-none text-muted">
+                                            {{ req.updated_at|date:"d/m/Y" }}
+                                        </small>
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        {% if req.notes %}
+                                            <span class="text-truncate d-block" style="max-width: 200px;" title="{{ req.notes }}">
+                                                {{ req.notes|truncatechars:30 }}
+                                            </span>
+                                            <small class="text-muted">by {{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}</small>
+                                        {% else %}
+                                            <span class="text-muted">-</span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="d-none d-lg-table-cell">
+                                        <small>{{ req.updated_at|date:"d M Y H:i" }}</small>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% endif %}
+
+                    <!-- Empty State -->
+                    {% if not pending_requests_list and not processed_requests %}
+                    <div class="text-center py-3 py-md-4">
+                        <i class="bi bi-check-circle text-success display-4"></i>
+                        <h6 class="mt-2">No requests yet</h6>
+                        <p class="text-muted small mb-0">Your submitted requests will appear here</p>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardware Types Summary -->
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center mb-2 mb-md-3 gap-2">
+                <h4 class="mb-0 h5 h-md-4">
+                    <i class="bi bi-tags"></i> Hardware Types Summary
+                </h4>
+            </div>
+        </div>
+        
+        {% for type in hardware_types %}
+        <div class="col-6 col-md-3 mb-2 mb-md-3">
+            <div class="card h-100 border-0 shadow-sm hover-card">
+                <div class="card-body p-2 p-md-3">
+                    <div class="d-flex justify-content-between align-items-start">
+                        <div class="flex-grow-1 me-2">
+                            <h6 class="text-muted mb-1 small">{{ type.name|truncatechars:15 }}</h6>
+                            <h2 class="mb-0 fw-bold h3 h-md-2">
+                                {% for item in hardware_items_count_list %}
+                                    {% if item.hardware_type == type.id %}
+                                        {{ item.count }}
+                                    {% endif %}
+                                {% endfor %}
+                            </h2>
+                            <small class="text-muted">
+                                {% for item in hardware_items_count_list %}
+                                    {% if item.hardware_type == type.id %}
+                                        {% if item.count == 1 %}
+                                            1 item
+                                        {% else %}
+                                            {{ item.count }} items
+                                        {% endif %}
+                                    {% endif %}
+                                {% endfor %}
+                            </small>
+                        </div>
+                        <div class="bg-light p-2 p-md-3 rounded-circle flex-shrink-0">
+                            <i class="bi bi-{{ type.icon|default:'laptop' }} fs-5 fs-md-4 text-primary"></i>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <span class="badge text-primary small">
+                                <i class="bi bi-box-seam"></i> 
+                                {% for item in hardware_items_count_list %}
+                                    {% if item.hardware_type == type.id %}
+                                        {% widthratio item.count paginator.count 100 %}
+                                    {% endif %}
+                                {% endfor %}%
+                            </span>
+                            <a href="?type={{ type.id }}" class="btn btn-sm btn-link text-decoration-none p-0">
+                                View <i class="bi bi-arrow-right"></i>
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="col-12">
+            <div class="card border-0 shadow-sm bg-light">
+                <div class="card-body text-center py-3 py-md-4">
+                    <i class="bi bi-tag display-4 text-muted"></i>
+                    <h5 class="mt-3">No Hardware Types</h5>
+                    <p class="text-muted small">No hardware types available</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Filter Section -->
+    <div class="row mb-3 mb-md-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body p-2 p-md-3">
+                    <form method="GET" action="" class="row g-2 g-md-3">
+                        <div class="col-12 col-md-5">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white">
+                                    <i class="bi bi-search"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control form-control-sm" 
+                                       name="search" 
+                                       placeholder="Search by Asset or Serial..." 
+                                       value="{{ search_query }}">
+                                {% if search_query %}
+                                <a href="?{% if type_filter %}type={{ type_filter }}&{% endif %}{% if status_filter %}status={{ status_filter }}&{% endif %}" 
+                                   class="btn btn-outline-secondary">
+                                    <i class="bi bi-x"></i>
+                                </a>
+                                {% endif %}
+                            </div>
+                        </div>
+                        
+                        <div class="col-6 col-md-3">
+                            <select name="type" class="form-select form-select-sm">
+                                <option value="all" {% if type_filter == 'all' or not type_filter %}selected{% endif %}>
+                                    All Types
+                                </option>
+                                {% for type in hardware_types %}
+                                <option value="{{ type.id }}" {% if type_filter|stringformat:"s" == type.id|stringformat:"s" %}selected{% endif %}>
+                                    {{ type.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        
+                        <div class="col-6 col-md-3">
+                            <select name="status" class="form-select form-select-sm">
+                                <option value="all" {% if status_filter == 'all' or not status_filter %}selected{% endif %}>
+                                    All Status
+                                </option>
+                                <option value="available" {% if status_filter == 'available' %}selected{% endif %}>Available</option>
+                                <option value="assigned" {% if status_filter == 'assigned' %}selected{% endif %}>Assigned</option>
+                                <option value="in_use" {% if status_filter == 'in_use' %}selected{% endif %}>In Use</option>
+                                <option value="maintenance" {% if status_filter == 'maintenance' %}selected{% endif %}>Maintenance</option>
+                                <option value="retired" {% if status_filter == 'retired' %}selected{% endif %}>Retired</option>
+                            </select>
+                        </div>
+                        
+                        <div class="col-12 col-md-1">
+                            <button type="submit" class="btn btn-primary btn-sm w-100">
+                                <i class="bi bi-funnel"></i> <span class="d-none d-sm-inline">Filter</span>
+                            </button>
+                        </div>
+                        
+                        {% if search_query or type_filter and type_filter != 'all' or status_filter and status_filter != 'all' %}
+                        <div class="col-12 mt-2">
+                            <div class="d-flex align-items-center flex-wrap gap-1">
+                                <span class="text-muted small me-1">Active filters:</span>
+                                {% if search_query %}
+                                <span class="badge bg-primary p-1 small mb-1">
+                                    Search: "{{ search_query }}"
+                                    <a href="?{% if type_filter and type_filter != 'all' %}type={{ type_filter }}&{% endif %}{% if status_filter and status_filter != 'all' %}status={{ status_filter }}&{% endif %}" 
+                                       class="text-white ms-1">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+                                {% if type_filter and type_filter != 'all' %}
+                                <span class="badge bg-info p-1 small mb-1">
+                                    Type: {% for type in hardware_types %}{% if type.id|stringformat:"s" == type_filter %}{{ type.name }}{% endif %}{% endfor %}
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if status_filter and status_filter != 'all' %}status={{ status_filter }}&{% endif %}" 
+                                       class="text-white ms-1">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+                                {% if status_filter and status_filter != 'all' %}
+                                <span class="badge bg-warning p-1 small mb-1">
+                                    Status: {{ status_filter|title }}
+                                    <a href="?{% if search_query %}search={{ search_query }}&{% endif %}{% if type_filter and type_filter != 'all' %}type={{ type_filter }}&{% endif %}" 
+                                       class="text-white ms-1">
+                                        <i class="bi bi-x"></i>
+                                    </a>
+                                </span>
+                                {% endif %}
+                                <a href="{% url 'manage_hardware' %}" class="btn btn-sm btn-outline-secondary ms-1 mb-1">
+                                    <i class="bi bi-eraser"></i> Clear All
+                                </a>
+                            </div>
+                        </div>
+                        {% endif %}
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hardware Items Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-primary text-white py-2 py-md-3 d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-2">
+                    <h4 class="mb-0 h5 h-md-4">
+                        <i class="bi bi-laptop"></i> Hardware Items
+                    </h4>
+                    <div class="d-flex align-items-center gap-2">
+                        <span class="badge bg-light text-dark small">
+                            Showing {{ page_obj.start_index }} - {{ page_obj.end_index }} of {{ paginator.count }}
+                        </span>
+                        {% if pending_requests > 0 %}
+                        <span class="badge bg-warning text-dark small">
+                            <i class="bi bi-clock"></i> {{ pending_requests }} pending
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="card-body p-0 p-md-3">
+                    <div class="table-responsive">
+                        <table class="table table-hover table-sm mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th class="text-center" style="width: 40px;">#</th>
+                                    <th>Type</th>
+                                    <th class="d-none d-md-table-cell">Asset Number</th>
+                                    <th class="d-none d-lg-table-cell">Serial Number</th>
+                                    <th class="d-none d-xl-table-cell">Model</th>
+                                    <th class="text-center d-none d-sm-table-cell">Status</th>
+                                    <th class="d-none d-xl-table-cell">Added On</th>
+                                    <th class="text-center" style="min-width: 120px;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for hardware in hardware_items %}
+                                <tr>
+                                    <td class="text-center small">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                                    <td>
+                                        <span class="badge bg-primary small">{{ hardware.hardware_type.name|truncatechars:12 }}</span>
+                                    </td>
+                                    <td class="d-none d-md-table-cell">
+                                        <code class="asset-number small">{{ hardware.asset_number }}</code>
+                                    </td>
+                                    <td class="d-none d-lg-table-cell">
+                                        <code class="serial-number small">{{ hardware.serial_number }}</code>
+                                    </td>
+                                    <td class="d-none d-xl-table-cell small">{{ hardware.model_name|default:"-"|truncatechars:15 }}</td>
+                                    <td class="text-center d-none d-sm-table-cell">
+                                        <div class="d-flex flex-column align-items-center gap-1">
+                                            <!-- Hardware Status -->
+                                            {% if hardware.status == 'available' %}
+                                                <span class="badge bg-success small">Available</span>
+                                            {% elif hardware.status == 'assigned' %}
+                                                <span class="badge bg-warning small">Assigned</span>
+                                            {% elif hardware.status == 'in_use' %}
+                                                <span class="badge bg-info small">In Use</span>
+                                            {% elif hardware.status == 'maintenance' %}
+                                                <span class="badge bg-danger small">Maintenance</span>
+                                            {% elif hardware.status == 'retired' %}
+                                                <span class="badge bg-secondary small">Retired</span>
+                                            {% else %}
+                                                <span class="badge bg-secondary small">{{ hardware.status }}</span>
+                                            {% endif %}
+                                            
+                                            <!-- Request Status Badges -->
+                                            {% if hardware.hardware_id in pending_update_ids %}
+                                                <span class="badge bg-warning text-dark" style="font-size: 0.6rem;">
+                                                    <i class="bi bi-clock"></i> Update pending
+                                                </span>
+                                            {% elif hardware.hardware_id in pending_delete_ids %}
+                                                <span class="badge bg-danger" style="font-size: 0.6rem;">
+                                                    <i class="bi bi-clock"></i> Delete pending
+                                                </span>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                    <td class="d-none d-xl-table-cell small">{{ hardware.created_at|date:"d/m/Y" }}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <!-- View Button - Always visible -->
+                                            <button type="button" class="btn btn-outline-info" 
+                                                    data-bs-toggle="modal" 
+                                                    data-bs-target="#viewModal{{ hardware.hardware_id }}"
+                                                    title="View Details">
+                                                <i class="bi bi-eye"></i>
+                                            </button>
+                                            
+                                            <!-- Request Update Button - Only for AVAILABLE items -->
+                                            {% if hardware.status == 'available' %}
+                                                {% if hardware.hardware_id not in pending_update_ids %}
+                                                    <button type="button" class="btn btn-outline-warning" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#requestUpdateModal{{ hardware.hardware_id }}"
+                                                            title="Request Update">
+                                                        <i class="bi bi-pencil"></i>
+                                                    </button>
+                                                {% else %}
+                                                    <button type="button" class="btn btn-warning" disabled 
+                                                            title="Update request pending approval">
+                                                        <i class="bi bi-clock"></i>
+                                                    </button>
+                                                {% endif %}
+                                            {% else %}
+                                                <button type="button" class="btn btn-secondary" disabled 
+                                                        title="Only available items can be updated">
+                                                    <i class="bi bi-pencil"></i>
+                                                </button>
+                                            {% endif %}
+                                            
+                                            <!-- Request Delete Button - Only for AVAILABLE items -->
+                                            {% if hardware.status == 'available' %}
+                                                {% if hardware.hardware_id not in pending_delete_ids %}
+                                                    <button type="button" class="btn btn-outline-danger" 
+                                                            data-bs-toggle="modal" 
+                                                            data-bs-target="#requestDeleteModal{{ hardware.hardware_id }}"
+                                                            title="Request Delete">
+                                                        <i class="bi bi-trash"></i>
+                                                    </button>
+                                                {% else %}
+                                                    <button type="button" class="btn btn-danger" disabled 
+                                                            title="Delete request pending approval">
+                                                        <i class="bi bi-clock"></i>
+                                                    </button>
+                                                {% endif %}
+                                            {% else %}
+                                                <button type="button" class="btn btn-secondary" disabled 
+                                                        title="Only available items can be deleted">
+                                                    <i class="bi bi-trash"></i>
+                                                </button>
+                                            {% endif %}
+                                        </div>
+                                    </td>
+                                </tr>
+                                
+                                <!-- View Modal -->
+                                <div class="modal fade" id="viewModal{{ hardware.hardware_id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-info text-white py-2">
+                                                <h5 class="modal-title small">
+                                                    <i class="bi bi-info-circle me-2"></i>Hardware Details
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-3">
+                                                <div class="row g-2 small">
+                                                    <div class="col-6"><strong>Type:</strong></div>
+                                                    <div class="col-6">{{ hardware.hardware_type.name }}</div>
+                                                    <div class="col-6"><strong>Asset:</strong></div>
+                                                    <div class="col-6"><code>{{ hardware.asset_number }}</code></div>
+                                                    <div class="col-6"><strong>Serial:</strong></div>
+                                                    <div class="col-6"><code>{{ hardware.serial_number }}</code></div>
+                                                    <div class="col-6"><strong>Model:</strong></div>
+                                                    <div class="col-6">{{ hardware.model_name|default:"-" }}</div>
+                                                    <div class="col-6"><strong>Brand:</strong></div>
+                                                    <div class="col-6">{{ hardware.brand|default:"-" }}</div>
+                                                    <div class="col-6"><strong>Status:</strong></div>
+                                                    <div class="col-6">
+                                                        {% if hardware.status == 'available' %}
+                                                            <span class="badge bg-success">Available</span>
+                                                        {% elif hardware.status == 'assigned' %}
+                                                            <span class="badge bg-warning">Assigned</span>
+                                                        {% elif hardware.status == 'in_use' %}
+                                                            <span class="badge bg-info">In Use</span>
+                                                        {% elif hardware.status == 'maintenance' %}
+                                                            <span class="badge bg-danger">Maintenance</span>
+                                                        {% else %}
+                                                            <span class="badge bg-secondary">{{ hardware.status }}</span>
+                                                        {% endif %}
+                                                    </div>
+                                                    <div class="col-6"><strong>Added:</strong></div>
+                                                    <div class="col-6">{{ hardware.created_at|date:"d M Y H:i" }}</div>
+                                                    {% if hardware.specifications %}
+                                                    <div class="col-12 mt-2"><strong>Specifications:</strong></div>
+                                                    <div class="col-12">{{ hardware.specifications|linebreaksbr }}</div>
+                                                    {% endif %}
+                                                </div>
+                                                
+                                                <!-- Request History -->
+                                                <hr>
+                                                <h6 class="mb-2">
+                                                    <i class="bi bi-clock-history me-1"></i> Request History
+                                                </h6>
+                                                
+                                                {% for req in hardware_requests_list %}
+                                                    {% if req.hardware.hardware_id == hardware.hardware_id %}
+                                                        <div class="timeline small">
+                                                            <div class="d-flex gap-2 mb-2">
+                                                                <div class="flex-shrink-0">
+                                                                    {% if req.status == 'pending' %}
+                                                                        <i class="bi bi-clock text-warning"></i>
+                                                                    {% elif req.status == 'approved' or req.status == 'completed' %}
+                                                                        <i class="bi bi-check-circle text-success"></i>
+                                                                    {% elif req.status == 'rejected' %}
+                                                                        <i class="bi bi-x-circle text-danger"></i>
+                                                                    {% endif %}
+                                                                </div>
+                                                                <div class="flex-grow-1">
+                                                                    <div class="d-flex flex-wrap justify-content-between">
+                                                                        <span>
+                                                                            <strong>{{ req.get_request_type_display }}</strong>
+                                                                            <span class="badge bg-{% if req.status == 'pending' %}warning{% else %}secondary{% endif %} ms-1">
+                                                                                {{ req.get_status_display }}
+                                                                            </span>
+                                                                        </span>
+                                                                        <small class="text-muted">{{ req.created_at|date:"d M Y H:i" }}</small>
+                                                                    </div>
+                                                                    <div class="text-muted small">
+                                                                        Reason: {{ req.reason|truncatechars:50 }}
+                                                                    </div>
+                                                                    {% if req.notes %}
+                                                                        <div class="bg-light p-1 mt-1 rounded small">
+                                                                            <strong>Admin:</strong> {{ req.notes }}
+                                                                            {% if req.reviewed_by %}
+                                                                                <span class="text-muted"> - {{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}</span>
+                                                                            {% endif %}
+                                                                        </div>
+                                                                    {% endif %}
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    {% endif %}
+                                                {% empty %}
+                                                    <p class="text-muted small">No requests submitted for this hardware.</p>
+                                                {% endfor %}
+                                            </div>
+                                            <div class="modal-footer p-2">
+                                                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Request Update Modal - Only shown for Available items -->
+                                {% if hardware.status == 'available' %}
+                                <div class="modal fade" id="requestUpdateModal{{ hardware.hardware_id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-warning text-dark py-2">
+                                                <h5 class="modal-title small">
+                                                    <i class="bi bi-pencil me-2"></i>Request Update
+                                                </h5>
+                                                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <i class="bi bi-pencil-square display-4 text-warning"></i>
+                                                </div>
+                                                <p class="small text-center">
+                                                    Request to update hardware: <strong>{{ hardware.asset_number }}</strong>
+                                                </p>
+                                                <div class="alert alert-info p-2 small">
+                                                    <i class="bi bi-info-circle me-1"></i>
+                                                    Your request will be reviewed by the Super Admin.
+                                                </div>
+                                                <form method="POST" action="{% url 'request_hardware_update' hardware.hardware_id %}">
+                                                    {% csrf_token %}
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Reason for Update <span class="text-danger">*</span></label>
+                                                        <textarea name="reason" class="form-control form-control-sm" rows="3" required 
+                                                                  placeholder="Please explain what needs to be updated..."></textarea>
+                                                        <small class="text-muted">Be specific about what changes are needed.</small>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-warning btn-sm w-100">
+                                                        <i class="bi bi-send"></i> Submit Request
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                
+                                <!-- Request Delete Modal - Only shown for Available items -->
+                                <div class="modal fade" id="requestDeleteModal{{ hardware.hardware_id }}" tabindex="-1">
+                                    <div class="modal-dialog modal-dialog-centered">
+                                        <div class="modal-content">
+                                            <div class="modal-header bg-danger text-white py-2">
+                                                <h5 class="modal-title small">
+                                                    <i class="bi bi-trash me-2"></i>Request Delete
+                                                </h5>
+                                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                            </div>
+                                            <div class="modal-body p-3">
+                                                <div class="text-center mb-3">
+                                                    <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
+                                                </div>
+                                                <p class="small text-center">
+                                                    Request to delete hardware: <strong>{{ hardware.asset_number }}</strong>
+                                                </p>
+                                                <div class="alert alert-warning p-2 small">
+                                                    <i class="bi bi-exclamation-triangle me-1"></i>
+                                                    <strong>Note:</strong> This will be reviewed by Super Admin before deletion.
+                                                </div>
+                                                <form method="POST" action="{% url 'request_hardware_delete' hardware.hardware_id %}">
+                                                    {% csrf_token %}
+                                                    <div class="mb-2">
+                                                        <label class="form-label small fw-bold">Reason for Deletion <span class="text-danger">*</span></label>
+                                                        <textarea name="reason" class="form-control form-control-sm" rows="3" required 
+                                                                  placeholder="Please explain why this should be deleted..."></textarea>
+                                                        <small class="text-muted">Provide a valid reason for deletion.</small>
+                                                    </div>
+                                                    <button type="submit" class="btn btn-danger btn-sm w-100">
+                                                        <i class="bi bi-send"></i> Submit Request
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                {% endif %}
+                                
+                                <!-- Mobile Detail Row -->
+                                <tr class="d-sm-none">
+                                    <td colspan="8" class="p-2 bg-light">
+                                        <div class="row g-1 small">
+                                            <div class="col-6">
+                                                <strong>Asset:</strong> 
+                                                <code class="asset-number small">{{ hardware.asset_number }}</code>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Serial:</strong> 
+                                                <code class="serial-number small">{{ hardware.serial_number }}</code>
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Model:</strong> {{ hardware.model_name|default:"-" }}
+                                            </div>
+                                            <div class="col-6">
+                                                <strong>Status:</strong>
+                                                {% if hardware.status == 'available' %}
+                                                    <span class="badge bg-success small">Available</span>
+                                                {% elif hardware.status == 'assigned' %}
+                                                    <span class="badge bg-warning small">Assigned</span>
+                                                {% elif hardware.status == 'in_use' %}
+                                                    <span class="badge bg-info small">In Use</span>
+                                                {% elif hardware.status == 'maintenance' %}
+                                                    <span class="badge bg-danger small">Maintenance</span>
+                                                {% elif hardware.status == 'retired' %}
+                                                    <span class="badge bg-secondary small">Retired</span>
+                                                {% else %}
+                                                    <span class="badge bg-secondary small">{{ hardware.status }}</span>
+                                                {% endif %}
+                                                
+                                                <!-- Mobile Request Status -->
+                                                {% if hardware.hardware_id in pending_update_ids %}
+                                                    <span class="badge bg-warning text-dark d-block mt-1">
+                                                        <i class="bi bi-clock"></i> Update pending
+                                                    </span>
+                                                {% elif hardware.hardware_id in pending_delete_ids %}
+                                                    <span class="badge bg-danger d-block mt-1">
+                                                        <i class="bi bi-clock"></i> Delete pending
+                                                    </span>
+                                                {% endif %}
+                                            </div>
+                                            <div class="col-12">
+                                                <strong>Added:</strong> {{ hardware.created_at|date:"d/m/Y H:i" }}
+                                            </div>
+                                            <div class="col-12 mt-1 d-flex gap-1">
+                                                <button type="button" class="btn btn-sm btn-outline-info flex-grow-1" 
+                                                        data-bs-toggle="modal" data-bs-target="#viewModal{{ hardware.hardware_id }}">
+                                                    <i class="bi bi-eye"></i> View
+                                                </button>
+                                                
+                                                <!-- Mobile Update Button -->
+                                                {% if hardware.status == 'available' %}
+                                                    {% if hardware.hardware_id not in pending_update_ids %}
+                                                        <button type="button" class="btn btn-sm btn-outline-warning flex-grow-1" 
+                                                                data-bs-toggle="modal" data-bs-target="#requestUpdateModal{{ hardware.hardware_id }}">
+                                                            <i class="bi bi-pencil"></i> Update
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="button" class="btn btn-sm btn-warning flex-grow-1" disabled>
+                                                            <i class="bi bi-clock"></i> Pending
+                                                        </button>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <button type="button" class="btn btn-sm btn-secondary flex-grow-1" disabled>
+                                                        <i class="bi bi-pencil"></i> Update
+                                                    </button>
+                                                {% endif %}
+                                                
+                                                <!-- Mobile Delete Button -->
+                                                {% if hardware.status == 'available' %}
+                                                    {% if hardware.hardware_id not in pending_delete_ids %}
+                                                        <button type="button" class="btn btn-sm btn-outline-danger flex-grow-1" 
+                                                                data-bs-toggle="modal" data-bs-target="#requestDeleteModal{{ hardware.hardware_id }}">
+                                                            <i class="bi bi-trash"></i> Delete
+                                                        </button>
+                                                    {% else %}
+                                                        <button type="button" class="btn btn-sm btn-danger flex-grow-1" disabled>
+                                                            <i class="bi bi-clock"></i> Pending
+                                                        </button>
+                                                    {% endif %}
+                                                {% else %}
+                                                    <button type="button" class="btn btn-sm btn-secondary flex-grow-1" disabled>
+                                                        <i class="bi bi-trash"></i> Delete
+                                                    </button>
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="8" class="text-center py-4">
+                                        <i class="bi bi-laptop display-4 text-muted"></i>
+                                        <h5 class="mt-3">No Hardware Items Found</h5>
+                                        <p class="text-muted small">
+                                            {% if search_query or type_filter and type_filter != 'all' or status_filter and status_filter != 'all' %}
+                                                No items match your search criteria. 
+                                                <a href="{% url 'manage_hardware' %}">Clear filters</a> to see all items.
+                                            {% else %}
+                                                Start by adding your first hardware item
+                                            {% endif %}
+                                        </p>
+                                        <a href="{% url 'add_hardware' %}" class="btn btn-primary btn-sm">
+                                            <i class="bi bi-plus-circle"></i> Add Hardware
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    
+                    <!-- Pagination - Responsive -->
+                    {% if page_obj.has_other_pages %}
+                    <nav aria-label="Hardware items pagination" class="mt-3 mt-md-4 px-2 px-md-0">
+                        <ul class="pagination pagination-sm justify-content-center flex-wrap">
+                            {% if page_obj.has_previous %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page=1{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="First">
+                                    <span aria-hidden="true">&laquo;&laquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="Previous">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;&laquo;</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                            {% endif %}
+                            
+                            {% for i in page_obj.paginator.page_range %}
+                                {% if page_obj.number == i %}
+                                <li class="page-item active">
+                                    <span class="page-link">{{ i }}</span>
+                                </li>
+                                {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+                                <li class="page-item d-none d-sm-block">
+                                    <a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% elif i == page_obj.paginator.num_pages or i == 1 %}
+                                <li class="page-item d-none d-sm-block">
+                                    <a class="page-link" href="?page={{ i }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}">{{ i }}</a>
+                                </li>
+                                {% endif %}
+                            {% endfor %}
+                            
+                            {% if page_obj.has_next %}
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="Next">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                            <li class="page-item">
+                                <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if search_query %}&search={{ search_query }}{% endif %}{% if type_filter and type_filter != 'all' %}&type={{ type_filter }}{% endif %}{% if status_filter and status_filter != 'all' %}&status={{ status_filter }}{% endif %}" aria-label="Last">
+                                    <span aria-hidden="true">&raquo;&raquo;</span>
+                                </a>
+                            </li>
+                            {% else %}
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;&raquo;</span>
+                            </li>
+                            {% endif %}
+                        </ul>
+                    </nav>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s, box-shadow 0.2s;
+        cursor: default;
+    }
+    .hover-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-family: 'Courier New', monospace;
+        word-break: break-all;
+    }
+    
+    .asset-number {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+    }
+    
+    .serial-number {
+        background-color: #f8f9fa;
+        color: #6c757d;
+    }
+    
+    .badge {
+        font-weight: 500;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    .btn-group .btn {
+        font-size: 0.65rem;
+        padding: 0.15rem 0.3rem;
+    }
+    
+    .btn-group .btn i {
+        font-size: 0.75rem;
+    }
+    
+    .btn-group .btn-secondary[disabled] {
+        opacity: 0.5;
+        cursor: not-allowed;
+    }
+    
+    /* Modal Improvements */
+    .modal-content {
+        border-radius: 12px;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 0.75rem 1rem;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 0.75rem 1rem;
+    }
+    
+    /* Timeline for request history */
+    .timeline {
+        max-height: 300px;
+        overflow-y: auto;
+    }
+    
+    .timeline::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .timeline::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 10px;
+    }
+    
+    .timeline::-webkit-scrollbar-thumb {
+        background: #888;
+        border-radius: 10px;
+    }
+    
+    .timeline::-webkit-scrollbar-thumb:hover {
+        background: #555;
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th {
+            font-size: 0.7rem;
+            padding: 0.3rem;
+        }
+        .badge {
+            font-size: 0.6rem !important;
+            padding: 0.15rem 0.4rem;
+        }
+        .btn {
+            font-size: 0.65rem !important;
+            padding: 0.15rem 0.3rem !important;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+        .card-header {
+            padding: 0.5rem !important;
+        }
+        .btn-group .btn {
+            padding: 0.1rem 0.2rem !important;
+        }
+        .btn-group .btn i {
+            font-size: 0.65rem;
+        }
+        .h2 {
+            font-size: 1.3rem !important;
+        }
+        .h3 {
+            font-size: 1.1rem !important;
+        }
+        .h4 {
+            font-size: 0.9rem !important;
+        }
+        .h5 {
+            font-size: 0.8rem !important;
+        }
+        .container-fluid {
+            padding-left: 0.5rem !important;
+            padding-right: 0.5rem !important;
+        }
+        .g-2 {
+            --bs-gutter-y: 0.5rem;
+            --bs-gutter-x: 0.5rem;
+        }
+        .pagination-sm .page-link {
+            padding: 0.15rem 0.4rem;
+            font-size: 0.65rem;
+        }
+        code {
+            font-size: 0.65rem;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .table td, .table th {
+            font-size: 0.75rem;
+            padding: 0.4rem;
+        }
+        .badge {
+            font-size: 0.65rem !important;
+        }
+        .btn {
+            font-size: 0.7rem !important;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+        .card-header {
+            padding: 0.5rem 0.75rem !important;
+        }
+        .btn-group .btn i {
+            font-size: 0.7rem;
+        }
+        .h2 {
+            font-size: 1.5rem !important;
+        }
+        .h3 {
+            font-size: 1.25rem !important;
+        }
+        .g-2 {
+            --bs-gutter-y: 0.5rem;
+            --bs-gutter-x: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .table td, .table th {
+            font-size: 0.8rem;
+            padding: 0.4rem;
+        }
+        .badge {
+            font-size: 0.7rem !important;
+        }
+    }
+    
+    /* Print styles */
+    @media print {
+        .btn, .card-header, .no-print, .actions, .floating-chat-btn {
+            display: none !important;
+        }
+        .card {
+            box-shadow: none !important;
+            border: 1px solid #ddd;
+            break-inside: avoid;
+        }
+        .table td, .table th {
+            padding: 0.3rem !important;
+            font-size: 0.7rem !important;
+        }
+        .badge {
+            border: 1px solid #ddd;
+            background: #f8f9fa !important;
+            color: #333 !important;
+        }
+        .container-fluid {
+            padding: 0 !important;
+        }
+        .hover-card:hover {
+            transform: none !important;
+        }
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Modal scroll fix
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                document.body.style.overflow = 'hidden';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Prevent modal from closing when clicking outside on mobile
+        var modalDialogs = document.querySelectorAll('.modal-dialog');
+        modalDialogs.forEach(function(dialog) {
+            dialog.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+        
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+    });
+</script>
+{% endblock %}

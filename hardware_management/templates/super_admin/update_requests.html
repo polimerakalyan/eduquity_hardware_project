@@ -1,0 +1,917 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Employee Update Requests - Super Admin{% endblock %}
+
+{% block page_title %}Employee Update Requests{% endblock %}
+{% block page_subtitle %}Review and manage employee update requests from managers{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== STATISTICS CARDS ========== */
+    .stat-card {
+        border-radius: 12px;
+        border: none;
+        transition: all 0.2s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #6B7280;
+        font-weight: 500;
+    }
+    
+    .stat-icon {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .stat-icon.primary { background: rgba(79, 70, 229, 0.1); color: #4F46E5; }
+    .stat-icon.warning { background: rgba(245, 158, 11, 0.1); color: #F59E0B; }
+    .stat-icon.success { background: rgba(16, 185, 129, 0.1); color: #10B981; }
+    .stat-icon.danger { background: rgba(239, 68, 68, 0.1); color: #EF4444; }
+    
+    /* ========== BADGES ========== */
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+    }
+    
+    .badge-pending {
+        background: #FEF3C7;
+        color: #92400E;
+    }
+    
+    .badge-approved {
+        background: #D1FAE5;
+        color: #065F46;
+    }
+    
+    .badge-rejected {
+        background: #FEE2E2;
+        color: #991B1B;
+    }
+    
+    .field-badge {
+        display: inline-block;
+        padding: 2px 10px;
+        border-radius: 12px;
+        font-size: 0.6rem;
+        font-weight: 500;
+        background: #EEF2FF;
+        color: #4F46E5;
+    }
+    
+    /* ========== VALUE COMPARE ========== */
+    .current-value {
+        color: #DC2626;
+        text-decoration: line-through;
+    }
+    
+    .proposed-value {
+        color: #16A34A;
+        font-weight: 600;
+    }
+    
+    .value-compare {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 0.75rem;
+    }
+    
+    .value-compare .arrow {
+        color: #6B7280;
+        font-size: 0.7rem;
+    }
+    
+    /* ========== TABLE ========== */
+    .table td {
+        vertical-align: middle;
+        padding: 0.6rem 0.4rem;
+        font-size: 0.8rem;
+    }
+    
+    .table th {
+        background-color: #F8FAFC;
+        font-weight: 600;
+        color: #1E293B;
+        padding: 0.6rem 0.4rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        border-bottom: 2px solid #E2E8F0;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    /* ========== FILTER CARD ========== */
+    .filter-card {
+        border-radius: 10px;
+        border: none;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+        border-color: #E2E8F0;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 3px rgba(224, 77, 0, 0.08);
+    }
+    
+    /* ========== ACTIONS ========== */
+    .action-group {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        flex-wrap: wrap;
+    }
+    
+    .action-btn {
+        padding: 0.2rem 0.35rem;
+        font-size: 0.6rem;
+        transition: all 0.2s ease;
+        border-radius: 4px;
+    }
+    
+    .action-btn:hover {
+        transform: scale(1.08);
+    }
+    
+    /* ========== MODAL ========== */
+    .modal-content {
+        border-radius: 12px;
+        border: none;
+        overflow: hidden;
+    }
+    
+    .modal-header {
+        padding: 0.8rem 1.2rem;
+    }
+    
+    .modal-body {
+        padding: 1.2rem;
+    }
+    
+    .modal-footer {
+        padding: 0.8rem 1.2rem;
+        background: #F8FAFC;
+    }
+    
+    /* ========== SUPER ADMIN BADGE ========== */
+    .super-admin-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.4rem;
+        background: linear-gradient(135deg, #667EEA, #764BA2);
+        color: white;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 576px) {
+        .stat-number {
+            font-size: 1.2rem;
+        }
+        .stat-card .card-body {
+            padding: 0.5rem !important;
+        }
+        .stat-icon {
+            width: 32px;
+            height: 32px;
+        }
+        .stat-icon i {
+            font-size: 0.8rem !important;
+        }
+        .table td, .table th {
+            padding: 0.3rem 0.2rem;
+            font-size: 0.7rem;
+        }
+        .action-btn {
+            padding: 0.15rem 0.25rem;
+            font-size: 0.5rem;
+        }
+        .value-compare {
+            font-size: 0.65rem;
+            gap: 4px;
+        }
+        .modal-body {
+            padding: 0.8rem;
+        }
+        .modal-header {
+            padding: 0.6rem 0.8rem;
+        }
+        .modal-footer {
+            padding: 0.6rem 0.8rem;
+        }
+        .btn {
+            font-size: 0.7rem;
+            padding: 0.2rem 0.4rem;
+        }
+        .badge {
+            font-size: 0.55rem;
+            padding: 0.15rem 0.3rem;
+        }
+        .field-badge {
+            font-size: 0.5rem;
+            padding: 1px 6px;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.3rem;
+        }
+        .table td, .table th {
+            padding: 0.4rem 0.3rem;
+            font-size: 0.75rem;
+        }
+        .filter-card .form-control,
+        .filter-card .form-select {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+        .action-btn {
+            padding: 0.15rem 0.3rem;
+            font-size: 0.55rem;
+        }
+    }
+    
+    /* ========== PRINT ========== */
+    @media print {
+        .btn, .no-print, .filter-card {
+            display: none !important;
+        }
+        .card {
+            border: 1px solid #E5E7EB !important;
+            box-shadow: none !important;
+        }
+        .stat-card {
+            border: 1px solid #E5E7EB !important;
+        }
+        .modal {
+            display: none !important;
+        }
+        .badge {
+            border: 1px solid #D1D5DB !important;
+            background: #F9FAFB !important;
+            color: #1F2937 !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h4 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Employee Update Requests
+                </h4>
+                <p class="text-muted small mb-0">Review and manage employee update requests from managers</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="super-admin-badge align-self-center">
+                    <i class="bi bi-shield-lock me-1"></i> Super Admin
+                </span>
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-2 g-md-3 mb-3 mb-md-4">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-primary">{{ total }}</div>
+                        <div class="stat-label">Total Requests</div>
+                    </div>
+                    <div class="stat-icon primary">
+                        <i class="bi bi-list-check fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-warning">{{ pending }}</div>
+                        <div class="stat-label">Pending</div>
+                    </div>
+                    <div class="stat-icon warning">
+                        <i class="bi bi-clock fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-success">{{ approved }}</div>
+                        <div class="stat-label">Approved</div>
+                    </div>
+                    <div class="stat-icon success">
+                        <i class="bi bi-check-circle fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-number text-danger">{{ rejected }}</div>
+                        <div class="stat-label">Rejected</div>
+                    </div>
+                    <div class="stat-icon danger">
+                        <i class="bi bi-x-circle fs-5"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card filter-card shadow-sm">
+            <div class="card-body py-2">
+                <form method="GET" class="row g-2 align-items-end">
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.6rem;">
+                            <i class="bi bi-funnel me-1"></i>Status
+                        </label>
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All Status</option>
+                            <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                            <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+                            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                        </select>
+                    </div>
+                    <div class="col-md-3">
+                        <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.6rem;">
+                            <i class="bi bi-tag me-1"></i>Field
+                        </label>
+                        <select name="field" class="form-select form-select-sm">
+                            <option value="">All Fields</option>
+                            {% for value, label in field_choices %}
+                            <option value="{{ value }}" {% if field_filter == value %}selected{% endif %}>{{ label }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-md-4">
+                        <label class="form-label small fw-bold text-muted mb-1" style="font-size: 0.6rem;">
+                            <i class="bi bi-search me-1"></i>Search
+                        </label>
+                        <input type="text" name="search" class="form-control form-control-sm" 
+                               placeholder="Search by employee, manager..." 
+                               value="{{ request.GET.search|default:'' }}">
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-search me-1"></i>Filter
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Requests Table -->
+<div class="card shadow-sm">
+    <div class="card-header bg-white py-2 py-md-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+        <h5 class="mb-0 fw-bold">
+            <i class="bi bi-list-check me-2"></i>All Update Requests
+            <span class="badge bg-secondary ms-2">{{ update_requests|length }} records</span>
+        </h5>
+        <div class="d-flex gap-2">
+            <span class="badge badge-pending">{{ pending }} Pending</span>
+            <span class="badge badge-approved">{{ approved }} Approved</span>
+            <span class="badge badge-rejected">{{ rejected }} Rejected</span>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th style="width: 50px;">ID</th>
+                        <th style="min-width: 120px;">Employee</th>
+                        <th style="min-width: 80px;">Field</th>
+                        <th style="min-width: 150px;">Current → Proposed</th>
+                        <th style="min-width: 100px;">Requested By</th>
+                        <th style="min-width: 100px;">Reason</th>
+                        <th style="min-width: 80px;">Status</th>
+                        <th style="min-width: 80px;">Date</th>
+                        <th style="min-width: 140px; text-align: center;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for req in update_requests %}
+                    <tr>
+                        <td><span class="badge bg-secondary">#{{ req.id }}</span></td>
+                        <td>
+                            <div class="d-flex align-items-center gap-2">
+                                <div class="employee-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: linear-gradient(135deg, #667eea, #764ba2); display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 10px; flex-shrink: 0;">
+                                    {{ req.employee.get_full_name|default:req.employee.username|first|upper }}
+                                </div>
+                                <div>
+                                    <strong class="small">{{ req.employee.get_full_name|default:req.employee.username|truncatechars:15 }}</strong>
+                                    <br>
+                                    <small class="text-muted" style="font-size: 0.6rem;">{{ req.employee.email|truncatechars:20 }}</small>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="field-badge">{{ req.get_field_updated_display }}</span>
+                        </td>
+                        <td>
+                            <div class="value-compare">
+                                <span class="current-value">{{ req.current_value|default:"-"|truncatechars:15 }}</span>
+                                <span class="arrow"><i class="bi bi-arrow-right"></i></span>
+                                <span class="proposed-value">{{ req.proposed_value|truncatechars:15 }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div>
+                                <strong class="small">{{ req.requested_by.get_full_name|default:req.requested_by.username|truncatechars:12 }}</strong>
+                                <br>
+                                <small class="text-muted" style="font-size: 0.6rem;">{{ req.requested_by.email|truncatechars:15 }}</small>
+                            </div>
+                        </td>
+                        <td>
+                            <span title="{{ req.reason }}">{{ req.reason|truncatechars:20 }}</span>
+                        </td>
+                        <td>
+                            {% if req.status == 'pending' %}
+                                <span class="badge badge-pending">
+                                    <i class="bi bi-clock me-1"></i>Pending
+                                </span>
+                            {% elif req.status == 'approved' %}
+                                <span class="badge badge-approved">
+                                    <i class="bi bi-check-circle me-1"></i>Approved
+                                </span>
+                            {% elif req.status == 'rejected' %}
+                                <span class="badge badge-rejected">
+                                    <i class="bi bi-x-circle me-1"></i>Rejected
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <small>{{ req.created_at|date:"d/m/Y H:i" }}</small>
+                        </td>
+                        <td>
+                            <div class="action-group">
+                                <!-- View Button -->
+                                <button type="button" class="btn btn-sm btn-outline-info action-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#viewModal{{ req.id }}"
+                                        title="View Details">
+                                    <i class="bi bi-eye"></i>
+                                </button>
+                                
+                                <!-- Approve Button (only for pending) -->
+                                {% if req.status == 'pending' %}
+                                <button type="button" class="btn btn-sm btn-outline-success action-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#approveModal{{ req.id }}"
+                                        title="Approve">
+                                    <i class="bi bi-check-circle"></i>
+                                </button>
+                                <button type="button" class="btn btn-sm btn-outline-danger action-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#rejectModal{{ req.id }}"
+                                        title="Reject">
+                                    <i class="bi bi-x-circle"></i>
+                                </button>
+                                {% endif %}
+                                
+                                <!-- Delete Button -->
+                                <button type="button" class="btn btn-sm btn-outline-dark action-btn" 
+                                        data-bs-toggle="modal" 
+                                        data-bs-target="#deleteModal{{ req.id }}"
+                                        title="Delete Request">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-4">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <h6 class="mt-2">No Requests Found</h6>
+                            <p class="text-muted small">No employee update requests have been submitted yet.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<nav aria-label="Requests pagination" class="mt-3">
+    <ul class="pagination pagination-sm justify-content-center flex-wrap">
+        {% if page_obj.has_previous %}
+        <li class="page-item">
+            <a class="page-link" href="?page=1{% if status_filter %}&status={{ status_filter }}{% endif %}{% if field_filter %}&field={{ field_filter }}{% endif %}" aria-label="First">
+                <span aria-hidden="true">&laquo;&laquo;</span>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if field_filter %}&field={{ field_filter }}{% endif %}" aria-label="Previous">
+                <span aria-hidden="true">&laquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&laquo;&laquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">&laquo;</span></li>
+        {% endif %}
+        
+        {% for i in page_obj.paginator.page_range %}
+            {% if page_obj.number == i %}
+            <li class="page-item active"><span class="page-link">{{ i }}</span></li>
+            {% elif i > page_obj.number|add:'-3' and i < page_obj.number|add:'3' %}
+            <li class="page-item">
+                <a class="page-link" href="?page={{ i }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if field_filter %}&field={{ field_filter }}{% endif %}">{{ i }}</a>
+            </li>
+            {% endif %}
+        {% endfor %}
+        
+        {% if page_obj.has_next %}
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if field_filter %}&field={{ field_filter }}{% endif %}" aria-label="Next">
+                <span aria-hidden="true">&raquo;</span>
+            </a>
+        </li>
+        <li class="page-item">
+            <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if field_filter %}&field={{ field_filter }}{% endif %}" aria-label="Last">
+                <span aria-hidden="true">&raquo;&raquo;</span>
+            </a>
+        </li>
+        {% else %}
+        <li class="page-item disabled"><span class="page-link">&raquo;</span></li>
+        <li class="page-item disabled"><span class="page-link">&raquo;&raquo;</span></li>
+        {% endif %}
+    </ul>
+</nav>
+{% endif %}
+
+<!-- View Modal -->
+{% for req in update_requests %}
+<div class="modal fade" id="viewModal{{ req.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-eye me-2"></i>Request Details
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="row g-2 small">
+                    <div class="col-6"><strong>Request ID:</strong></div>
+                    <div class="col-6">#{{ req.id }}</div>
+                    
+                    <div class="col-6"><strong>Status:</strong></div>
+                    <div class="col-6">
+                        {% if req.status == 'pending' %}
+                            <span class="badge badge-pending">Pending</span>
+                        {% elif req.status == 'approved' %}
+                            <span class="badge badge-approved">Approved</span>
+                        {% elif req.status == 'rejected' %}
+                            <span class="badge badge-rejected">Rejected</span>
+                        {% endif %}
+                    </div>
+                    
+                    <div class="col-12"><hr></div>
+                    
+                    <div class="col-6"><strong>Employee:</strong></div>
+                    <div class="col-6">{{ req.employee.get_full_name|default:req.employee.username }}</div>
+                    
+                    <div class="col-6"><strong>Username:</strong></div>
+                    <div class="col-6">{{ req.employee.username }}</div>
+                    
+                    <div class="col-6"><strong>Email:</strong></div>
+                    <div class="col-6">{{ req.employee.email }}</div>
+                    
+                    <div class="col-6"><strong>Branch:</strong></div>
+                    <div class="col-6">{{ req.employee.branch_location|default:"-" }}</div>
+                    
+                    <div class="col-12"><hr></div>
+                    
+                    <div class="col-6"><strong>Field to Update:</strong></div>
+                    <div class="col-6"><span class="field-badge">{{ req.get_field_updated_display }}</span></div>
+                    
+                    <div class="col-6"><strong>Current Value:</strong></div>
+                    <div class="col-6"><span class="current-value">{{ req.current_value|default:"-" }}</span></div>
+                    
+                    <div class="col-6"><strong>Proposed Value:</strong></div>
+                    <div class="col-6"><span class="proposed-value">{{ req.proposed_value }}</span></div>
+                    
+                    <div class="col-12"><hr></div>
+                    
+                    <div class="col-6"><strong>Requested By:</strong></div>
+                    <div class="col-6">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</div>
+                    
+                    <div class="col-6"><strong>Submitted:</strong></div>
+                    <div class="col-6">{{ req.created_at|date:"d M Y H:i" }}</div>
+                    
+                    <div class="col-12 mt-2"><strong>Reason:</strong></div>
+                    <div class="col-12 bg-light p-2 rounded">{{ req.reason }}</div>
+                    
+                    {% if req.notes %}
+                    <div class="col-12 mt-2"><strong>Admin Notes:</strong></div>
+                    <div class="col-12 bg-light p-2 rounded">{{ req.notes }}</div>
+                    {% endif %}
+                    
+                    {% if req.reviewed_by %}
+                    <div class="col-12 mt-2"><strong>Reviewed By:</strong></div>
+                    <div class="col-12">{{ req.reviewed_by.get_full_name|default:req.reviewed_by.username }}</div>
+                    
+                    <div class="col-6"><strong>Reviewed At:</strong></div>
+                    <div class="col-6">{{ req.reviewed_at|date:"d M Y H:i" }}</div>
+                    {% endif %}
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Approve Modal -->
+{% for req in update_requests %}
+{% if req.status == 'pending' %}
+<div class="modal fade" id="approveModal{{ req.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-check-circle me-2"></i>Approve Update Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'super_admin_approve_update_request' req.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-pencil-square display-4 text-success"></i>
+                    </div>
+                    <h6 class="text-center">Approve update for {{ req.employee.get_full_name|default:req.employee.username }}?</h6>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Update Details:</strong>
+                        <div class="mt-2">
+                            <span class="fw-bold">Field:</span> {{ req.get_field_updated_display }}<br>
+                            <span class="fw-bold">Current:</span> <span class="current-value">{{ req.current_value|default:"-" }}</span><br>
+                            <span class="fw-bold">Proposed:</span> <span class="proposed-value">{{ req.proposed_value }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded small">
+                        <div class="row g-2">
+                            <div class="col-6"><strong>Employee:</strong></div>
+                            <div class="col-6">{{ req.employee.get_full_name|default:req.employee.username }}</div>
+                            <div class="col-6"><strong>Username:</strong></div>
+                            <div class="col-6">{{ req.employee.username }}</div>
+                            <div class="col-6"><strong>Email:</strong></div>
+                            <div class="col-6">{{ req.employee.email }}</div>
+                            <div class="col-6"><strong>Branch:</strong></div>
+                            <div class="col-6">{{ req.employee.branch_location|default:"-" }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="notes_approve_{{ req.id }}" class="form-label fw-bold small">Admin Notes</label>
+                        <textarea name="notes" id="notes_approve_{{ req.id }}" class="form-control form-control-sm" 
+                                  rows="2" placeholder="Add any notes about this approval (optional)"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-success btn-sm">
+                        <i class="bi bi-check-circle me-1"></i> Approve & Update
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Reject Modal -->
+{% for req in update_requests %}
+{% if req.status == 'pending' %}
+<div class="modal fade" id="rejectModal{{ req.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-x-circle me-2"></i>Reject Update Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'super_admin_reject_update_request' req.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-x-circle display-4 text-danger"></i>
+                    </div>
+                    <h6 class="text-center">Reject update for {{ req.employee.get_full_name|default:req.employee.username }}?</h6>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-info-circle-fill me-2"></i>
+                        <strong>Update Request:</strong>
+                        <div class="mt-2">
+                            <span class="fw-bold">Field:</span> {{ req.get_field_updated_display }}<br>
+                            <span class="fw-bold">Current:</span> <span class="current-value">{{ req.current_value|default:"-" }}</span><br>
+                            <span class="fw-bold">Proposed:</span> <span class="proposed-value">{{ req.proposed_value }}</span>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded small">
+                        <div class="row g-2">
+                            <div class="col-6"><strong>Employee:</strong></div>
+                            <div class="col-6">{{ req.employee.get_full_name|default:req.employee.username }}</div>
+                            <div class="col-6"><strong>Requested By:</strong></div>
+                            <div class="col-6">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-3">
+                        <label for="notes_reject_{{ req.id }}" class="form-label fw-bold small">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea name="notes" id="notes_reject_{{ req.id }}" class="form-control form-control-sm" 
+                                  rows="2" placeholder="Please provide a reason for rejection..." required></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="bi bi-x-circle me-1"></i> Reject Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endfor %}
+
+<!-- Delete Modal -->
+{% for req in update_requests %}
+<div class="modal fade" id="deleteModal{{ req.id }}" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-dark text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-trash me-2"></i>Delete Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{% url 'super_admin_delete_update_request' req.id %}">
+                {% csrf_token %}
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-exclamation-triangle display-4 text-warning"></i>
+                    </div>
+                    <h6 class="text-center">Delete Request #{{ req.id }}?</h6>
+                    
+                    <div class="alert alert-warning">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    
+                    <div class="bg-light p-3 rounded small">
+                        <div class="row g-2">
+                            <div class="col-6"><strong>Employee:</strong></div>
+                            <div class="col-6">{{ req.employee.get_full_name|default:req.employee.username }}</div>
+                            <div class="col-6"><strong>Field:</strong></div>
+                            <div class="col-6">{{ req.get_field_updated_display }}</div>
+                            <div class="col-6"><strong>Status:</strong></div>
+                            <div class="col-6">
+                                {% if req.status == 'pending' %}
+                                    <span class="badge badge-pending">Pending</span>
+                                {% elif req.status == 'approved' %}
+                                    <span class="badge badge-approved">Approved</span>
+                                {% elif req.status == 'rejected' %}
+                                    <span class="badge badge-rejected">Rejected</span>
+                                {% endif %}
+                            </div>
+                            <div class="col-6"><strong>Requested By:</strong></div>
+                            <div class="col-6">{{ req.requested_by.get_full_name|default:req.requested_by.username }}</div>
+                            <div class="col-6"><strong>Submitted:</strong></div>
+                            <div class="col-6">{{ req.created_at|date:"d M Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <button type="submit" class="btn btn-danger btn-sm">
+                        <i class="bi bi-trash me-1"></i> Delete Request
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<!-- Footer -->
+<div class="mt-2 text-muted small d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-info-circle me-1"></i>
+        Showing {{ update_requests|length }} requests
+    </div>
+    <div>
+        <span class="super-admin-badge">
+            <i class="bi bi-shield-lock me-1"></i> Super Admin
+        </span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Modal scroll fix
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                document.body.style.overflow = 'hidden';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Prevent modal from closing when clicking outside on mobile
+        var modalDialogs = document.querySelectorAll('.modal-dialog');
+        modalDialogs.forEach(function(dialog) {
+            dialog.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>
+{% endblock %}

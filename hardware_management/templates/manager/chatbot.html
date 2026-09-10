@@ -1,0 +1,441 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Hardware AI Assistant - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-3">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center flex-wrap">
+            <div>
+                <h5 class="fw-bold mb-0"><i class="bi bi-robot text-primary me-2"></i> Hardware AI Assistant</h5>
+                <small class="text-muted">Menu-driven assistant</small>
+            </div>
+            <div>
+                <a href="{% url 'manager_dashboard' %}" class="btn btn-sm btn-outline-secondary">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8 mx-auto">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center">
+                        <i class="bi bi-robot fs-5 me-2"></i>
+                        <div>
+                            <small class="fw-semibold">AI Assistant</small>
+                        </div>
+                    </div>
+                    <div>
+                        <button class="btn btn-sm btn-light text-primary py-0 px-2" id="clearChatBtn" title="Clear Chat">
+                            <i class="bi bi-trash"></i>
+                        </button>
+                        <button class="btn btn-sm btn-light text-success py-0 px-2 ms-1" id="showMainMenuBtn" title="Menu">
+                            <i class="bi bi-grid-3x3-gap-fill"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- CHAT AREA -->
+            <div class="card-body p-2 response-area" id="responseArea" style="min-height: 350px; max-height: 400px; overflow-y: auto; background: #f8f9fa;">
+                <!-- Welcome Message -->
+                <div class="bot-message mb-2">
+                    <div class="d-flex gap-2">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">
+                            <i class="bi bi-robot text-white fs-6"></i>
+                        </div>
+                        <div class="bg-white rounded-3 p-2 shadow-sm" style="max-width: 85%;">
+                            <small class="fw-bold">👋 Hello {{ user.first_name|default:user.username }}!</small>
+                            <div class="mt-1">
+                                <div class="menu-grid" id="mainMenuGrid">
+                                    <button class="menu-option-btn btn-sm" data-group="hardware">📊 Hardware</button>
+                                    <button class="menu-option-btn btn-sm" data-group="employee">👥 Employees</button>
+                                    <button class="menu-option-btn btn-sm" data-group="assignment">📋 Assignments</button>
+                                    <button class="menu-option-btn btn-sm" data-group="verification">✅ Verification</button>
+                                    <button class="menu-option-btn btn-sm" data-group="transfer">🔄 Transfers</button>
+                                    <button class="menu-option-btn btn-sm" data-group="backup">🛡️ Backup</button>
+                                    <button class="menu-option-btn btn-sm" data-group="stats">📈 Stats</button>
+                                    <button class="menu-option-btn btn-sm" data-group="search">🔍 Help</button>
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-1 border-top">
+                                <small class="text-muted">Total: <span id="statTotalHardwareDisplay">{{ total_hardware|default:"0" }}</span> | Active: <span id="statActiveAssignmentsDisplay">{{ active_assignments|default:"0" }}</span> | Verified: <span id="statVerifiedItemsDisplay">{{ verified_items|default:"0" }}</span></small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div id="conversationHistory"></div>
+            </div>
+            
+            <!-- Typing Indicator -->
+            <div id="typingIndicator" class="p-2 border-top" style="display: none;">
+                <div class="d-flex gap-2">
+                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center" style="width: 28px; height: 28px;">
+                        <i class="bi bi-robot text-white fs-6"></i>
+                    </div>
+                    <div class="bg-white rounded-3 p-2">
+                        <div class="typing-dots">
+                            <span></span><span></span><span></span>
+                        </div>
+                        <small class="text-muted ms-2">AI is thinking...</small>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Input Area -->
+            <div class="card-footer bg-white p-2 border-top">
+                <div class="input-group input-group-sm">
+                    <input type="text" class="form-control form-control-sm" id="messageInput" placeholder="Type question...">
+                    <button class="btn btn-primary btn-sm" id="sendMessageBtn">
+                        <i class="bi bi-send"></i>
+                    </button>
+                </div>
+                <div class="d-flex justify-content-between mt-1">
+                    <small class="text-muted">Click menu or type</small>
+                    <button class="btn btn-sm btn-link text-decoration-none p-0" id="backToMenuBtn">
+                        <small><i class="bi bi-arrow-return-left"></i> Menu</small>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .response-area::-webkit-scrollbar { width: 4px; }
+    .response-area::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+    .response-area::-webkit-scrollbar-thumb { background: #ccc; border-radius: 4px; }
+    
+    .menu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+    }
+    
+    .menu-option-btn {
+        padding: 3px 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        background: #f8f9fa;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .menu-option-btn:hover {
+        background: #E04D00;
+        border-color: #E04D00;
+        color: white;
+    }
+    
+    .user-message {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 8px;
+    }
+    
+    .user-message .message-text {
+        background: linear-gradient(135deg, #0d6efd 0%, #0a58ca 100%);
+        color: white;
+        border-radius: 15px 15px 4px 15px;
+        padding: 6px 12px;
+        max-width: 75%;
+        font-size: 13px;
+    }
+    
+    .bot-message {
+        display: flex;
+        margin-bottom: 8px;
+    }
+    
+    .bot-message .message-text {
+        background: white;
+        border-radius: 15px 15px 15px 4px;
+        padding: 8px 12px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        font-size: 13px;
+    }
+    
+    .submenu-grid {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+        margin-top: 8px;
+    }
+    
+    .submenu-option {
+        padding: 3px 10px;
+        border: 1px solid #dee2e6;
+        border-radius: 15px;
+        background: white;
+        font-size: 11px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .submenu-option:hover {
+        background: #0d6efd;
+        border-color: #0d6efd;
+        color: white;
+    }
+    
+    .back-menu-btn {
+        margin-top: 8px;
+        padding: 2px 8px;
+        background: #6c757d;
+        border: none;
+        border-radius: 12px;
+        color: white;
+        font-size: 10px;
+        cursor: pointer;
+    }
+    
+    .typing-dots {
+        display: inline-flex;
+        gap: 3px;
+    }
+    
+    .typing-dots span {
+        width: 6px;
+        height: 6px;
+        background: #0d6efd;
+        border-radius: 50%;
+        animation: typing 1.4s infinite ease-in-out;
+    }
+    
+    @keyframes typing {
+        0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+        30% { transform: translateY(-6px); opacity: 1; }
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .fade-in {
+        animation: fadeIn 0.2s ease;
+    }
+</style>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const responseArea = document.getElementById('responseArea');
+        const typingIndicator = document.getElementById('typingIndicator');
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value;
+        const messageInput = document.getElementById('messageInput');
+        const sendBtn = document.getElementById('sendMessageBtn');
+        const clearChatBtn = document.getElementById('clearChatBtn');
+        const backToMenuBtn = document.getElementById('backToMenuBtn');
+        const showMainMenuBtn = document.getElementById('showMainMenuBtn');
+        
+        const menuOptions = {
+            hardware: { title: 'Hardware', buttons: [
+                { text: 'Total Hardware', q: 'Total hardware' },
+                { text: 'By Type', q: 'Hardware by type' },
+                { text: 'Available', q: 'Available hardware' },
+                { text: 'Laptops', q: 'Laptop status' },
+                { text: 'Firewalls', q: 'Firewall status' }
+            ]},
+            employee: { title: 'Employees', buttons: [
+                { text: 'All Employees', q: 'All employees' },
+                { text: 'Active', q: 'Active employees' },
+                { text: 'Details', q: 'emp_details' },
+                { text: 'Hardware', q: 'emp_hardware' }
+            ]},
+            assignment: { title: 'Assignments', buttons: [
+                { text: 'Active', q: 'Active assignments' },
+                { text: 'Overdue', q: 'Overdue assignments' },
+                { text: 'Due Soon', q: 'Due soon' },
+                { text: 'By Employee', q: 'Assignment by employee' }
+            ]},
+            verification: { title: 'Verification', buttons: [
+                { text: 'Overview', q: 'Verification status overview' },
+                { text: 'Pending', q: 'Pending verification items' },
+                { text: 'Verified', q: 'Verified items list' }
+            ]},
+            transfer: { title: 'Transfers', buttons: [
+                { text: 'Status', q: 'Transfer status overview' },
+                { text: 'In Transit', q: 'In transit transfers' },
+                { text: 'Pending', q: 'Pending transfers' },
+                { text: 'Completed', q: 'Completed transfers' }
+            ]},
+            backup: { title: 'Backup', buttons: [
+                { text: 'My Duties', q: 'My backup duties' },
+                { text: 'View Chains', q: 'View backup chains' },
+                { text: 'Create Chain', q: 'Create backup chain' }
+            ]},
+            stats: { title: 'Stats', buttons: [
+                { text: 'Hardware', q: 'Total hardware' },
+                { text: 'Employees', q: 'All employees' },
+                { text: 'Assignments', q: 'Active assignments' },
+                { text: 'Verification', q: 'Verification status overview' }
+            ]},
+            search: { title: 'Help', buttons: [
+                { text: 'Commands', q: 'Help' },
+                { text: 'Search', q: 'search' }
+            ]}
+        };
+        
+        function scrollToBottom() { responseArea.scrollTop = responseArea.scrollHeight; }
+        
+        function addMessage(text, isUser) {
+            const div = document.createElement('div');
+            div.className = isUser ? 'user-message fade-in' : 'bot-message fade-in';
+            if (isUser) {
+                div.innerHTML = `<div class="message-text">${escapeHtml(text)}</div>`;
+            } else {
+                const formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+                div.innerHTML = `
+                    <div class="d-flex gap-2">
+                        <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">
+                            <i class="bi bi-robot text-white fs-6"></i>
+                        </div>
+                        <div class="bg-white rounded-3 p-2 shadow-sm message-text" style="max-width: 85%;">
+                            ${formatted}
+                            <div class="mt-1"><small class="text-muted">${new Date().toLocaleTimeString()}</small></div>
+                        </div>
+                    </div>
+                `;
+            }
+            responseArea.appendChild(div);
+            scrollToBottom();
+        }
+        
+        function addSubmenu(menuGroup) {
+            const menu = menuOptions[menuGroup];
+            if (!menu) return;
+            
+            let btns = '';
+            menu.buttons.forEach(btn => {
+                btns += `<button class="submenu-option" data-q="${btn.q}">${btn.text}</button>`;
+            });
+            
+            const div = document.createElement('div');
+            div.className = 'bot-message fade-in';
+            div.innerHTML = `
+                <div class="d-flex gap-2">
+                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">
+                        <i class="bi bi-robot text-white fs-6"></i>
+                    </div>
+                    <div class="bg-white rounded-3 p-2 shadow-sm" style="max-width: 85%;">
+                        <small><strong>📁 ${menu.title}</strong> - Choose option:</small>
+                        <div class="submenu-grid mt-1">${btns}</div>
+                        <button class="back-menu-btn mt-1">← Back to Menu</button>
+                    </div>
+                </div>
+            `;
+            responseArea.appendChild(div);
+            scrollToBottom();
+            
+            div.querySelectorAll('.submenu-option').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const q = btn.getAttribute('data-q');
+                    if (q === 'emp_details') {
+                        const name = prompt('Employee name:');
+                        if (name) sendMessage(`Employee details ${name}`);
+                    } else if (q === 'emp_hardware') {
+                        const name = prompt('Employee name:');
+                        if (name) sendMessage(`Employee hardware ${name}`);
+                    } else if (q === 'search') {
+                        const term = prompt('Search term:');
+                        if (term) sendMessage(`Search for ${term}`);
+                    } else {
+                        sendMessage(q);
+                    }
+                });
+            });
+            div.querySelector('.back-menu-btn').addEventListener('click', () => showMainMenu());
+        }
+        
+        function showMainMenu() {
+            const div = document.createElement('div');
+            div.className = 'bot-message fade-in';
+            div.innerHTML = `
+                <div class="d-flex gap-2">
+                    <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center flex-shrink-0" style="width: 28px; height: 28px;">
+                        <i class="bi bi-robot text-white fs-6"></i>
+                    </div>
+                    <div class="bg-white rounded-3 p-2 shadow-sm">
+                        <small><strong>🏠 Main Menu</strong> - Select category:</small>
+                        <div class="menu-grid mt-1">
+                            <button class="menu-option-btn" data-group="hardware">📊 Hardware</button>
+                            <button class="menu-option-btn" data-group="employee">👥 Employees</button>
+                            <button class="menu-option-btn" data-group="assignment">📋 Assignments</button>
+                            <button class="menu-option-btn" data-group="verification">✅ Verification</button>
+                            <button class="menu-option-btn" data-group="transfer">🔄 Transfers</button>
+                            <button class="menu-option-btn" data-group="backup">🛡️ Backup</button>
+                            <button class="menu-option-btn" data-group="stats">📈 Stats</button>
+                            <button class="menu-option-btn" data-group="search">🔍 Help</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            responseArea.appendChild(div);
+            scrollToBottom();
+            div.querySelectorAll('.menu-option-btn').forEach(btn => {
+                btn.addEventListener('click', () => addSubmenu(btn.getAttribute('data-group')));
+            });
+        }
+        
+        async function sendMessage(message) {
+            if (!message.trim()) return;
+            addMessage(message, true);
+            typingIndicator.style.display = 'flex';
+            scrollToBottom();
+            try {
+                const res = await fetch('/manager/chatbot-api/', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'X-CSRFToken': csrfToken },
+                    body: JSON.stringify({ message: message })
+                });
+                const data = await res.json();
+                typingIndicator.style.display = 'none';
+                if (data.message) {
+                    addMessage(data.message, false);
+                    const totalMatch = data.message.match(/Total Hardware:\s*\*\*(\d+)\*\*/);
+                    const activeMatch = data.message.match(/Total Active:\s*\*\*(\d+)\*\*/);
+                    const verifiedMatch = data.message.match(/Verified:\s*\*\*(\d+)\*\*/);
+                    if (totalMatch) document.getElementById('statTotalHardwareDisplay').textContent = totalMatch[1];
+                    if (activeMatch) document.getElementById('statActiveAssignmentsDisplay').textContent = activeMatch[1];
+                    if (verifiedMatch) document.getElementById('statVerifiedItemsDisplay').textContent = verifiedMatch[1];
+                } else if (data.error) addMessage('Error, please try again.', false);
+            } catch (error) {
+                typingIndicator.style.display = 'none';
+                addMessage('Error, please try again.', false);
+            }
+        }
+        
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+        
+        sendBtn?.addEventListener('click', () => {
+            const msg = messageInput.value.trim();
+            if (msg) { sendMessage(msg); messageInput.value = ''; }
+        });
+        messageInput?.addEventListener('keypress', e => {
+            if (e.key === 'Enter') {
+                const msg = messageInput.value.trim();
+                if (msg) { sendMessage(msg); messageInput.value = ''; }
+            }
+        });
+        clearChatBtn?.addEventListener('click', () => {
+            const msgs = responseArea.querySelectorAll('.user-message, .bot-message');
+            msgs.forEach(m => m.remove());
+            showMainMenu();
+        });
+        backToMenuBtn?.addEventListener('click', () => showMainMenu());
+        showMainMenuBtn?.addEventListener('click', () => showMainMenu());
+        
+        scrollToBottom();
+    });
+</script>
+{% endblock %}

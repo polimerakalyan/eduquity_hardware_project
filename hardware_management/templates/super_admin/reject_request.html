@@ -1,0 +1,68 @@
+{% extends 'base.html' %}
+{% block title %}Reject Request - Super Admin{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8 col-lg-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-danger text-white py-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-x-circle me-2"></i>Reject Request
+                </h5>
+            </div>
+            <div class="card-body p-4">
+                <div class="text-center mb-4">
+                    <i class="bi bi-x-circle display-1 text-danger"></i>
+                    <h5 class="mt-3">Confirm Rejection</h5>
+                    <p class="text-muted small">You are about to reject this request</p>
+                </div>
+                
+                <!-- Request Details -->
+                <div class="alert alert-warning">
+                    <div class="row small">
+                        <div class="col-6"><strong>Request ID:</strong></div>
+                        <div class="col-6">#{{ request.id }}</div>
+                        
+                        <div class="col-6"><strong>Type:</strong></div>
+                        <div class="col-6">
+                            {% if request.request_type == 'update' %}
+                                <span class="badge bg-warning text-dark">Update</span>
+                            {% else %}
+                                <span class="badge bg-danger">Delete</span>
+                            {% endif %}
+                        </div>
+                        
+                        <div class="col-6"><strong>Hardware:</strong></div>
+                        <div class="col-6">{{ request.hardware.asset_number|default:request.hardware.serial_number }}</div>
+                        
+                        <div class="col-6"><strong>Requested By:</strong></div>
+                        <div class="col-6">{{ request.requested_by.get_full_name|default:request.requested_by.username }}</div>
+                        
+                        <div class="col-12 mt-2"><strong>Reason:</strong></div>
+                        <div class="col-12">{{ request.reason }}</div>
+                    </div>
+                </div>
+                
+                <!-- Rejection Form -->
+                <form method="POST">
+                    {% csrf_token %}
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Reason for Rejection <span class="text-danger">*</span></label>
+                        <textarea name="notes" class="form-control" rows="3" required
+                                  placeholder="Please explain why this request is being rejected..."></textarea>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-danger">
+                            <i class="bi bi-x-circle me-2"></i>Confirm Rejection
+                        </button>
+                        <a href="{% url 'super_admin_requests' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-arrow-left me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,253 @@
+{% extends 'base.html' %}
+{% block title %}My Projects - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h2 class="h4 h-md-3"><i class="bi bi-folder-fill text-primary"></i> My Projects</h2>
+                <p class="text-muted small mb-0">View projects assigned to you</p>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+                <span class="badge bg-primary">{{ total_projects }} Total</span>
+                <span class="badge bg-success">{{ active_projects }} Active</span>
+                {% if global_projects > 0 %}
+                <span class="badge bg-info text-white">
+                    <i class="bi bi-globe"></i> {{ global_projects }} Global
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-2 g-md-3 mb-3 mb-md-4">
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center hover-card">
+            <div class="card-body p-2 p-md-3">
+                <h3 class="text-primary mb-0 h3 h-md-2">{{ total_projects|default:0 }}</h3>
+                <p class="text-muted small mb-0">Total Projects</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center hover-card">
+            <div class="card-body p-2 p-md-3">
+                <h3 class="text-success mb-0 h3 h-md-2">{{ active_projects|default:0 }}</h3>
+                <p class="text-muted small mb-0">Active Projects</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center hover-card">
+            <div class="card-body p-2 p-md-3">
+                <h3 class="text-secondary mb-0 h3 h-md-2">{{ completed_projects|default:0 }}</h3>
+                <p class="text-muted small mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card border-0 shadow-sm text-center hover-card">
+            <div class="card-body p-2 p-md-3">
+                <h3 class="text-warning mb-0 h3 h-md-2">{{ assigned_to_me|default:0 }}</h3>
+                <p class="text-muted small mb-0">Assigned to Me</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Global Projects Alert -->
+<!-- {% if global_projects > 0 %}
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="alert alert-info alert-dismissible fade show d-flex align-items-center">
+            <i class="bi bi-globe me-2 fs-5"></i>
+            <div>
+                <strong>🌍 Global Projects Available:</strong> 
+                {{ global_projects }} global project(s) are available to <strong>ALL managers</strong>.
+                <small class="d-block text-muted">These projects don't have a specific manager assigned.</small>
+            </div>
+            <button type="button" class="btn-close ms-auto" data-bs-dismiss="alert"></button>
+        </div>
+    </div>
+</div>
+{% endif %} -->
+
+<!-- Projects List -->
+<div class="row">
+    {% for project in projects %}
+    <div class="col-12 col-md-6 col-xl-4 mb-3 mb-md-4">
+        <div class="card border-0 shadow-sm h-100 project-card">
+            <div class="card-header {% if project.is_global %}bg-info{% elif project.assigned_manager == user %}bg-primary{% else %}bg-secondary{% endif %} text-white py-2 py-md-3 d-flex justify-content-between align-items-center">
+                <div class="flex-grow-1">
+                    <h6 class="mb-0 small fw-bold">
+                        <i class="bi bi-folder-fill me-2"></i>
+                        {{ project.project_name|truncatechars:25 }}
+                    </h6>
+                    <small class="text-white-50">{{ project.project_id }}</small>
+                </div>
+                <!-- <div class="d-flex gap-1">
+                    {% if project.is_global %}
+                    <span class="badge bg-light text-info">
+                        <i class="bi bi-globe"></i> Global
+                    </span>
+                    {% elif project.assigned_manager == user %}
+                    <span class="badge bg-light text-primary">
+                        <i class="bi bi-person-check"></i> Mine
+                    </span>
+                    {% endif %}
+                    <span class="badge bg-light text-dark">{{ project.location|default:"All" }}</span>
+                </div> -->
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <!-- Project Details -->
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-calendar"></i> Duration:</span>
+                        <span class="small">{{ project.start_date|date:"d M Y" }} - {{ project.end_date|date:"d M Y" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span class="text-muted small"><i class="bi bi-people"></i> Employees:</span>
+                        <span class="small">{{ project.employee_count|default:0 }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="text-muted small"><i class="bi bi-clipboard-check"></i> Assignments:</span>
+                        <span class="small">{{ project.assignment_count|default:0 }}</span>
+                    </div>
+                    <!-- {% if project.is_global %}
+                    <div class="mt-2">
+                        <span class="badge bg-info text-white w-100">
+                            <i class="bi bi-globe"></i> Available to All Managers
+                        </span>
+                    </div>
+                    {% endif %} -->
+                </div>
+                
+                <!-- Hardware Summary -->
+                <div class="border-top pt-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <span class="text-muted small"><i class="bi bi-laptop"></i> Hardware:</span>
+                        <span class="small">
+                            <span class="text-success">{{ project.active_hardware|default:0 }}</span> / 
+                            <span class="text-primary">{{ project.total_hardware|default:0 }}</span> in use
+                        </span>
+                    </div>
+                    <div class="mt-2">
+                        <div class="progress" style="height: 6px;">
+                            {% if project.total_hardware > 0 %}
+                            <div class="progress-bar bg-success" role="progressbar" 
+                                 style="width: {% widthratio project.active_hardware project.total_hardware 100 %}%">
+                            </div>
+                            {% else %}
+                            <div class="progress-bar bg-secondary" role="progressbar" style="width: 0%"></div>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Description -->
+                {% if project.description %}
+                <div class="mt-2">
+                    <small class="text-muted">{{ project.description|truncatechars:60 }}</small>
+                </div>
+                {% endif %}
+            </div>
+            <div class="card-footer bg-white border-0 pt-0 pb-3">
+                <div class="d-grid gap-2">
+                    {% if project.has_assignments %}
+                    <a href="{% url 'project_assignments' project.project_id %}" class="btn btn-primary btn-sm">
+                        <i class="bi bi-eye"></i> View Assignments
+                    </a>
+                    {% else %}
+                    <a href="{% url 'create_assignment' %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-plus-circle"></i> Create Assignment
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-5">
+            <i class="bi bi-folder-x display-1 text-muted"></i>
+            <h5 class="mt-3">No Projects Found</h5>
+            <p class="text-muted small">
+                You don't have any projects assigned to you or available globally.
+                <br>Projects are created by the Super Admin.
+            </p>
+            <a href="{% url 'manager_dashboard' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-arrow-left"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .hover-card {
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        cursor: default;
+    }
+    
+    .hover-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+    
+    .project-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+    
+    .project-card:hover {
+        box-shadow: 0 12px 24px rgba(0,0,0,0.1) !important;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+    }
+    
+    .progress {
+        border-radius: 10px;
+    }
+    
+    .card-header.bg-info {
+        background: linear-gradient(135deg, #0dcaf0, #0aa2c0) !important;
+    }
+    
+    .card-header.bg-primary {
+        background: linear-gradient(135deg, #0d6efd, #0a58ca) !important;
+    }
+    
+    .card-header.bg-secondary {
+        background: linear-gradient(135deg, #6c757d, #495057) !important;
+    }
+    
+    @media (max-width: 576px) {
+        .card-body {
+            padding: 0.75rem !important;
+        }
+        .card-header {
+            padding: 0.5rem 0.75rem !important;
+        }
+        .card-footer {
+            padding: 0.5rem 0.75rem !important;
+        }
+        .h3 {
+            font-size: 1.2rem !important;
+        }
+        .small {
+            font-size: 0.7rem !important;
+        }
+        .btn-sm {
+            font-size: 0.7rem !important;
+            padding: 0.25rem 0.5rem !important;
+        }
+    }
+</style>
+{% endblock %}

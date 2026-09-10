@@ -1,0 +1,289 @@
+{% extends 'base.html' %}
+{% block title %}Bulk Create Employees - Super Admin{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h4 h-md-3"><i class="bi bi-file-earmark-excel text-success"></i> Bulk Create Employees</h2>
+                <p class="text-muted small mb-0">Upload a CSV file to create multiple employees at once</p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_employees' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left"></i> Back to Employees
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white py-2 py-md-3">
+                <h5 class="mb-0 h6 h-md-5">
+                    <i class="bi bi-upload"></i> Upload CSV File
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <form method="POST" action="{% url 'bulk_create_employees' %}" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    
+                    <!-- Branch Selection -->
+                    <div class="mb-4">
+                        <label for="branch" class="form-label small fw-bold">Branch <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-building text-primary"></i>
+                            </span>
+                            <select class="form-select form-select-sm border-0 bg-light" 
+                                    id="branch" name="branch" required>
+                                <option value="">Select branch</option>
+                                {% for branch in branches %}
+                                <option value="{{ branch }}">{{ branch }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <small class="text-muted">All employees will be assigned to this branch</small>
+                    </div>
+                    
+                    <!-- Manager Selection -->
+                    <div class="mb-4">
+                        <label for="manager" class="form-label small fw-bold">Assign Manager</label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-person-badge text-primary"></i>
+                            </span>
+                            <select class="form-select form-select-sm border-0 bg-light" 
+                                    id="manager" name="manager" required>
+                                <option value="">-- Unassigned --</option>
+                                {% for manager in managers %}
+                                <option value="{{ manager.id }}" data-branch="{{ manager.branch_location }}">
+                                    {{ manager.get_full_name|default:manager.username }} 
+                                    ({{ manager.branch_location|default:"No Branch" }})
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> 
+                            Manager must be in the same branch as the employees
+                        </small>
+                    </div>
+                    
+                    <!-- CSV File Upload -->
+                    <div class="mb-4">
+                        <label for="csv_file" class="form-label small fw-bold">CSV File <span class="text-danger">*</span></label>
+                        <div class="input-group input-group-sm">
+                            <span class="input-group-text bg-light border-0">
+                                <i class="bi bi-file-earmark-excel text-success"></i>
+                            </span>
+                            <input type="file" class="form-control form-control-sm border-0 bg-light" 
+                                   id="csv_file" name="csv_file" 
+                                   accept=".csv" required>
+                        </div>
+                        <small class="text-muted">Upload a CSV file with employee data</small>
+                    </div>
+                    
+                    <!-- Sample CSV Download -->
+                    <div class="alert alert-info py-2">
+                        <i class="bi bi-info-circle"></i>
+                        <strong>Need a template?</strong>
+                        <a href="{% url 'download_sample_csv' %}" class="btn btn-sm btn-outline-primary ms-2">
+                            <i class="bi bi-download"></i> Download Sample CSV
+                        </a>
+                    </div>
+                    
+                    <!-- Default Password Info -->
+                    <div class="alert alert-warning py-2 small">
+                        <i class="bi bi-key"></i>
+                        <strong>Default Password:</strong> <code>{{ default_password }}</code>
+                        <span class="text-muted">- Will be sent to employees via email</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div class="d-flex flex-wrap gap-2 justify-content-end">
+                        <a href="{% url 'super_admin_employees' %}" class="btn btn-outline-secondary btn-sm">
+                            <i class="bi bi-x-circle"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-sm">
+                            <i class="bi bi-upload"></i> Upload & Create Employees
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Quick Tips -->
+        <div class="card border-0 shadow-sm mb-4">
+            <div class="card-header bg-info text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> CSV Format Guide
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="mb-3">
+                    <h6 class="small fw-bold">Required Columns:</h6>
+                    <ul class="small text-muted ps-3 mb-0">
+                        <li><strong>name</strong> - Full name (e.g., John Doe)</li>
+                        <li><strong>email</strong> - Email address (must be unique)</li>
+                        <li><strong>phone</strong> - Phone number (optional)</li>
+                        <li><strong>username</strong> - Username (optional, auto-generated from email)</li>
+                    </ul>
+                </div>
+                
+                <div class="mb-2">
+                    <h6 class="small fw-bold">Sample Data:</h6>
+                    <div class="bg-light p-2 rounded small" style="font-family: monospace; font-size: 0.65rem; overflow-x: auto;">
+                        <span class="text-success">name</span>,<span class="text-primary">email</span>,<span class="text-warning">phone</span>,<span class="text-info">username</span><br>
+                        John Doe,john@example.com,+91 9876543210,john_doe<br>
+                        Jane Smith,jane@example.com,+91 9876543211,jane_smith<br>
+                        Mike Johnson,mike@example.com,+91 9876543212,mike_j
+                    </div>
+                </div>
+                
+                <div class="alert alert-warning small">
+                    <i class="bi bi-exclamation-triangle"></i>
+                    <strong>Note:</strong> Username will be auto-generated from email if not provided.
+                </div>
+            </div>
+        </div>
+        
+        <!-- Quick Stats -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-secondary text-white py-2">
+                <h6 class="mb-0">
+                    <i class="bi bi-graph-up"></i> Current Stats
+                </h6>
+            </div>
+            <div class="card-body p-3">
+                <div class="row text-center">
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-primary mb-0 h3 h-md-2">{{ employee_count|default:0 }}</h4>
+                            <small class="text-muted">Total Employees</small>
+                        </div>
+                    </div>
+                    <div class="col-6 mb-3">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-success mb-0 h3 h-md-2">{{ managers|length }}</h4>
+                            <small class="text-muted">Managers</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-info mb-0 h3 h-md-2">{{ branches|length }}</h4>
+                            <small class="text-muted">Branches</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light rounded-3 p-2">
+                            <h4 class="text-warning mb-0 h3 h-md-2">{{ employee_count|default:0 }}</h4>
+                            <small class="text-muted">Employees</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Filter managers by branch
+    document.getElementById('branch').addEventListener('change', function() {
+        const selectedBranch = this.value;
+        const managerSelect = document.getElementById('manager');
+        const options = managerSelect.options;
+        
+        // Reset to first option
+        managerSelect.selectedIndex = 0;
+        
+        for (let i = 1; i < options.length; i++) {
+            const option = options[i];
+            const branch = option.dataset.branch;
+            
+            if (selectedBranch && branch !== selectedBranch) {
+                option.style.display = 'none';
+            } else {
+                option.style.display = '';
+            }
+        }
+    });
+</script>
+
+<style>
+    .input-group-text {
+        border-radius: 8px 0 0 8px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 0 8px 8px 0;
+        padding: 0.6rem 1rem;
+    }
+    
+    .form-control:focus, .form-select:focus {
+        box-shadow: none;
+        border-color: #E04D00;
+        background-color: #fff;
+    }
+    
+    .btn-success {
+        background-color: #059669;
+        border-color: #059669;
+    }
+    
+    .btn-success:hover {
+        background-color: #047857;
+        border-color: #047857;
+    }
+    
+    @media (max-width: 768px) {
+        .col-lg-8, .col-lg-4 {
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            width: 100%;
+        }
+        
+        .d-flex.gap-2 {
+            flex-direction: column;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .h2 {
+            font-size: 1.3rem !important;
+        }
+        .h3 {
+            font-size: 1.1rem !important;
+        }
+        .h4 {
+            font-size: 0.9rem !important;
+        }
+        .h5 {
+            font-size: 0.8rem !important;
+        }
+        .h6 {
+            font-size: 0.7rem !important;
+        }
+        .small {
+            font-size: 0.7rem !important;
+        }
+        .btn {
+            font-size: 0.75rem !important;
+            padding: 0.3rem 0.6rem !important;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+        .card-header {
+            padding: 0.5rem !important;
+        }
+    }
+</style>
+{% endblock %}

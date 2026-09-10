@@ -1,0 +1,643 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes, viewport-fit=cover">
+  <title>Login - Eduquity Hardware Management</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+  <style>
+    :root {
+      --primary: #E04D00;
+      --primary-light: #FF6B1A;
+      --primary-dark: #c44500;
+      --light-bg: #f8f9fa;
+      --gray: #6c757d;
+      --dark: #212529;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #f1efed 0%, #f3f2f2 100%);
+      min-height: 100vh;
+      padding: 0;
+      margin: 0;
+    }
+
+    .login-container {
+      width: 100%;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 15px;
+    }
+
+    .main-card {
+      background: white;
+      border-radius: 24px;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
+      width: 100%;
+      max-width: 1100px;
+    }
+
+    /* Left Panel */
+    .left-panel {
+      background: linear-gradient(135deg, #E04D00 0%, #c44500 100%);
+      padding: 40px 35px;
+      color: white;
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .left-content {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      height: 100%;
+      text-align: center;
+    }
+
+    .left-content h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 15px;
+      line-height: 1.2;
+    }
+
+    .left-content p {
+      font-size: 0.95rem;
+      line-height: 1.5;
+      opacity: 0.95;
+      margin-bottom: 25px;
+      max-width: 450px;
+    }
+
+    /* ======== APPLICATION IMAGES SECTION ======== */
+    .app-images {
+      display: flex;
+      gap: 20px;
+      margin-top: 15px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .app-image-wrapper {
+      background: rgba(255, 255, 255, 0.12);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.25);
+      border-radius: 20px;
+      padding: 20px 25px;
+      transition: transform 0.3s ease, background 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .app-image-wrapper:hover {
+      transform: translateY(-4px);
+      background: rgba(255, 255, 255, 0.20);
+    }
+
+    .app-image-wrapper svg {
+      width: 60px;
+      height: 60px;
+    }
+
+    .app-image-wrapper span {
+      font-size: 0.75rem;
+      font-weight: 500;
+      opacity: 0.9;
+    }
+    /* ============================================ */
+
+    .btn-homepage {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px 20px;
+      background: rgba(255, 255, 255, 0.15);
+      backdrop-filter: blur(10px);
+      color: white;
+      border: 1px solid rgba(255, 255, 255, 0.3);
+      border-radius: 50px;
+      font-weight: 600;
+      font-size: 13px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      width: fit-content;
+    }
+
+    .btn-homepage:hover {
+      background: white;
+      color: var(--primary-dark);
+      transform: translateY(-2px);
+    }
+
+    /* Right Panel */
+    .right-panel {
+      background: white;
+      padding: 40px 35px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .login-card {
+      width: 100%;
+      max-width: 400px;
+      margin: 0 auto;
+    }
+
+    .login-card h3 {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--dark);
+      margin-bottom: 8px;
+    }
+
+    .login-card p {
+      color: var(--gray);
+      font-size: 0.85rem;
+      margin-bottom: 25px;
+    }
+
+    /* Password Field with Toggle */
+    .password-wrapper {
+      position: relative;
+    }
+
+    .password-wrapper .form-control {
+      padding-right: 45px;
+    }
+
+    .password-toggle {
+      position: absolute;
+      right: 12px;
+      top: 50%;
+      transform: translateY(-50%);
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: var(--gray);
+      font-size: 1.1rem;
+      padding: 5px;
+      transition: color 0.2s ease;
+      z-index: 10;
+    }
+
+    .password-toggle:hover {
+      color: var(--primary);
+    }
+
+    .password-toggle:focus {
+      outline: none;
+    }
+
+    .form-control {
+      border-radius: 12px;
+      padding: 12px 16px;
+      border: 1.5px solid #e9ecef;
+      font-size: 14px;
+      transition: all 0.3s ease;
+      width: 100%;
+    }
+
+    .form-control:focus {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(224, 77, 0, 0.1);
+      outline: none;
+    }
+
+    .btn-login {
+      background: var(--primary);
+      border: none;
+      border-radius: 12px;
+      padding: 12px;
+      font-weight: 600;
+      font-size: 15px;
+      color: white;
+      transition: all 0.3s ease;
+      width: 100%;
+      cursor: pointer;
+    }
+
+    .btn-login:hover {
+      background: var(--primary-dark);
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(224, 77, 0, 0.3);
+    }
+
+    .divider {
+      display: flex;
+      align-items: center;
+      margin: 25px 0 20px;
+    }
+
+    .divider::before,
+    .divider::after {
+      content: "";
+      flex: 1;
+      border-bottom: 1px solid #e9ecef;
+    }
+
+    .divider-text {
+      padding: 0 15px;
+      color: var(--gray);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .text-link {
+      color: var(--primary);
+      text-decoration: none;
+      font-weight: 500;
+      font-size: 13px;
+    }
+
+    .text-link:hover {
+      text-decoration: underline;
+    }
+
+    .alert {
+      border-radius: 12px;
+      padding: 10px 14px;
+      font-size: 12px;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+    }
+
+    .alert i {
+      margin-right: 10px;
+    }
+
+    .alert-success {
+      background: #d4edda;
+      border: 1px solid #c3e6cb;
+      color: #155724;
+    }
+
+    .alert-danger {
+      background: #f8d7da;
+      border: 1px solid #f5c6cb;
+      color: #721c24;
+    }
+
+    .alert-warning {
+      background: #fff3cd;
+      border: 1px solid #ffeaa7;
+      color: #856404;
+    }
+
+    .alert-info {
+      background: #d1ecf1;
+      border: 1px solid #bee5eb;
+      color: #0c5460;
+    }
+
+    .form-check-label {
+      font-size: 13px;
+    }
+
+    /* ========== RESPONSIVE STYLES ========== */
+    
+    /* Tablet (768px - 991px) */
+    @media (min-width: 768px) and (max-width: 991px) {
+      .left-panel {
+        padding: 30px 25px;
+      }
+      
+      .right-panel {
+        padding: 30px 25px;
+      }
+      
+      .left-content h1 {
+        font-size: 1.6rem;
+      }
+      
+      .login-card h3 {
+        font-size: 1.4rem;
+      }
+    }
+    
+    /* Mobile (up to 767px) - STACKED LAYOUT */
+    @media (max-width: 767px) {
+      .login-container {
+        padding: 10px;
+        align-items: stretch;
+      }
+      
+      .main-card {
+        border-radius: 20px;
+        flex-direction: column !important;
+      }
+      
+      .left-panel {
+        padding: 30px 20px;
+        text-align: center;
+        border-radius: 20px 20px 0 0;
+      }
+      
+      .left-content {
+        align-items: center;
+      }
+      
+      .left-content h1 {
+        font-size: 1.5rem;
+        text-align: center;
+      }
+      
+      .left-content p {
+        font-size: 0.85rem;
+        text-align: center;
+      }
+      
+      .app-images {
+        gap: 12px;
+      }
+      
+      .app-image-wrapper {
+        padding: 12px 16px;
+      }
+      
+      .app-image-wrapper svg {
+        width: 40px;
+        height: 40px;
+      }
+      
+      .btn-homepage {
+        margin: 0 auto;
+        font-size: 12px;
+        padding: 8px 18px;
+      }
+      
+      .right-panel {
+        padding: 25px 20px;
+        border-radius: 0 0 20px 20px;
+      }
+      
+      .login-card {
+        max-width: 100%;
+      }
+      
+      .login-card h3 {
+        font-size: 1.3rem;
+        text-align: center;
+      }
+      
+      .login-card p {
+        text-align: center;
+        font-size: 0.8rem;
+      }
+      
+      .form-control {
+        padding: 10px 14px;
+        font-size: 13px;
+      }
+      
+      .btn-login {
+        padding: 10px;
+        font-size: 14px;
+      }
+      
+      .d-flex.justify-content-between {
+        flex-direction: column;
+        gap: 12px;
+        align-items: flex-start;
+      }
+      
+      .divider {
+        margin: 20px 0 15px;
+      }
+      
+      .divider-text {
+        font-size: 11px;
+      }
+      
+      .text-link {
+        font-size: 12px;
+      }
+      
+      .password-toggle {
+        right: 10px;
+        font-size: 1rem;
+      }
+    }
+    
+    /* Small Mobile (up to 480px) */
+    @media (max-width: 480px) {
+      .left-panel {
+        padding: 25px 15px;
+      }
+      
+      .right-panel {
+        padding: 20px 15px;
+      }
+      
+      .left-content h1 {
+        font-size: 1.3rem;
+      }
+      
+      .left-content p {
+        font-size: 0.75rem;
+      }
+      
+      .login-card h3 {
+        font-size: 1.2rem;
+      }
+      
+      .app-image-wrapper svg {
+        width: 32px;
+        height: 32px;
+      }
+      
+      .btn-homepage {
+        font-size: 11px;
+        padding: 7px 16px;
+      }
+      
+      .form-control {
+        padding: 8px 12px;
+        font-size: 13px;
+      }
+      
+      .alert {
+        padding: 8px 12px;
+        font-size: 11px;
+      }
+    }
+
+    /* Animation */
+    @keyframes slideUp {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .main-card {
+      animation: slideUp 0.5s ease forwards;
+    }
+
+    /* Custom Checkbox */
+    .form-check-input:checked {
+      background-color: var(--primary);
+      border-color: var(--primary);
+    }
+
+    .form-check-input:focus {
+      box-shadow: 0 0 0 0.2rem rgba(224, 77, 0, 0.25);
+    }
+  </style>
+</head>
+<body>
+
+<div class="login-container">
+  <div class="main-card row g-0">
+    <!-- Left Panel - Branding & App Images -->
+    <div class="col-12 col-md-6 left-panel">
+      <div class="left-content">
+        <h1>Welcome to Eduquity</h1>
+        <p>Securely manage company hardware assets, allocations, audits, and tracking — all in one place.</p>
+
+        <a href="{% url 'home' %}" class="btn-homepage">
+          <i class="fas fa-home me-2"></i> Go to Homepage
+        </a>
+
+        <!-- ====== APPLICATION IMAGES ====== -->
+        <div class="app-images">
+          <div class="app-image-wrapper">
+            <!-- Hardware Tracking Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+              <line x1="8" y1="21" x2="16" y2="21"></line>
+              <line x1="12" y1="17" x2="12" y2="21"></line>
+              <circle cx="18" cy="10" r="1"></circle>
+              <circle cx="6" cy="10" r="1"></circle>
+            </svg>
+            <span>Hardware Tracking</span>
+          </div>
+          <div class="app-image-wrapper">
+            <!-- Asset Management Icon -->
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <span>Asset Management</span>
+          </div>
+        </div>
+        <!-- ================================ -->
+      </div>
+    </div>
+
+    <!-- Right Panel - Login Form -->
+    <div class="col-12 col-md-6 right-panel">
+      <div class="login-card">
+        <h3>Welcome Back</h3>
+        <p>Sign in to access your Eduquity Hardware</p>
+
+        {% if messages %}
+          {% for message in messages %}
+            <div class="alert alert-{{ message.tags }}">
+              <i class="fas fa-{% if message.tags == 'success' %}check-circle{% elif message.tags == 'error' %}exclamation-circle{% elif message.tags == 'warning' %}exclamation-triangle{% else %}info-circle{% endif %}"></i>
+              <span>{{ message }}</span>
+            </div>
+          {% endfor %}
+        {% endif %}
+
+        <form method="post" action="{% url 'login' %}">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label class="form-label">Employee ID / Username</label>
+            <input type="text" class="form-control" name="username" placeholder="Enter Employee ID" required>
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Password</label>
+            <div class="password-wrapper">
+              <input type="password" class="form-control" name="password" id="passwordField" placeholder="Enter password" required>
+              <button type="button" class="password-toggle" id="togglePassword">
+                <i class="fas fa-eye"></i>
+              </button>
+            </div>
+          </div>
+          <div class="d-flex justify-content-between align-items-center mb-4">
+            <div class="form-check">
+              <input type="checkbox" class="form-check-input" id="rememberMe">
+              <label for="rememberMe" class="form-check-label">Remember me</label>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-login">
+            <i class="fas fa-sign-in-alt me-2"></i> Sign In
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  // Show/Hide Password Toggle
+  document.addEventListener('DOMContentLoaded', function() {
+    const togglePassword = document.getElementById('togglePassword');
+    const passwordField = document.getElementById('passwordField');
+    
+    if (togglePassword && passwordField) {
+      togglePassword.addEventListener('click', function() {
+        const type = passwordField.getAttribute('type') === 'password' ? 'text' : 'password';
+        passwordField.setAttribute('type', type);
+        
+        const icon = togglePassword.querySelector('i');
+        if (icon) {
+          icon.classList.toggle('fa-eye');
+          icon.classList.toggle('fa-eye-slash');
+        }
+      });
+    }
+  });
+
+  // Remember Me functionality
+  document.addEventListener('DOMContentLoaded', function() {
+    const rememberCheckbox = document.getElementById('rememberMe');
+    const usernameInput = document.querySelector('input[name="username"]');
+    
+    const savedUsername = localStorage.getItem('savedUsername');
+    if (savedUsername) {
+      usernameInput.value = savedUsername;
+      if (rememberCheckbox) rememberCheckbox.checked = true;
+    }
+    
+    const form = document.querySelector('form');
+    if (form) {
+      form.addEventListener('submit', function() {
+        if (rememberCheckbox && rememberCheckbox.checked) {
+          localStorage.setItem('savedUsername', usernameInput.value);
+        } else {
+          localStorage.removeItem('savedUsername');
+        }
+      });
+    }
+  });
+</script>
+</body>
+</html>

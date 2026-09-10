@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .header {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            padding: 20px;
+            border-radius: 8px 8px 0 0;
+            text-align: center;
+        }
+        .content {
+            background: #f9fafb;
+            padding: 30px;
+            border-radius: 0 0 8px 8px;
+            border: 1px solid #e5e7eb;
+            border-top: none;
+        }
+        .request-details {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 15px 0;
+            border: 1px solid #e5e7eb;
+        }
+        .badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-update {
+            background: #fbbf24;
+            color: #000;
+        }
+        .badge-delete {
+            background: #ef4444;
+            color: #fff;
+        }
+        .badge-pending {
+            background: #f59e0b;
+            color: #fff;
+        }
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: 600;
+            margin: 5px;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-success {
+            background: #22c55e;
+            color: white;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-secondary {
+            background: #6b7280;
+            color: white;
+        }
+        .footer {
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 1px solid #e5e7eb;
+            text-align: center;
+            color: #6b7280;
+            font-size: 12px;
+        }
+        .request-id {
+            font-weight: bold;
+            color: #3b82f6;
+            font-size: 18px;
+        }
+        .label {
+            font-weight: 600;
+            color: #4b5563;
+            display: inline-block;
+            min-width: 100px;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 style="margin: 0;">🔔 New Hardware Request</h1>
+        <p style="margin: 5px 0 0; opacity: 0.9;">Action Required: Super Admin Review</p>
+    </div>
+    
+    <div class="content">
+        <p style="font-size: 16px;">Dear Super Admin,</p>
+        <p>A new <strong>{{ request_type|title }}</strong> request has been submitted for your review.</p>
+        
+        <div class="request-details">
+            <h3 style="margin-top: 0; color: #1f2937;">📋 Request Details</h3>
+            
+            <p><span class="label">Request ID:</span> <span class="request-id">#{{ request.id }}</span></p>
+            <p><span class="label">Type:</span> 
+                <span class="badge {% if request_type == 'update' %}badge-update{% else %}badge-delete{% endif %}">
+                    {{ request_type|title }}
+                </span>
+            </p>
+            <p><span class="label">Status:</span> 
+                <span class="badge badge-pending">Pending</span>
+            </p>
+            <p><span class="label">Hardware:</span> 
+                <strong>{{ hardware.asset_number }}</strong> 
+                ({{ hardware.hardware_type.name }})
+            </p>
+            <p><span class="label">Serial Number:</span> <code>{{ hardware.serial_number }}</code></p>
+            <p><span class="label">Model:</span> {{ hardware.model_name|default:"Not specified" }}</p>
+            <p><span class="label">Requested By:</span> 
+                {{ requested_by.get_full_name|default:requested_by.username }} 
+                ({{ requested_by.email }})
+            </p>
+            <p><span class="label">Submitted:</span> {{ created_at|date:"F d, Y H:i" }}</p>
+            
+            <div style="background: #f3f4f6; padding: 12px; border-radius: 6px; margin-top: 10px;">
+                <p style="margin: 0;"><span class="label">Reason:</span></p>
+                <p style="margin: 5px 0 0 0; padding: 8px; background: white; border-radius: 4px;">
+                    {{ reason }}
+                </p>
+            </div>
+        </div>
+        
+        <div style="text-align: center; margin: 25px 0;">
+            <p style="font-weight: 600; color: #1f2937;">Please review this request:</p>
+            <div>
+                <a href="{{ approve_url }}" class="btn btn-success">✅ Approve</a>
+                <a href="{{ reject_url }}" class="btn btn-danger">❌ Reject</a>
+                <br>
+                <a href="{{ admin_url }}" class="btn btn-secondary" style="margin-top: 10px;">
+                    📋 View All Requests
+                </a>
+            </div>
+        </div>
+        
+        <div style="background: #fef3c7; padding: 12px; border-radius: 6px; border-left: 4px solid #f59e0b;">
+            <p style="margin: 0; font-size: 14px;">
+                <strong>💡 Quick Actions:</strong> Click Approve or Reject to process this request immediately.
+                You can also view all requests in the admin panel.
+            </p>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>This is an automated notification from Eduquity Hardware Management System.</p>
+        <p>© {% now "Y" %} Eduquity. All rights reserved.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,1030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Eduquity Hardware Management{% endblock %}</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-icons/1.11.3/font/bootstrap-icons.min.css">
+    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========== CSS VARIABLES ========== */
+        :root {
+            --brand-orange: #E04D00;
+            --brand-orange-dark: #c44500;
+            --brand-orange-light: #fff8f4;
+            --text-color: #1e293b;
+            --text-muted: #64748b;
+            --bg-light: #f8fafc;
+            --border-light: #e2e8f0;
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.04);
+            --radius-md: 8px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f1f5f9;
+            color: var(--text-color);
+            line-height: 1.5;
+        }
+
+        .app-container {
+            display: flex;
+            min-height: 100vh;
+        }
+
+        /* ========== SIDEBAR ========== */
+        .sidebar {
+            width: 260px;
+            background: #ffffff;
+            border-right: 1px solid var(--border-light);
+            position: fixed;
+            left: 0;
+            top: 0;
+            bottom: 0;
+            z-index: 1000;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 20px rgba(0,0,0,0.02);
+            transition: transform 0.3s ease;
+            overflow-y: auto;
+        }
+
+        .sidebar-header {
+            padding: 16px 16px 12px;
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .sidebar-header img {
+            max-width: 140px;
+            height: auto;
+        }
+
+        .sidebar-nav {
+            flex: 1;
+            padding: 8px 0 12px;
+            overflow-y: auto;
+        }
+
+        .nav-section-title {
+            padding: 8px 16px 4px;
+            font-size: 0.6rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #94a3b8;
+            font-weight: 700;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 8px 14px;
+            margin: 1px 8px;
+            border-radius: var(--radius-md);
+            color: #64748b;
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 0.8rem;
+            font-weight: 500;
+        }
+
+        .nav-item:hover {
+            background-color: var(--brand-orange-light);
+            color: var(--brand-orange);
+        }
+
+        .nav-item.active {
+            background: var(--brand-orange);
+            color: white;
+            box-shadow: 0 4px 10px rgba(224, 77, 0, 0.2);
+        }
+
+        .nav-item.active .nav-icon {
+            color: white;
+        }
+
+        .nav-icon {
+            width: 20px;
+            text-align: center;
+            font-size: 1rem;
+            color: #94a3b8;
+            flex-shrink: 0;
+        }
+
+        .nav-text {
+            flex: 1;
+            font-size: 0.8rem;
+        }
+
+        .nav-badge {
+            background-color: #e2e8f0;
+            color: #64748b;
+            padding: 0.1rem 0.6rem;
+            border-radius: 20px;
+            font-size: 0.6rem;
+            font-weight: 600;
+            flex-shrink: 0;
+        }
+
+        .nav-item.active .nav-badge {
+            background-color: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .bg-gradient-ai {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 0.1rem 0.5rem;
+            font-size: 0.55rem;
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+        }
+
+        .sidebar-footer {
+            padding: 10px 14px;
+            border-top: 1px solid var(--border-light);
+            flex-shrink: 0;
+            background: #fafbfc;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--brand-orange), #FF6B1A);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+            font-size: 0.8rem;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            min-width: 0;
+            flex: 1;
+        }
+
+        .user-details h6 {
+            margin: 0;
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .user-details small {
+            color: #94a3b8;
+            font-size: 0.65rem;
+        }
+
+        .user-details .badge {
+            font-size: 0.55rem;
+            padding: 2px 6px;
+        }
+
+        /* ========== MAIN CONTENT ========== */
+        .main-content {
+            flex: 1;
+            margin-left: 260px;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-nav {
+            height: 60px;
+            background: white;
+            border-bottom: 1px solid var(--border-light);
+            padding: 0 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 900;
+            gap: 10px;
+        }
+
+        .page-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .page-title h1 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin: 0;
+            letter-spacing: -0.3px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .page-title p {
+            color: #94a3b8;
+            font-size: 0.65rem;
+            margin: 0;
+            display: none;
+        }
+
+        .mobile-menu-btn {
+            background: none;
+            border: none;
+            font-size: 1.4rem;
+            color: var(--text-color);
+            padding: 4px;
+            cursor: pointer;
+            display: none;
+            flex-shrink: 0;
+        }
+
+        .top-nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+
+        .quick-actions {
+            display: flex;
+            gap: 4px;
+        }
+
+        .btn-action {
+            padding: 5px 10px;
+            background: white;
+            border: 1px solid var(--border-light);
+            border-radius: var(--radius-md);
+            color: #64748b;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.7rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-action i {
+            font-size: 0.9rem;
+        }
+
+        .btn-action:hover {
+            background: var(--bg-light);
+            border-color: var(--brand-orange);
+            color: var(--brand-orange);
+        }
+
+        .btn-action.primary {
+            background: var(--brand-orange);
+            color: white;
+            border-color: var(--brand-orange);
+        }
+
+        .btn-action.primary:hover {
+            background: var(--brand-orange-dark);
+            border-color: var(--brand-orange-dark);
+            color: white;
+        }
+
+        .btn-action .btn-text {
+            display: inline;
+        }
+
+        .content-area {
+            flex: 1;
+            padding: 16px 20px 20px;
+            background: #f1f5f9;
+        }
+
+        /* ========== MESSAGES ========== */
+        .messages-container {
+            margin-bottom: 16px;
+        }
+
+        .alert {
+            padding: 10px 14px;
+            border-radius: var(--radius-md);
+            border: none;
+            border-left: 3px solid transparent;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.8rem;
+        }
+
+        .alert i { font-size: 1rem; flex-shrink: 0; }
+        
+        .alert-success { background: #ecfdf5; border-left-color: #10b981; color: #065f46; }
+        .alert-danger { background: #fef2f2; border-left-color: #ef4444; color: #991b1b; }
+        .alert-warning { background: #fffbeb; border-left-color: #f59e0b; color: #92400e; }
+        .alert-info { background: #eff6ff; border-left-color: #3b82f6; color: #1e40af; }
+
+        /* First Login Banner */
+        .first-login-banner {
+            background: linear-gradient(135deg, #f59e0b, #d97706);
+            color: white;
+            padding: 10px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 16px;
+            border-radius: var(--radius-md);
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .first-login-banner div {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.85rem;
+        }
+        .first-login-banner .btn {
+            font-size: 0.75rem;
+            padding: 4px 12px;
+        }
+
+        /* ========== FOOTER ========== */
+        .main-footer {
+            background: white;
+            border-top: 1px solid var(--border-light);
+            padding: 8px 20px;
+            margin-top: auto;
+        }
+        .copyright {
+            color: #94a3b8;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        /* ========== FLOATING CHAT ========== */
+        .floating-chat-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 1050;
+        }
+        .floating-chat-btn .chat-trigger {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 22px;
+            text-decoration: none;
+            box-shadow: 0 4px 20px rgba(102, 126, 234, 0.4);
+            transition: var(--transition-smooth);
+            position: relative;
+        }
+        .floating-chat-btn .chat-trigger:hover {
+            transform: scale(1.05);
+            box-shadow: 0 6px 25px rgba(102, 126, 234, 0.5);
+            color: white;
+        }
+        .floating-chat-btn .chat-badge {
+            position: absolute;
+            top: -4px;
+            right: -4px;
+            background: #ef4444;
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 20px;
+            font-weight: 700;
+        }
+
+        /* ========== OVERLAY ========== */
+        .overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.4);
+            backdrop-filter: blur(4px);
+            z-index: 999;
+        }
+        .overlay.show { display: block; }
+
+        /* ========== RESPONSIVE ========== */
+
+        /* Tablets */
+        @media (max-width: 992px) {
+            .sidebar {
+                transform: translateX(-100%);
+                width: 280px;
+                z-index: 1100;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            }
+            .sidebar.show { transform: translateX(0); }
+            .main-content { margin-left: 0; }
+            .mobile-menu-btn { display: block; }
+            .top-nav { padding: 0 16px; height: 56px; }
+            .page-title h1 { font-size: 1rem; }
+            .content-area { padding: 14px 16px; }
+            .btn-action .btn-text { display: none; }
+        }
+
+        /* Mobile Phones */
+        @media (max-width: 576px) {
+            .sidebar { width: 100%; max-width: 320px; }
+            .sidebar-header { padding: 14px; }
+            .sidebar-header img { max-width: 110px; }
+            .nav-item { padding: 6px 12px; font-size: 0.75rem; }
+            .nav-section-title { font-size: 0.55rem; }
+            .sidebar-footer { padding: 8px 12px; }
+            .user-avatar { width: 32px; height: 32px; font-size: 0.75rem; }
+            .user-details h6 { font-size: 0.75rem; }
+            
+            .top-nav { height: 52px; padding: 0 12px; }
+            .mobile-menu-btn { font-size: 1.2rem; }
+            .page-title h1 { font-size: 0.9rem; }
+            
+            .btn-action { padding: 3px 6px; font-size: 0.6rem; }
+            .btn-action i { font-size: 0.8rem; }
+            
+            .content-area { padding: 10px 12px; }
+            .alert { padding: 8px 12px; font-size: 0.75rem; }
+            .first-login-banner { flex-direction: column; text-align: center; align-items: stretch; }
+            .first-login-banner .btn { width: 100%; }
+            
+            .main-footer { padding: 6px 12px; }
+            .copyright { font-size: 0.6rem; }
+            
+            .floating-chat-btn { bottom: 14px; right: 14px; }
+            .floating-chat-btn .chat-trigger { width: 46px; height: 46px; font-size: 18px; }
+        }
+
+        /* Print styles */
+        @media print {
+            .sidebar, .top-nav, .main-footer, .floating-chat-btn, .mobile-menu-btn { display: none !important; }
+            .main-content { margin-left: 0 !important; }
+            .content-area { padding: 16px !important; }
+        }
+
+        /* ========== UTILITY OVERRIDES ========== */
+        .text-primary { color: var(--brand-orange) !important; }
+        .bg-primary { background-color: var(--brand-orange) !important; }
+        .border-primary { border-color: var(--brand-orange) !important; }
+        
+        .btn-primary {
+            background-color: var(--brand-orange);
+            border-color: var(--brand-orange);
+            font-weight: 500;
+            transition: all 0.2s;
+        }
+        .btn-primary:hover {
+            background-color: var(--brand-orange-dark);
+            border-color: var(--brand-orange-dark);
+        }
+
+        /* Scrollbar */
+        .sidebar-nav::-webkit-scrollbar { width: 4px; }
+        .sidebar-nav::-webkit-scrollbar-track { background: transparent; }
+        .sidebar-nav::-webkit-scrollbar-thumb { background: #d1d5db; border-radius: 4px; }
+        .sidebar-nav::-webkit-scrollbar-thumb:hover { background: #9ca3af; }
+    </style>
+    
+    {% block extra_css %}{% endblock %}
+    {% block inline_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <div class="overlay" id="overlay"></div>
+    
+    <div class="app-container">
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <img src="/media/logo.png" alt="Eduquity Logo">
+            </div>
+            
+            {% if user.user_type == 'employee' and user.is_first_login %}
+                <nav class="sidebar-nav">
+                    <div class="nav-section-title">Account Setup</div>
+                    <div class="nav-item" style="background: rgba(245,158,11,0.1); color: #f59e0b;">
+                        <i class="bi bi-shield-lock nav-icon" style="color: #f59e0b;"></i>
+                        <span class="nav-text">First Login</span>
+                    </div>
+                    
+                    <div class="nav-section-title">Account</div>
+                    <a href="{% url 'change_password' %}" class="nav-item {% if request.path == '/change-password/' %}active{% endif %}">
+                        <i class="bi bi-key nav-icon"></i>
+                        <span class="nav-text">Change Password</span>
+                        <span class="nav-badge">Required</span>
+                    </a>
+                    
+                    <div class="nav-section-title">Settings</div>
+                    <a href="{% url 'logout' %}" class="nav-item">
+                        <i class="bi bi-box-arrow-right nav-icon"></i>
+                        <span class="nav-text">Logout</span>
+                    </a>
+                </nav>
+            {% else %}
+                <nav class="sidebar-nav">
+                    <div class="nav-section-title">Main</div>
+                    
+                    {% if user.user_type == 'super_admin' %}
+                        <a href="{% url 'super_admin_dashboard' %}" class="nav-item {% if '/super-admin/dashboard/' in request.path %}active{% endif %}">
+                            <i class="bi bi-speedometer2 nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    {% else %}
+                        <a href="{% if user.user_type == 'manager' %}{% url 'manager_dashboard' %}{% else %}{% url 'employee_dashboard' %}{% endif %}" 
+                           class="nav-item {% if request.path == '/manager/dashboard/' or request.path == '/employee/dashboard/' %}active{% endif %}">
+                            <i class="bi bi-speedometer2 nav-icon"></i>
+                            <span class="nav-text">Dashboard</span>
+                        </a>
+                    {% endif %}
+                    
+                    {% if user.user_type == 'super_admin' %}
+                    <!-- ========== SUPER ADMIN NAVIGATION ========== -->
+                    <div class="nav-section-title">Super Admin</div>
+                    <a href="{% url 'super_admin_dashboard' %}" class="nav-item {% if '/super-admin/dashboard/' in request.path %}active{% endif %}">
+                        <i class="bi bi-speedometer2 nav-icon"></i>
+                        <span class="nav-text">Dashboard</span>
+                    </a>
+                    
+                    <!-- ========== EMPLOYEE MANAGEMENT - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Employee Management</div>
+                    <a href="{% url 'super_admin_employees' %}" class="nav-item {% if '/super-admin/employees' in request.path %}active{% endif %}">
+                        <i class="bi bi-people nav-icon"></i>
+                        <span class="nav-text">All Employees</span>
+                        <span class="nav-badge">{{ total_employees|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'create_employee' %}" class="nav-item {% if '/super-admin/create-employee' in request.path %}active{% endif %}">
+                        <i class="bi bi-person-plus nav-icon"></i>
+                        <span class="nav-text">Create Employee</span>
+                    </a>
+                    <a href="{% url 'bulk_create_employees' %}" class="nav-item {% if '/super-admin/bulk-create-employees' in request.path %}active{% endif %}">
+                        <i class="bi bi-file-earmark-excel nav-icon"></i>
+                        <span class="nav-text">Bulk Upload</span>
+                    </a>
+                    
+                    <!-- ========== EMPLOYEE REQUESTS - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Employee Requests</div>
+                    <a href="{% url 'super_admin_delete_requests' %}" class="nav-item {% if '/super-admin/delete-requests' in request.path %}active{% endif %}">
+                        <i class="bi bi-person-x nav-icon"></i>
+                        <span class="nav-text">Delete Requests</span>
+                        <span class="nav-badge">{{ pending_delete_requests|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'super_admin_update_requests' %}" class="nav-item {% if '/super-admin/update-requests' in request.path %}active{% endif %}">
+                        <i class="bi bi-pencil-square nav-icon"></i>
+                        <span class="nav-text">Update Requests</span>
+                        <span class="nav-badge">{{ pending_update_requests|default:"0" }}</span>
+                    </a>
+                    <div class="nav-section-title">Transfer Management</div>
+                <a href="{% url 'super_admin_transfer_requests' %}" class="nav-item {% if '/super-admin/transfers' in request.path %}active{% endif %}">
+                    <i class="bi bi-arrow-left-right nav-icon"></i>
+                    <span class="nav-text">Transfer Requests</span>
+                    <span class="nav-badge">{{ pending_transfers|default:"0" }}</span>
+                </a>
+                    
+                    <!-- ========== MANAGER MANAGEMENT - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Manager Management</div>
+                    <a href="{% url 'super_admin_managers' %}" class="nav-item {% if '/super-admin/managers' in request.path %}active{% endif %}">
+                        <i class="bi bi-person-badge nav-icon"></i>
+                        <span class="nav-text">All Managers</span>
+                        <span class="nav-badge">{{ total_managers|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'super_admin_create_manager' %}" class="nav-item {% if '/super-admin/create-manager' in request.path %}active{% endif %}">
+                        <i class="bi bi-person-plus nav-icon"></i>
+                        <span class="nav-text">Create Manager</span>
+                    </a>
+                    
+                    <!-- ========== BRANCHES - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Branches</div>
+                    <a href="{% url 'super_admin_branches' %}" class="nav-item {% if '/super-admin/branches' in request.path %}active{% endif %}">
+                        <i class="bi bi-building nav-icon"></i>
+                        <span class="nav-text">Branches</span>
+                        <span class="nav-badge">{{ branches_count|default:"0" }}</span>
+                    </a>
+                    
+                    <!-- ========== PROJECTS - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Projects</div>
+                    <a href="{% url 'super_admin_projects' %}" class="nav-item {% if '/super-admin/projects' in request.path %}active{% endif %}">
+                        <i class="bi bi-folder-fill nav-icon"></i>
+                        <span class="nav-text">All Projects</span>
+                        <span class="nav-badge">{{ total_projects|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'super_admin_create_project' %}" class="nav-item {% if '/super-admin/create-project' in request.path %}active{% endif %}">
+                        <i class="bi bi-plus-circle nav-icon"></i>
+                        <span class="nav-text">Create Project</span>
+                    </a>
+                    
+                    <!-- ========== HARDWARE - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Hardware</div>
+                    <a href="{% url 'super_admin_hardware' %}" class="nav-item {% if '/super-admin/hardware' in request.path %}active{% endif %}">
+                        <i class="bi bi-laptop nav-icon"></i>
+                        <span class="nav-text">All Hardware</span>
+                        <span class="nav-badge">{{ total_hardware|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'add_hardware' %}" class="nav-item {% if '/super-admin/add-hardware' in request.path %}active{% endif %}">
+                        <i class="bi bi-plus-circle nav-icon"></i>
+                        <span class="nav-text">Add Hardware</span>
+                    </a>
+                    <a href="{% url 'super_admin_assignments' %}" class="nav-item {% if '/super-admin/assignments' in request.path %}active{% endif %}">
+                        <i class="bi bi-clipboard-check nav-icon"></i>
+                        <span class="nav-text">All Assignments</span>
+                        <span class="nav-badge">{{ total_assignments|default:"0" }}</span>
+                    </a>
+                    
+                    <!-- ========== HARDWARE REQUESTS - SUPER ADMIN ========== -->
+                    <div class="nav-section-title">Hardware Requests</div>
+                    <a href="{% url 'super_admin_requests' %}" class="nav-item {% if '/super-admin/requests' in request.path %}active{% endif %}">
+                        <i class="bi bi-clipboard-check nav-icon"></i>
+                        <span class="nav-text">Hardware Requests</span>
+                        <span class="nav-badge">{{ pending_requests|default:"0" }}</span>
+                    </a>
+                    
+                    {% elif user.user_type == 'manager' %}
+                    <!-- ========== MANAGER NAVIGATION ========== -->
+                    <div class="nav-section-title">Hardware Management</div>
+                    <a href="{% url 'manage_hardware' %}" class="nav-item {% if '/hardware/' in request.path %}active{% endif %}">
+                        <i class="bi bi-laptop nav-icon"></i>
+                        <span class="nav-text">Inventory</span>
+                        <span class="nav-badge">{{ hardware_count|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'manager_active_hardware' %}" class="nav-item {% if '/active-hardware/' in request.path %}active{% endif %}">
+                        <i class="bi bi-graph-up nav-icon"></i>
+                        <span class="nav-text">Active Hardware</span>
+                    </a>
+                    
+                    <!-- ========== EMPLOYEE MANAGEMENT - MANAGER ========== -->
+                    <div class="nav-section-title">Employee Management</div>
+                    <a href="{% url 'employee_list' %}" class="nav-item {% if '/employee/' in request.path %}active{% endif %}">
+                        <i class="bi bi-people nav-icon"></i>
+                        <span class="nav-text">Employees</span>
+                        <span class="nav-badge">{{ employee_count|default:"0" }}</span>
+                    </a>
+
+                    <!-- ========== PROJECTS - MANAGER ========== -->
+                    <div class="nav-section-title">Projects</div>
+                    <a href="{% url 'manager_projects' %}" class="nav-item {% if '/manager/projects' in request.path %}active{% endif %}">
+                        <i class="bi bi-folder nav-icon"></i>
+                        <span class="nav-text">Projects</span>
+                        <span class="nav-badge">{{ total_projects|default:"0" }}</span>
+                    </a>
+                    
+                    <!-- ========== OPERATIONS - MANAGER ========== -->
+                    <div class="nav-section-title">Operations</div>
+                    <a href="{% url 'view_assignments' %}" class="nav-item {% if '/assignment/' in request.path %}active{% endif %}">
+                        <i class="bi bi-clipboard-check nav-icon"></i>
+                        <span class="nav-text">Assignments</span>
+                        <span class="nav-badge">{{ assignment_count|default:"0" }}</span>
+                    </a>
+                    <a href="{% url 'create_assignment' %}" class="nav-item {% if '/assignment/' in request.path %}active{% endif %}">
+                        <i class="bi bi-plus-circle nav-icon"></i>
+                        <span class="nav-text">Create Assignment</span>
+                    </a>
+                    <a href="{% url 'view_assignments' %}?pending=1" class="nav-item {% if '/assignment/' in request.path %}active{% endif %}">
+                        <i class="bi bi-arrow-return-left nav-icon"></i>
+                        <span class="nav-text">Pending Returns</span>
+                        <span class="nav-badge">{{ assignment_count|default:"0" }}</span>
+                    </a>
+                    
+                    <!-- ========== VERIFICATION - MANAGER ========== -->
+                    <div class="nav-section-title">Verification</div>
+                    <a href="{% url 'view_serial_entries' %}" class="nav-item {% if '/serial-entries' in request.path %}active{% endif %}">
+                        <i class="bi bi-list-check nav-icon"></i>
+                        <span class="nav-text">Verification</span>
+                        <span class="nav-badge" id="pendingSerialBadge"></span>
+                    </a>
+                    <a href="{% url 'manager_verification_status' %}" class="nav-item {% if '/verification-status' in request.path %}active{% endif %}">
+                        <i class="bi bi-shield-check nav-icon"></i>
+                        <span class="nav-text">Verification Status</span>
+                    </a>
+                    
+                    <!-- ========== TRANSFER MANAGEMENT - MANAGER ========== -->
+                    <div class="nav-section-title">Transfer Management</div>
+                    <a href="{% url 'manager_transfer_requests' %}" class="nav-item">
+                        <i class="bi bi-arrow-left-right nav-icon"></i>
+                        <span class="nav-text">Transfer Requests</span>
+                    </a>
+                                
+                    <!-- ========== AI ASSISTANT - MANAGER ========== -->
+                    <div class="nav-section-title">
+                        <i class="bi bi-stars me-1"></i> AI Assistant
+                    </div>
+                    <a href="{% url 'chatbot' %}" class="nav-item {% if '/chatbot' in request.path %}active{% endif %}">
+                        <i class="bi bi-robot nav-icon"></i>
+                        <span class="nav-text">Hardware AI Bot</span>
+                        <span class="nav-badge bg-gradient-ai">
+                            <i class="bi bi-lightning-charge"></i> AI
+                        </span>
+                    </a>
+                    <a href="#" class="nav-item" data-bs-toggle="modal" data-bs-target="#aiHelpModal">
+                        <i class="bi bi-question-circle nav-icon"></i>
+                        <span class="nav-text">AI Help</span>
+                    </a>
+                    
+                    {% else %}
+                    <!-- ========== EMPLOYEE NAVIGATION ========== -->
+                    <div class="nav-section-title">My Work</div>
+                    <a href="{% url 'view_my_assignments' %}" class="nav-item {% if '/my-assignments' in request.path %}active{% endif %}">
+                        <i class="bi bi-clipboard-data nav-icon"></i>
+                        <span class="nav-text">My Assignments</span>
+                    </a>
+                    <a href="{% url 'my_hardware' %}" class="nav-item {% if '/my-hardware' in request.path %}active{% endif %}">
+                        <i class="bi bi-laptop nav-icon"></i>
+                        <span class="nav-text">My Hardware</span>
+                    </a>
+                    
+                    <div class="nav-section-title">Transfers</div>
+                    <a href="{% url 'my_transfers' %}" class="nav-item">
+                        <i class="bi bi-arrow-left-right nav-icon"></i>
+                        <span class="nav-text">My Transfers</span>
+                    </a>
+                    <a href="{% url 'request_hardware_transfer' %}" class="nav-item">
+                        <i class="bi bi-plus-circle nav-icon"></i>
+                        <span class="nav-text">Request Transfer</span>
+                    </a>
+                    {% endif %}
+                    
+                    <div class="nav-section-title">Settings</div>
+                    <a href="{% url 'profile' %}" class="nav-item {% if request.path == '/profile/' %}active{% endif %}">
+                        <i class="bi bi-gear nav-icon"></i>
+                        <span class="nav-text">Your Profile</span>
+                    </a>
+                    <a href="{% url 'logout' %}" class="nav-item">
+                        <i class="bi bi-box-arrow-right nav-icon"></i>
+                        <span class="nav-text">Logout</span>
+                    </a>
+                </nav>
+            {% endif %}
+            
+            <div class="sidebar-footer">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class="bi bi-person"></i>
+                    </div>
+                    <div class="user-details">
+                        <h6 class="mb-0">{{ user.get_full_name|default:user.username }}</h6>
+                        <small>
+                            <span class="badge {% if user.is_first_login %}bg-warning{% else %}bg-secondary{% endif %} text-white">
+                                {{ user.get_user_type_display }}
+                            </span>
+                            {% if user.branch_location %}
+                            <span class="badge bg-secondary text-white ms-1">
+                                <i class="bi bi-geo-alt"></i> {{ user.branch_location }}
+                            </span>
+                            {% endif %}
+                        </small>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        
+        <main class="main-content">
+            <header class="top-nav">
+                <div class="page-title">
+                    <button class="mobile-menu-btn" id="mobileMenuBtn" aria-label="Toggle menu">
+                        <i class="bi bi-list"></i>
+                    </button>
+                    <div>
+                        <h1>{% block page_title %}Dashboard{% endblock %}</h1>
+                        <p class="mb-0">{% block page_subtitle %}Welcome back, {{ user.get_full_name|default:user.username }}!{% endblock %}</p>
+                    </div>
+                </div>
+                
+                <div class="top-nav-actions">
+                    {% if user.user_type == 'manager' and not user.is_first_login %}
+                    <div class="quick-actions">
+                        <a href="{% url 'add_hardware' %}" class="btn-action primary" title="Add Hardware">
+                            <i class="bi bi-plus-circle"></i>
+                            <span class="btn-text">Add Hardware</span>
+                        </a>
+                        <a href="{% url 'create_assignment' %}" class="btn-action" title="New Assignment">
+                            <i class="bi bi-clipboard-plus"></i>
+                            <span class="btn-text">New Assignment</span>
+                        </a>
+                    </div>
+                    {% elif user.user_type == 'super_admin' %}
+                    
+                    {% endif %}
+                </div>
+            </header>
+            
+            <div class="content-area">
+                {% if user.user_type == 'employee' and user.is_first_login %}
+                <div class="first-login-banner">
+                    <div>
+                        <i class="bi bi-shield-lock"></i>
+                        <strong>First Login Detected!</strong> Please change your password to continue.
+                    </div>
+                    <a href="{% url 'change_password' %}" class="btn btn-light">
+                        <i class="bi bi-key"></i> Change Password
+                    </a>
+                </div>
+                {% endif %}
+                
+                {% if messages %}
+                <div class="messages-container">
+                    {% for message in messages %}
+                    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                        <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' %}exclamation-circle-fill{% elif message.tags == 'warning' %}exclamation-triangle-fill{% else %}info-circle-fill{% endif %}"></i>
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+                
+                {% block content %}{% endblock %}
+            </div>
+            
+            <footer class="main-footer">
+                <div class="copyright">
+                    <i class="bi bi-c-circle"></i> 2000-{% now "Y" %} Eduquity. All rights reserved.
+                    <br>
+                    <small>Thought-leader in the Indian assessment industry since 2000</small>
+                </div>
+            </footer>
+        </main>
+    </div>
+    
+    <!-- AI Help Modal -->
+    <div class="modal fade" id="aiHelpModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content border-0 shadow-lg">
+                <div class="modal-header" style="background: linear-gradient(135deg, #E04D00, #FF6B1A); color: white;">
+                    <h5 class="modal-title">
+                        <i class="bi bi-robot me-2"></i>AI Assistant Help
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="alert alert-info">
+                        <i class="bi bi-lightbulb"></i>
+                        <strong>Pro Tip:</strong> Ask natural language questions like you would ask a colleague!
+                    </div>
+                    
+                    <h6 class="mt-3"><i class="bi bi-chat-dots text-primary"></i> What you can ask:</h6>
+                    <div class="row g-2">
+                        <div class="col-12 col-md-6">
+                            <div class="mb-2">
+                                <div class="fw-semibold mb-1">📊 Hardware Status</div>
+                                <ul class="small text-muted ps-3 mb-0">
+                                    <li>"How many laptops are available?"</li>
+                                    <li>"Show hardware distribution by type"</li>
+                                    <li>"Which hardware needs maintenance?"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="mb-2">
+                                <div class="fw-semibold mb-1">📋 Assignments</div>
+                                <ul class="small text-muted ps-3 mb-0">
+                                    <li>"Show all active assignments"</li>
+                                    <li>"What's overdue?"</li>
+                                    <li>"List assignments due this week"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="mb-2">
+                                <div class="fw-semibold mb-1">👥 Employee Hardware</div>
+                                <ul class="small text-muted ps-3 mb-0">
+                                    <li>"Show hardware for [employee name]"</li>
+                                    <li>"Who has the most hardware?"</li>
+                                    <li>"Employee assignment summary"</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-12 col-md-6">
+                            <div class="mb-2">
+                                <div class="fw-semibold mb-1">🔐 Verification</div>
+                                <ul class="small text-muted ps-3 mb-0">
+                                    <li>"Verification progress report"</li>
+                                    <li>"Show pending verifications"</li>
+                                    <li>"Verification completion rate"</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <hr>
+                    <div class="text-center">
+                        <i class="bi bi-magic text-primary"></i>
+                        <small class="text-muted d-block">Powered by AI • Get instant answers to your hardware questions</small>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary" data-bs-dismiss="modal">
+                        <i class="bi bi-check-lg"></i> Got it
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Floating Chat Button - Only for Managers -->
+    {% if user.user_type == 'manager' %}
+    <div class="floating-chat-btn" id="floatingChatBtn">
+        <a href="{% url 'chatbot' %}" class="chat-trigger" title="Ask AI Assistant">
+            <i class="bi bi-robot"></i>
+            <span class="chat-badge">AI</span>
+        </a>
+    </div>
+    {% endif %}
+    
+    {% else %}
+    <div class="container">
+        {% block auth_content %}{% endblock %}
+    </div>
+    {% endif %}
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Auto-dismiss messages
+            const messages = document.querySelectorAll('.messages-container .alert');
+            if (messages.length > 0) {
+                messages.forEach((msg, index) => {
+                    const delay = index * 300;
+                    setTimeout(function() {
+                        msg.style.transition = 'opacity 0.5s ease, transform 0.5s ease';
+                        msg.style.opacity = '0';
+                        msg.style.transform = 'translateY(-10px)';
+                        setTimeout(function() {
+                            if (msg.parentNode) {
+                                const closeBtn = msg.querySelector('.btn-close');
+                                if (closeBtn) closeBtn.click();
+                                else msg.remove();
+                            }
+                        }, 500);
+                    }, 5000 + delay);
+                });
+            }
+        });
+    </script>
+    <script>
+        $(document).ready(function() {
+            // Mobile menu toggle
+            $('#mobileMenuBtn').click(function(e) {
+                e.stopPropagation();
+                $('#sidebar').addClass('show');
+                $('#overlay').addClass('show');
+                $('body').css('overflow', 'hidden');
+            });
+            
+            $('#overlay').click(function() {
+                $('#sidebar').removeClass('show');
+                $(this).removeClass('show');
+                $('body').css('overflow', 'auto');
+            });
+            
+            $(document).keydown(function(e) {
+                if (e.key === 'Escape') {
+                    $('#sidebar').removeClass('show');
+                    $('#overlay').removeClass('show');
+                    $('body').css('overflow', 'auto');
+                }
+            });
+            
+            $(window).resize(function() {
+                if ($(window).width() > 992) {
+                    $('#sidebar').removeClass('show');
+                    $('#overlay').removeClass('show');
+                    $('body').css('overflow', 'auto');
+                }
+            });
+        });
+    </script>
+    
+    {% block extra_js %}{% endblock %}
+    {% block scripts %}{% endblock %}
+</body>
+</html>

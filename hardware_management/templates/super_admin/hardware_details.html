@@ -1,0 +1,319 @@
+{% extends 'base.html' %}
+{% block title %}Hardware Details - Super Admin{% endblock %}
+
+{% block page_title %}Hardware Details{% endblock %}
+{% block page_subtitle %}View hardware details and assignment history{% endblock %}
+
+{% block extra_css %}
+<style>
+    .detail-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: box-shadow 0.2s ease;
+    }
+    
+    .detail-card:hover {
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+    
+    .status-badge {
+        font-size: 0.8rem;
+        padding: 0.35rem 0.75rem;
+        border-radius: 20px;
+    }
+    
+    .info-label {
+        font-weight: 600;
+        color: #6c757d;
+        font-size: 0.8rem;
+    }
+    
+    .info-value {
+        font-weight: 500;
+        font-size: 0.9rem;
+    }
+    
+    .timeline-item {
+        position: relative;
+        padding-left: 20px;
+        padding-bottom: 20px;
+        border-left: 2px solid #e9ecef;
+    }
+    
+    .timeline-item:last-child {
+        border-left: none;
+        padding-bottom: 0;
+    }
+    
+    .timeline-marker {
+        position: absolute;
+        left: -6px;
+        top: 0;
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+    }
+    
+    .timeline-marker.primary { background: #0d6efd; }
+    .timeline-marker.success { background: #198754; }
+    .timeline-marker.warning { background: #ffc107; }
+    .timeline-marker.danger { background: #dc3545; }
+    .timeline-marker.info { background: #0dcaf0; }
+    
+    .super-admin-badge {
+        font-size: 0.55rem;
+        padding: 0.15rem 0.5rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.7rem;
+    }
+    
+    @media (max-width: 768px) {
+        .info-label, .info-value {
+            font-size: 0.75rem;
+        }
+        .btn {
+            font-size: 0.7rem;
+            padding: 0.25rem 0.5rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h4 class="fw-bold mb-0"><i class="bi bi-laptop me-2 text-primary"></i>Hardware Details</h4>
+                <p class="text-muted small">{{ hardware.asset_number|default:hardware.serial_number }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-2">
+                <span class="super-admin-badge align-self-center">
+                    <i class="bi bi-shield-lock me-1"></i> Super Admin
+                </span>
+                <a href="{% url 'super_admin_hardware' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Hardware Information -->
+    <div class="col-lg-8">
+        <div class="card border-0 shadow-sm detail-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-info-circle me-2"></i>Hardware Information</h5>
+            </div>
+            <div class="card-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Hardware Type</div>
+                            <div class="info-value"><strong>{{ hardware.hardware_type.name }}</strong></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Status</div>
+                            <div class="info-value">
+                                {% if hardware.status == 'available' %}
+                                    <span class="badge bg-success status-badge">Available</span>
+                                {% elif hardware.status == 'assigned' %}
+                                    <span class="badge bg-warning status-badge">Assigned</span>
+                                {% elif hardware.status == 'in_use' %}
+                                    <span class="badge bg-info status-badge">In Use</span>
+                                {% elif hardware.status == 'maintenance' %}
+                                    <span class="badge bg-danger status-badge">Maintenance</span>
+                                {% elif hardware.status == 'retired' %}
+                                    <span class="badge bg-secondary status-badge">Retired</span>
+                                {% else %}
+                                    <span class="badge bg-secondary status-badge">{{ hardware.status }}</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Asset Number</div>
+                            <div class="info-value"><code>{{ hardware.asset_number|default:"N/A" }}</code></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Serial Number</div>
+                            <div class="info-value"><code>{{ hardware.serial_number }}</code></div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Model</div>
+                            <div class="info-value">{{ hardware.model_name|default:"-" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Brand</div>
+                            <div class="info-value">{{ hardware.brand|default:"-" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Purchase Date</div>
+                            <div class="info-value">{{ hardware.purchase_date|date:"d M Y"|default:"-" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="mb-3">
+                            <div class="info-label">Created By</div>
+                            <div class="info-value">{{ hardware.created_by.get_full_name|default:hardware.created_by.username }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <div class="info-label">Branch Location</div>
+                            <div class="info-value">{{ hardware.created_by.branch_location|default:"-" }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="mb-3">
+                            <div class="info-label">Specifications</div>
+                            <div class="info-value">{{ hardware.specifications|default:"No specifications provided"|linebreaks }}</div>
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <div class="info-label">Created At</div>
+                        <div class="info-value"><small>{{ hardware.created_at|date:"d M Y H:i:s" }}</small></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sidebar -->
+    <div class="col-lg-4">
+        <!-- Quick Actions -->
+        <div class="card border-0 shadow-sm detail-card mb-4">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-gear me-2"></i>Quick Actions</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <a href="{% url 'super_admin_edit_hardware' hardware.id %}" class="btn btn-outline-primary btn-sm">
+                        <i class="bi bi-pencil me-1"></i> Edit Hardware
+                    </a>
+                    {% if hardware.status not in 'assigned,in_use' %}
+                    <button type="button" class="btn btn-outline-danger btn-sm" 
+                            data-bs-toggle="modal" data-bs-target="#deleteModal">
+                        <i class="bi bi-trash me-1"></i> Delete Hardware
+                    </button>
+                    {% else %}
+                    <button type="button" class="btn btn-outline-secondary btn-sm" disabled>
+                        <i class="bi bi-lock me-1"></i> Cannot Delete - {{ hardware.get_status_display }}
+                    </button>
+                    {% endif %}
+                    <hr>
+                    <a href="{% url 'super_admin_hardware' %}" class="btn btn-outline-secondary btn-sm">
+                        <i class="bi bi-arrow-left me-1"></i> Back to List
+                    </a>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Assignment History -->
+        <div class="card border-0 shadow-sm detail-card">
+            <div class="card-header bg-white py-3">
+                <h5 class="mb-0 fw-bold"><i class="bi bi-clock-history me-2"></i>Assignment History</h5>
+                <small class="text-muted">{{ assignments|length }} records</small>
+            </div>
+            <div class="card-body p-0">
+                {% if assignments %}
+                <div class="p-3" style="max-height: 400px; overflow-y: auto;">
+                    {% for item in assignments %}
+                    <div class="timeline-item">
+                        <div class="timeline-marker 
+                            {% if item.assignment.actual_return_date %}success
+                            {% else %}warning{% endif %}">
+                        </div>
+                        <div>
+                            <strong>{{ item.assignment.employee.get_full_name|default:item.assignment.employee.username }}</strong>
+                            <br>
+                            <small class="text-muted">{{ item.assignment.project.project_name }}</small>
+                            <br>
+                            <small class="text-muted">
+                                {{ item.assignment.assigned_date|date:"d M Y" }}
+                                {% if item.assignment.actual_return_date %}
+                                    → Returned {{ item.assignment.actual_return_date|date:"d M Y" }}
+                                    <span class="badge bg-success ms-1">Returned</span>
+                                {% else %}
+                                    <span class="badge bg-warning ms-1">Active</span>
+                                {% endif %}
+                            </small>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-4">
+                    <i class="bi bi-inbox display-4 text-muted"></i>
+                    <p class="mt-2 text-muted small">No assignment history</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1" data-bs-backdrop="static">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Delete Hardware</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <div class="text-center mb-3">
+                    <i class="bi bi-laptop display-4 text-danger"></i>
+                </div>
+                <h5 class="text-center mb-3">Delete: {{ hardware.asset_number|default:hardware.serial_number }}?</h5>
+                <div class="alert alert-warning">
+                    <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                    <strong>Warning:</strong> This action cannot be undone.
+                </div>
+                <div class="bg-light p-3 rounded small">
+                    <div class="row g-2">
+                        <div class="col-6"><strong>Type:</strong></div>
+                        <div class="col-6">{{ hardware.hardware_type.name }}</div>
+                        <div class="col-6"><strong>Asset:</strong></div>
+                        <div class="col-6">{{ hardware.asset_number|default:"N/A" }}</div>
+                        <div class="col-6"><strong>Serial:</strong></div>
+                        <div class="col-6">{{ hardware.serial_number }}</div>
+                        <div class="col-6"><strong>Status:</strong></div>
+                        <div class="col-6">{{ hardware.get_status_display }}</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form method="POST" action="{% url 'super_admin_delete_hardware' hardware.id %}" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="bi bi-trash"></i> Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

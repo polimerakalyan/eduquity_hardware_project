@@ -1,0 +1,825 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Manager Dashboard - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.first_name|default:user.username }}! Here's an overview of your hardware management system at <strong class="text-primary">{{ user.branch_location|default:"Head Office" }}</strong>.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== STATISTICS CARDS ========== */
+    .stat-card {
+        border-radius: 14px;
+        border: none;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
+    }
+    
+    .stat-card .stat-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .stat-card .stat-number {
+        font-size: 1.6rem;
+        font-weight: 700;
+        line-height: 1.2;
+        color: #1E293B;
+    }
+    
+    .stat-card .stat-label {
+        font-size: 0.7rem;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        font-weight: 600;
+    }
+    
+    .stat-card .stat-growth {
+        font-size: 0.7rem;
+        font-weight: 600;
+    }
+    
+    .stat-card .stat-growth.up { color: #10B981; }
+    .stat-card .stat-growth.down { color: #EF4444; }
+    
+    /* ========== CHART ========== */
+    .chart-bar {
+        border-radius: 6px 6px 0 0;
+        transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        min-height: 5px;
+        width: 40px;
+        margin: 0 auto;
+    }
+    
+    .chart-bar.bar-success { 
+        background: linear-gradient(180deg, #34D399, #059669);
+        box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+    }
+    .chart-bar.bar-warning { 
+        background: linear-gradient(180deg, #FCD34D, #D97706);
+        box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+    }
+    .chart-bar.bar-info { 
+        background: linear-gradient(180deg, #60A5FA, #2563EB);
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+    .chart-bar.bar-danger { 
+        background: linear-gradient(180deg, #F87171, #DC2626);
+        box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);
+    }
+    
+    /* Chart container */
+    .chart-container {
+        height: 250px;
+        position: relative;
+        padding: 10px 0;
+    }
+    
+    .chart-y-axis {
+        width: 40px;
+        font-size: 0.6rem;
+        color: #94A3B8;
+        flex-shrink: 0;
+    }
+    
+    .chart-bars-container {
+        flex: 1;
+        height: 100%;
+        display: flex;
+        align-items: flex-end;
+        justify-content: space-around;
+        padding-left: 10px;
+    }
+    
+    .chart-bar-wrapper {
+        width: 60px;
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+    }
+    
+    /* ========== QUICK ACTION CARDS ========== */
+    .quick-action-card {
+        border-radius: 12px;
+        border: 2px solid #F1F5F9;
+        transition: all 0.3s ease;
+        padding: 1.2rem;
+        text-align: center;
+        background: #FAFBFC;
+        cursor: pointer;
+    }
+    
+    .quick-action-card:hover {
+        border-color: #E04D00;
+        background: #FFF7F3;
+        transform: translateY(-3px);
+        box-shadow: 0 8px 20px rgba(224, 77, 0, 0.08);
+    }
+    
+    .quick-action-card .icon-wrapper {
+        width: 48px;
+        height: 48px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 0.75rem;
+    }
+    
+    .quick-action-card .icon-wrapper.primary { background: #EEF2FF; color: #4F46E5; }
+    .quick-action-card .icon-wrapper.success { background: #ECFDF5; color: #059669; }
+    .quick-action-card .icon-wrapper.warning { background: #FFFBEB; color: #D97706; }
+    .quick-action-card .icon-wrapper.info { background: #EFF6FF; color: #2563EB; }
+    
+    .quick-action-card h6 {
+        font-size: 0.85rem;
+        font-weight: 600;
+        color: #1E293B;
+        margin-bottom: 0.2rem;
+    }
+    
+    .quick-action-card small {
+        font-size: 0.7rem;
+        color: #94A3B8;
+    }
+    
+    /* ========== TABLE ========== */
+    .table-dashboard th {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #94A3B8;
+        font-weight: 600;
+        border-bottom: 2px solid #F1F5F9;
+        padding: 0.6rem 0.5rem;
+    }
+    
+    .table-dashboard td {
+        padding: 0.6rem 0.5rem;
+        font-size: 0.8rem;
+        vertical-align: middle;
+        border-bottom: 1px solid #F8FAFC;
+    }
+    
+    .table-dashboard tr:hover td {
+        background: #FAFBFC;
+    }
+    
+    /* ========== VERIFICATION CIRCLE ========== */
+    .circular-chart {
+        width: 140px;
+        height: 140px;
+        display: block;
+        margin: 0 auto;
+    }
+    
+    .circle-bg {
+        fill: none;
+        stroke: #F1F5F9;
+        stroke-width: 4;
+    }
+    
+    .circle {
+        fill: none;
+        stroke: #10B981;
+        stroke-width: 4;
+        stroke-linecap: round;
+        transition: stroke-dasharray 0.8s ease;
+    }
+    
+    .circle-text {
+        fill: #1E293B;
+        font-size: 10px;
+        text-anchor: middle;
+        font-weight: 700;
+    }
+    
+    .circle-label {
+        fill: #94A3B8;
+        font-size: 4px;
+        text-anchor: middle;
+    }
+    
+    /* ========== ACTIVITY LIST ========== */
+    .activity-list {
+        max-height: 380px;
+        overflow-y: auto;
+    }
+    
+    .activity-list::-webkit-scrollbar {
+        width: 4px;
+    }
+    
+    .activity-list::-webkit-scrollbar-track {
+        background: #F1F5F9;
+        border-radius: 10px;
+    }
+    
+    .activity-list::-webkit-scrollbar-thumb {
+        background: #CBD5E1;
+        border-radius: 10px;
+    }
+    
+    .activity-item {
+        padding: 0.8rem 1rem;
+        border-bottom: 1px solid #F8FAFC;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:hover {
+        background: #FAFBFC;
+    }
+    
+    .activity-item:last-child {
+        border-bottom: none;
+    }
+    
+    .activity-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        flex-shrink: 0;
+        margin-top: 6px;
+    }
+    
+    .activity-dot.primary { background: #4F46E5; }
+    .activity-dot.success { background: #10B981; }
+    .activity-dot.warning { background: #F59E0B; }
+    .activity-dot.info { background: #3B82F6; }
+    .activity-dot.danger { background: #EF4444; }
+    
+    /* ========== BRANCH BANNER ========== */
+    .branch-banner {
+        border-radius: 12px;
+        padding: 0.8rem 1.2rem;
+        background: #F8FAFC;
+        border: 1px solid #E2E8F0;
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: space-between;
+        gap: 0.5rem;
+    }
+    
+    .branch-banner .branch-name {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    .branch-banner .branch-badge {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.6rem;
+        border-radius: 20px;
+        background: #E04D00;
+        color: white;
+        font-weight: 500;
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 576px) {
+        .stat-card .stat-number {
+            font-size: 1.2rem;
+        }
+        .stat-card .stat-icon {
+            width: 36px;
+            height: 36px;
+        }
+        .stat-card .stat-icon i {
+            font-size: 1rem !important;
+        }
+        .stat-card .card-body {
+            padding: 0.75rem !important;
+        }
+        .quick-action-card {
+            padding: 0.8rem;
+        }
+        .quick-action-card .icon-wrapper {
+            width: 36px;
+            height: 36px;
+        }
+        .quick-action-card .icon-wrapper i {
+            font-size: 1.2rem !important;
+        }
+        .quick-action-card h6 {
+            font-size: 0.75rem;
+        }
+        .quick-action-card small {
+            font-size: 0.6rem;
+        }
+        .circular-chart {
+            width: 100px;
+            height: 100px;
+        }
+        .table-dashboard td, .table-dashboard th {
+            font-size: 0.65rem;
+            padding: 0.3rem 0.2rem;
+        }
+        .activity-item {
+            padding: 0.5rem 0.6rem;
+        }
+        .activity-item .activity-text {
+            font-size: 0.7rem;
+        }
+        .branch-banner {
+            padding: 0.6rem 0.8rem;
+            flex-direction: column;
+            align-items: stretch;
+            text-align: center;
+        }
+        .branch-banner .branch-name {
+            font-size: 0.8rem;
+        }
+        .chart-bar {
+            width: 28px !important;
+        }
+        .chart-container {
+            height: 180px !important;
+        }
+        .chart-bar-wrapper {
+            width: 45px !important;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-card .stat-number {
+            font-size: 1.3rem;
+        }
+        .stat-card .stat-icon {
+            width: 40px;
+            height: 40px;
+        }
+        .stat-card .card-body {
+            padding: 0.8rem !important;
+        }
+        .quick-action-card {
+            padding: 1rem;
+        }
+        .chart-bar {
+            width: 32px !important;
+        }
+        .chart-container {
+            height: 200px !important;
+        }
+    }
+    
+    @media (max-width: 992px) {
+        .col-xl-3, .col-xl-4, .col-xl-5, .col-xl-6, .col-xl-7 {
+            margin-bottom: 1rem;
+        }
+        .quick-action-card {
+            padding: 1rem;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Branch Location Banner -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="branch-banner">
+            <div>
+                <i class="bi bi-building me-2 text-primary"></i>
+                <span class="branch-name">{{ user.branch_location|default:"Head Office" }}</span>
+                <span class="branch-badge ms-2">{{ user.get_user_type_display }}</span>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+                <div class="d-flex align-items-center gap-1">
+                    <i class="bi bi-person-circle text-muted"></i>
+                    <small class="text-muted">{{ user.get_full_name|default:user.username }}</small>
+                </div>
+                <div class="d-flex align-items-center gap-1">
+                    <i class="bi bi-calendar text-muted"></i>
+                    <small class="text-muted">{{ today|date:"d M Y" }}</small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-2 g-md-3 mb-3 mb-md-4">
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Total Employees</div>
+                        <div class="stat-number">{{ total_employees|default:"0" }}</div>
+                        <div class="stat-growth {% if employee_growth >= 0 %}up{% else %}down{% endif %}">
+                            <i class="bi bi-arrow-{% if employee_growth >= 0 %}up{% else %}down{% endif %}-short"></i>
+                            {{ employee_growth|default:"0"|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="stat-icon" style="background: #EEF2FF; color: #4F46E5;">
+                        <i class="bi bi-people-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Active Projects</div>
+                        <div class="stat-number">{{ total_projects|default:"0" }}</div>
+                        <div class="stat-growth {% if project_growth >= 0 %}up{% else %}down{% endif %}">
+                            <i class="bi bi-arrow-{% if project_growth >= 0 %}up{% else %}down{% endif %}-short"></i>
+                            {{ project_growth|default:"0"|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="stat-icon" style="background: #ECFDF5; color: #059669;">
+                        <i class="bi bi-folder-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Active Assignments</div>
+                        <div class="stat-number">{{ active_assignments|default:"0" }}</div>
+                        <div class="stat-growth {% if assignment_growth >= 0 %}up{% else %}down{% endif %}">
+                            <i class="bi bi-arrow-{% if assignment_growth >= 0 %}up{% else %}down{% endif %}-short"></i>
+                            {{ assignment_growth|default:"0"|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="stat-icon" style="background: #FFFBEB; color: #D97706;">
+                        <i class="bi bi-clipboard-check-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-xl-3">
+        <div class="card stat-card shadow-sm">
+            <div class="card-body p-2 p-md-3">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <div class="stat-label">Hardware Items</div>
+                        <div class="stat-number">{{ hardware_count|default:"0" }}</div>
+                        <div class="stat-growth {% if hardware_growth >= 0 %}up{% else %}down{% endif %}">
+                            <i class="bi bi-arrow-{% if hardware_growth >= 0 %}up{% else %}down{% endif %}-short"></i>
+                            {{ hardware_growth|default:"0"|floatformat:1 }}%
+                        </div>
+                    </div>
+                    <div class="stat-icon" style="background: #EFF6FF; color: #2563EB;">
+                        <i class="bi bi-laptop-fill fs-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 g-md-4 mb-3 mb-md-4">
+    <!-- Hardware Status Chart - COMPLETELY FIXED -->
+<div class="col-12 col-xl-7">
+    <div class="card border-0 shadow-sm">
+        <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 py-md-3">
+            <h5 class="mb-0 fw-bold small">
+                <i class="bi bi-pie-chart-fill me-2 text-primary"></i>Hardware Status
+                <span class="badge bg-light text-dark ms-2">{{ hardware_count }} total</span>
+            </h5>
+            <span class="badge bg-light text-dark" style="font-size: 0.6rem;">
+                <i class="bi bi-building me-1"></i> {{ user.branch_location|default:"Head Office" }}
+            </span>
+        </div>
+        <div class="card-body p-2 p-md-3">
+            <div class="row g-2">
+                <div class="col-12 col-md-8">
+                    <div class="chart-container" style="height: 250px; position: relative; padding: 10px 0;">
+                        <div class="d-flex h-100">
+                            <!-- Y-axis labels -->
+                            <div class="d-flex flex-column justify-content-between text-end" style="width: 45px; font-size: 0.6rem; color: #94A3B8; flex-shrink: 0; padding-right: 8px;">
+                                <span>{{ scale_values.0 }}</span>
+                                <span>{{ scale_values.1 }}</span>
+                                <span>{{ scale_values.2 }}</span>
+                                <span>{{ scale_values.3 }}</span>
+                                <span>0</span>
+                            </div>
+                            <!-- Bars -->
+                            <div class="flex-grow-1 d-flex align-items-end justify-content-around" style="height: 100%; padding-left: 5px;">
+                                {% for status in hardware_status %}
+                                <div class="text-center" style="width: 60px; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center;">
+                                    <div class="chart-bar bar-{{ status.color }}" 
+                                         style="height: {{ status.height|floatformat:1 }}%; min-height: 5px; width: 40px; border-radius: 6px 6px 0 0; transition: height 0.8s cubic-bezier(0.4, 0, 0.2, 1); 
+                                         {% if status.color == 'success' %}background: linear-gradient(180deg, #34D399, #059669); box-shadow: 0 2px 8px rgba(5, 150, 105, 0.3);
+                                         {% elif status.color == 'warning' %}background: linear-gradient(180deg, #FCD34D, #D97706); box-shadow: 0 2px 8px rgba(217, 119, 6, 0.3);
+                                         {% elif status.color == 'info' %}background: linear-gradient(180deg, #60A5FA, #2563EB); box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+                                         {% else %}background: linear-gradient(180deg, #F87171, #DC2626); box-shadow: 0 2px 8px rgba(220, 38, 38, 0.3);{% endif %}">
+                                         <span class="position-absolute" style="top: -18px; font-size: 0.6rem; font-weight: 600; color: #1E293B;">{{ status.count }}</span>
+                                    </div>
+                                    <span class="text-muted small d-block mt-1" style="font-size: 0.55rem;">{{ status.name }}</span>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-12 col-md-4">
+                    <div class="d-flex flex-column gap-1">
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light">
+                            <span class="small"><span class="badge bg-success me-2" style="width: 8px; height: 8px; padding: 0; display: inline-block;"></span> Available</span>
+                            <strong class="text-success small">{{ available_count }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light">
+                            <span class="small"><span class="badge bg-warning me-2" style="width: 8px; height: 8px; padding: 0; display: inline-block;"></span> Assigned</span>
+                            <strong class="text-warning small">{{ assigned_count }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light">
+                            <span class="small"><span class="badge bg-info me-2" style="width: 8px; height: 8px; padding: 0; display: inline-block;"></span> In Use</span>
+                            <strong class="text-info small">{{ in_use_count }}</strong>
+                        </div>
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-light">
+                            <span class="small"><span class="badge bg-danger me-2" style="width: 8px; height: 8px; padding: 0; display: inline-block;"></span> Maintenance</span>
+                            <strong class="text-danger small">{{ maintenance_count }}</strong>
+                        </div>
+                        <hr class="my-1">
+                        <div class="d-flex align-items-center justify-content-between p-2 rounded bg-primary bg-opacity-10">
+                            <span class="small fw-bold">Total Hardware</span>
+                            <strong class="text-primary fs-6">{{ hardware_count }}</strong>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+    <!-- Verification Status -->
+    <div class="col-12 col-xl-5">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-2 py-md-3">
+                <h5 class="mb-0 fw-bold small">
+                    <i class="bi bi-shield-check me-2 text-success"></i>Verification Status
+                </h5>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <div class="text-center mb-2">
+                    <div class="position-relative d-inline-block">
+                        <svg viewBox="0 0 36 36" class="circular-chart">
+                            <path class="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <path class="circle" stroke-dasharray="{{ verification_rate }}, 100" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                            <text x="18" y="20.5" class="circle-text">{{ verification_rate }}%</text>
+                            <text x="18" y="24.5" class="circle-label">VERIFIED</text>
+                        </svg>
+                    </div>
+                    <div class="mt-2">
+                        <span class="fw-bold">{{ verified_count }}</span>
+                        <span class="text-muted small"> / {{ total_verifications }} verified</span>
+                    </div>
+                </div>
+                <div class="row g-1">
+                    <div class="col-6">
+                        <div class="p-2 rounded text-center bg-success bg-opacity-10">
+                            <i class="bi bi-check-circle-fill text-success fs-5"></i>
+                            <div class="fw-bold small">{{ verified_count }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Verified</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="p-2 rounded text-center bg-warning bg-opacity-10">
+                            <i class="bi bi-clock-history text-warning fs-5"></i>
+                            <div class="fw-bold small">{{ pending_verifications }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Pending</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 g-md-4 mb-3 mb-md-4">
+    <!-- Recent Activity -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 py-md-3">
+                <h5 class="mb-0 fw-bold small">
+                    <i class="bi bi-clock-history me-2 text-primary"></i>Recent Activity
+                </h5>
+                <span class="badge bg-light text-dark">{{ recent_activities|length }} activities</span>
+            </div>
+            <div class="card-body p-0">
+                <div class="activity-list">
+                    {% for activity in recent_activities %}
+                    <div class="activity-item">
+                        <div class="d-flex gap-2 align-items-start">
+                            <div class="activity-dot {{ activity.color }}"></div>
+                            <div class="flex-grow-1">
+                                <div class="d-flex flex-wrap justify-content-between align-items-start gap-1">
+                                    <strong class="small activity-text">{{ activity.title }}</strong>
+                                    {% if activity.badge %}
+                                    <span class="badge bg-{{ activity.color }} bg-opacity-10 text-{{ activity.color }} px-2 py-1" style="font-size: 0.5rem;">
+                                        {{ activity.badge }}
+                                    </span>
+                                    {% endif %}
+                                </div>
+                                <div class="small text-muted activity-text">{{ activity.description }}</div>
+                                <small class="text-muted" style="font-size: 0.6rem;">{{ activity.timestamp|timesince }} ago</small>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-4">
+                        <i class="bi bi-inbox text-muted" style="font-size: 2rem;"></i>
+                        <p class="text-muted small mt-2 mb-0">No recent activities</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm h-100">
+            <div class="card-header bg-white border-0 py-2 py-md-3">
+                <h5 class="mb-0 fw-bold small">
+                    <i class="bi bi-lightning-charge me-2 text-warning"></i>Quick Actions
+                </h5>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <div class="row g-2">
+                    <div class="col-6">
+                        <a href="{% url 'manager_transfer_requests' %}" class="quick-action-card d-block text-decoration-none">
+                            <div class="icon-wrapper primary">
+                                <i class="bi bi-person-plus fs-4"></i>
+                            </div>
+                            <h6>Transfer Requests</h6>
+                            <small>Chech Transfer Requests</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'view_serial_entries' %}" class="quick-action-card d-block text-decoration-none">
+                            <div class="icon-wrapper info">
+                                <i class="bi bi-laptop fs-4"></i>
+                            </div>
+                            <h6>Verify The Hardware</h6>
+                            <small>Verification for Active Assignments</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'create_assignment' %}" class="quick-action-card d-block text-decoration-none">
+                            <div class="icon-wrapper warning">
+                                <i class="bi bi-clipboard-plus fs-4"></i>
+                            </div>
+                            <h6>Create Assignment</h6>
+                            <small>Assign hardware to employees</small>
+                        </a>
+                    </div>
+                    <div class="col-6">
+                        <a href="{% url 'manage_hardware' %}" class="quick-action-card d-block text-decoration-none">
+                            <div class="icon-wrapper success">
+                                <i class="bi bi-box-seam fs-4"></i>
+                            </div>
+                            <h6>Manage Inventory</h6>
+                            <small>View and manage hardware</small>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-3 g-md-4">
+    <!-- Recent Assignments -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 py-md-3">
+                <h5 class="mb-0 fw-bold small">
+                    <i class="bi bi-clipboard-data me-2 text-primary"></i>Recent Assignments
+                </h5>
+                <a href="{% url 'view_assignments' %}" class="btn btn-sm btn-outline-primary" style="font-size: 0.65rem;">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dashboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th class="d-none d-sm-table-cell">Project</th>
+                                <th class="d-none d-md-table-cell">Date</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for assignment in assignments %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="rounded-circle bg-primary bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                            <i class="bi bi-person-fill text-primary" style="font-size: 0.6rem;"></i>
+                                        </div>
+                                        <span class="small">{{ assignment.employee.get_full_name|default:assignment.employee.username|truncatechars:12 }}</span>
+                                    </div>
+                                </td>
+                                <td class="d-none d-sm-table-cell small">{{ assignment.project.project_name|truncatechars:15 }}</td>
+                                <td class="d-none d-md-table-cell small">{{ assignment.assigned_date|date:"d/m/Y" }}</td>
+                                <td class="text-center">
+                                    {% if assignment.actual_return_date %}
+                                        <span class="badge bg-success" style="font-size: 0.5rem;">Returned</span>
+                                    {% else %}
+                                        <span class="badge bg-warning text-dark" style="font-size: 0.5rem;">Active</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3">
+                                    <i class="bi bi-inbox text-muted" style="font-size: 1.5rem;"></i>
+                                    <p class="text-muted small mt-1 mb-0">No assignments yet</p>
+                                    <a href="{% url 'create_assignment' %}" class="btn btn-sm btn-primary mt-2" style="font-size: 0.65rem;">Create First Assignment</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Employees -->
+    <div class="col-12 col-xl-6">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-white border-0 d-flex flex-wrap justify-content-between align-items-center gap-2 py-2 py-md-3">
+                <h5 class="mb-0 fw-bold small">
+                    <i class="bi bi-people me-2 text-primary"></i>Recent Employees
+                </h5>
+                <a href="{% url 'employee_list' %}" class="btn btn-sm btn-outline-primary" style="font-size: 0.65rem;">
+                    View All <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-dashboard mb-0">
+                        <thead>
+                            <tr>
+                                <th>Employee</th>
+                                <th class="d-none d-sm-table-cell">Email</th>
+                                <th class="d-none d-md-table-cell">Phone</th>
+                                <th class="text-center">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for employee in employees %}
+                            <tr>
+                                <td>
+                                    <div class="d-flex align-items-center gap-1">
+                                        <div class="rounded-circle bg-success bg-opacity-10 d-flex align-items-center justify-content-center" style="width: 24px; height: 24px;">
+                                            <i class="bi bi-person-fill text-success" style="font-size: 0.6rem;"></i>
+                                        </div>
+                                        <span class="small">{{ employee.get_full_name|default:employee.username|truncatechars:12 }}</span>
+                                    </div>
+                                </td>
+                                <td class="d-none d-sm-table-cell small text-truncate" style="max-width: 100px;">{{ employee.email }}</td>
+                                <td class="d-none d-md-table-cell small">{{ employee.phone|default:"—" }}</td>
+                                <td class="text-center">
+                                    {% if employee.is_active %}
+                                        <span class="badge bg-success" style="font-size: 0.5rem;">Active</span>
+                                    {% else %}
+                                        <span class="badge bg-danger" style="font-size: 0.5rem;">Inactive</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="4" class="text-center py-3">
+                                    <i class="bi bi-people text-muted" style="font-size: 1.5rem;"></i>
+                                    <p class="text-muted small mt-1 mb-0">No employees yet</p>
+                                    <a href="{% url 'create_employee' %}" class="btn btn-sm btn-primary mt-2" style="font-size: 0.65rem;">Add First Employee</a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

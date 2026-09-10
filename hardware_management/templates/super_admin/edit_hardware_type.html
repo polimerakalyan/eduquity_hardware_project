@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Edit Hardware Type - Super Admin{% endblock %}
+
+{% block page_title %}Edit Hardware Type{% endblock %}
+{% block page_subtitle %}Update hardware type details{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h4 class="fw-bold mb-0">
+                    <i class="bi bi-pencil-square text-primary me-2"></i>Edit Hardware Type
+                </h4>
+                <p class="text-muted small mb-0">Update hardware type details</p>
+            </div>
+            <div>
+                <a href="{% url 'manage_hardware_types' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back to Types
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row justify-content-center">
+    <div class="col-lg-6">
+        <div class="card shadow-sm">
+            <div class="card-header bg-primary text-white py-2 py-md-3">
+                <h5 class="mb-0">
+                    <i class="bi bi-tag me-2"></i>Hardware Type Details
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <form method="POST">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Type Name <span class="text-danger">*</span></label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-tag"></i>
+                            </span>
+                            <input type="text" class="form-control" id="name" name="name" 
+                                   value="{{ hardware_type.name }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="icon" class="form-label">Icon</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-emoji-smile"></i>
+                            </span>
+                            <select class="form-select" id="icon" name="icon">
+                                <option value="laptop" {% if hardware_type.icon == 'laptop' %}selected{% endif %}>💻 Laptop</option>
+                                <option value="plug" {% if hardware_type.icon == 'plug' %}selected{% endif %}>🔌 Charger</option>
+                                <option value="shield" {% if hardware_type.icon == 'shield' %}selected{% endif %}>🛡️ Firewall</option>
+                                <option value="box" {% if hardware_type.icon == 'box' %}selected{% endif %}>📦 CADC Box</option>
+                                <option value="upc-scan" {% if hardware_type.icon == 'upc-scan' %}selected{% endif %}>📷 Barcode Scanner</option>
+                                <option value="hdd-stack" {% if hardware_type.icon == 'hdd-stack' %}selected{% endif %}>💾 L1 Device</option>
+                                <option value="cpu" {% if hardware_type.icon == 'cpu' %}selected{% endif %}>🖥️ Tatwik</option>
+                                <option value="camera" {% if hardware_type.icon == 'camera' %}selected{% endif %}>📷 Camera</option>
+                                <option value="wifi" {% if hardware_type.icon == 'wifi' %}selected{% endif %}>📶 Router</option>
+                                <option value="router" {% if hardware_type.icon == 'router' %}selected{% endif %}>🔀 Switch</option>
+                                <option value="printer" {% if hardware_type.icon == 'printer' %}selected{% endif %}>🖨️ Printer</option>
+                                <option value="tablet" {% if hardware_type.icon == 'tablet' %}selected{% endif %}>📱 Tablet</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <div class="input-group">
+                            <span class="input-group-text">
+                                <i class="bi bi-file-text"></i>
+                            </span>
+                            <textarea class="form-control" id="description" name="description" 
+                                      rows="3">{{ hardware_type.description|default:'' }}</textarea>
+                        </div>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle me-2"></i>
+                        <strong>Hardware Items:</strong> {{ hardware_type.hardware_set.count }} items use this type
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-save me-1"></i> Update Type
+                        </button>
+                        <a href="{% url 'manage_hardware_types' %}" class="btn btn-outline-secondary">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

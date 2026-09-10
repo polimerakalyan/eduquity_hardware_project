@@ -1,0 +1,689 @@
+{% extends 'base.html' %}
+{% block title %}Manager Registration - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="register-wrapper">
+    <div class="register-card">
+        <!-- Header -->
+        <div class="register-header">
+            <div class="header-icon">
+                <i class="bi bi-person-plus"></i>
+            </div>
+            <h2>Manager Registration</h2>
+            <p class="text-muted">Create a new manager account for your branch</p>
+            {% if user.is_authenticated and user.user_type == 'super_admin' %}
+            <span class="badge super-admin-badge">
+                <i class="bi bi-shield-lock"></i> Super Admin Access
+            </span>
+            {% endif %}
+        </div>
+
+        <!-- Messages -->
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    <i class="bi bi-{% if message.tags == 'success' %}check-circle-fill{% elif message.tags == 'error' %}exclamation-circle-fill{% else %}info-circle-fill{% endif %} me-2"></i>
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+
+        <!-- Form -->
+        <form method="POST" action="{% url 'super_admin_create_manager' %}" class="registration-form">
+            {% csrf_token %}
+            
+            <div class="form-grid">
+                <!-- First Name -->
+                <div class="form-group">
+                    <label for="first_name" class="form-label">First Name <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="first_name" name="first_name" 
+                           placeholder="Enter first name" required>
+                </div>
+
+                <!-- Last Name -->
+                <div class="form-group">
+                    <label for="last_name" class="form-label">Last Name</label>
+                    <input type="text" class="form-control" id="last_name" name="last_name" 
+                           placeholder="Enter last name">
+                </div>
+
+                <!-- Username -->
+                <div class="form-group">
+                    <label for="username" class="form-label">Username <span class="required">*</span></label>
+                    <input type="text" class="form-control" id="username" name="username" 
+                           placeholder="Choose username" required>
+                </div>
+
+                <!-- Email -->
+                <div class="form-group">
+                    <label for="email" class="form-label">Email Address <span class="required">*</span></label>
+                    <input type="email" class="form-control" id="email" name="email" 
+                           placeholder="your.email@eduquity.com" required>
+                </div>
+
+                <!-- Phone Number -->
+                <div class="form-group">
+                    <label for="phone" class="form-label">Phone Number</label>
+                    <input type="tel" class="form-control" id="phone" name="phone" 
+                           placeholder="+91 9876543210">
+                </div>
+
+                <!-- Branch Location -->
+                <div class="form-group">
+                    <label for="branch_location" class="form-label">Branch Location <span class="required">*</span></label>
+                    <select class="form-select" id="branch_location" name="branch_location" required>
+                        <option value="">Select Branch Location</option>
+                        <option value="Hyderabad">Hyderabad</option>
+                        <option value="Bangalore">Bangalore</option>
+                        <option value="Mumbai">Mumbai</option>
+                        <option value="Delhi">Delhi</option>
+                        <option value="Chennai">Chennai</option>
+                        <option value="Pune">Pune</option>
+                        <option value="Bhubaneswar">Bhubaneswar</option>
+                        <option value="Kolkata">Kolkata</option>
+                        <option value="viz">Vishakapatnam</option>
+                    </select>
+                </div>
+
+                <!-- Password -->
+                <div class="form-group">
+                    <label for="password" class="form-label">Password <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" class="form-control" id="password" name="password" 
+                               placeholder="Enter password" required minlength="8">
+                        <button type="button" class="password-toggle" onclick="togglePassword('password')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <small class="text-muted">Minimum 8 characters</small>
+                    <div class="password-strength mt-1"></div>
+                </div>
+
+                <!-- Confirm Password -->
+                <div class="form-group">
+                    <label for="confirm_password" class="form-label">Confirm Password <span class="required">*</span></label>
+                    <div class="password-wrapper">
+                        <input type="password" class="form-control" id="confirm_password" name="confirm_password" 
+                               placeholder="Confirm password" required>
+                        <button type="button" class="password-toggle" onclick="togglePassword('confirm_password')">
+                            <i class="bi bi-eye"></i>
+                        </button>
+                    </div>
+                    <div class="password-match-error text-danger small mt-1" style="display: none;">
+                        <i class="bi bi-exclamation-circle"></i> Passwords do not match
+                    </div>
+                </div>
+
+                <!-- Password Requirements - Full Width -->
+                <div class="form-group full-width">
+                    <div class="password-hints">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> Password requirements:
+                        </small>
+                        <ul class="small mt-1 mb-0">
+                            <li><i class="bi bi-check-circle"></i> At least 8 characters long</li>
+                            <li><i class="bi bi-check-circle"></i> Use a mix of letters, numbers, and symbols</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Super Admin Notice - Full Width -->
+                {% if user.is_authenticated and user.user_type == 'super_admin' %}
+                <div class="form-group full-width">
+                    <div class="notice-box">
+                        <i class="bi bi-shield-lock-fill"></i>
+                        <div>
+                            <strong>Super Admin Access:</strong>
+                            <p class="mb-0">You are creating a manager account. This manager will have full administrative privileges for their branch.</p>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" class="btn btn-register w-100">
+                <i class="bi bi-person-plus me-2"></i> Register as Manager
+            </button>
+        </form>
+
+        <!-- Footer Links -->
+        <div class="form-footer">
+            <p class="security-note mt-3">
+                <i class="bi bi-shield-lock"></i> 
+                Manager accounts have full branch administrative privileges
+            </p>
+        </div>
+    </div>
+</div>
+
+<style>
+    /* ===== MAIN WRAPPER ===== */
+    .register-wrapper {
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+
+    /* ===== CARD ===== */
+    .register-card {
+        max-width: 1000px;
+        width: 100%;
+        background: white;
+        border-radius: 20px;
+        padding: 45px 40px 35px;
+        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.25);
+        animation: slideUp 0.5s ease;
+    }
+
+    /* ===== FORM GRID ===== */
+    .form-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px 20px;
+    }
+
+    .form-group {
+        margin-bottom: 0;
+    }
+
+    .form-group.full-width {
+        grid-column: 1 / -1;
+    }
+
+    /* ===== HEADER ===== */
+    .register-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .header-icon {
+        width: 70px;
+        height: 70px;
+        background: linear-gradient(135deg, #E04D00, #FF6B1A);
+        border-radius: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        box-shadow: 0 8px 20px rgba(224, 77, 0, 0.3);
+    }
+
+    .header-icon i {
+        font-size: 32px;
+        color: white;
+    }
+
+    .register-header h2 {
+        font-size: 26px;
+        font-weight: 700;
+        color: #1a1a2e;
+        margin-bottom: 4px;
+    }
+
+    .register-header p {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 10px;
+    }
+
+    .super-admin-badge {
+        background: linear-gradient(135deg, #E04D00, #b33e00);
+        color: white;
+        padding: 6px 16px;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 12px;
+        display: inline-block;
+        letter-spacing: 0.3px;
+    }
+
+    .super-admin-badge i {
+        margin-right: 5px;
+    }
+
+    /* ===== FORM LABELS ===== */
+    .form-label {
+        font-weight: 600;
+        font-size: 13px;
+        color: #2d3748;
+        margin-bottom: 5px;
+        display: block;
+    }
+
+    .required {
+        color: #dc3545;
+        font-weight: 700;
+    }
+
+    /* ===== FORM INPUTS ===== */
+    .form-control,
+    .form-select {
+        width: 100%;
+        padding: 10px 14px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+        background: white;
+        color: #1a1a2e;
+        height: 44px;
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 4px rgba(224, 77, 0, 0.08);
+        outline: none;
+    }
+
+    .form-control::placeholder {
+        color: #adb5bd;
+    }
+
+    .form-control.error {
+        border-color: #dc3545;
+    }
+
+    .form-control.success {
+        border-color: #28a745;
+    }
+
+    /* ===== PASSWORD WRAPPER ===== */
+    .password-wrapper {
+        position: relative;
+    }
+
+    .password-wrapper .form-control {
+        padding-right: 42px;
+    }
+
+    .password-toggle {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background: none;
+        border: none;
+        cursor: pointer;
+        color: #adb5bd;
+        padding: 4px;
+        transition: all 0.3s ease;
+    }
+
+    .password-toggle:hover {
+        color: #E04D00;
+    }
+
+    /* ===== PASSWORD STRENGTH ===== */
+    .password-strength {
+        font-size: 12px;
+        font-weight: 500;
+        min-height: 18px;
+    }
+
+    .password-strength.weak { color: #dc3545; }
+    .password-strength.medium { color: #ffc107; }
+    .password-strength.strong { color: #28a745; }
+
+    .text-muted {
+        font-size: 12px;
+        color: #6c757d;
+    }
+
+    /* ===== PASSWORD HINTS ===== */
+    .password-hints {
+        background: #f8f9fa;
+        padding: 10px 14px;
+        border-radius: 8px;
+        margin-top: 0;
+        width: 100%;
+    }
+
+    .password-hints ul {
+        list-style: none;
+        padding-left: 0;
+        margin-top: 4px;
+        margin-bottom: 0;
+    }
+
+    .password-hints ul li {
+        font-size: 12px;
+        color: #6c757d;
+        margin-bottom: 2px;
+    }
+
+    .password-hints ul li i {
+        color: #28a745;
+        margin-right: 4px;
+        font-size: 14px;
+    }
+
+    /* ===== NOTICE BOX ===== */
+    .notice-box {
+        display: flex;
+        align-items: flex-start;
+        gap: 12px;
+        background: #fff8f4;
+        border-left: 4px solid #E04D00;
+        padding: 12px 16px;
+        border-radius: 8px;
+        width: 100%;
+    }
+
+    .notice-box i {
+        font-size: 20px;
+        color: #E04D00;
+        margin-top: 2px;
+        flex-shrink: 0;
+    }
+
+    .notice-box strong {
+        font-size: 13px;
+        color: #2d3748;
+    }
+
+    .notice-box p {
+        font-size: 12px;
+        color: #495057;
+        margin-top: 2px;
+    }
+
+    /* ===== REGISTER BUTTON ===== */
+    .btn-register {
+        background: linear-gradient(135deg, #E04D00, #b33e00);
+        color: white;
+        border: none;
+        border-radius: 12px;
+        padding: 14px;
+        font-weight: 600;
+        font-size: 16px;
+        transition: all 0.3s ease;
+        letter-spacing: 0.3px;
+        cursor: pointer;
+        margin-top: 10px;
+    }
+
+    .btn-register:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 25px rgba(224, 77, 0, 0.35);
+        color: white;
+    }
+
+    .btn-register:active {
+        transform: translateY(0);
+    }
+
+    /* ===== FORM FOOTER ===== */
+    .form-footer {
+        text-align: center;
+        margin-top: 25px;
+        padding-top: 20px;
+        border-top: 1px solid #e9ecef;
+    }
+
+    .form-footer p {
+        font-size: 14px;
+        color: #6c757d;
+        margin-bottom: 6px;
+    }
+
+    .form-footer a {
+        color: #E04D00;
+        text-decoration: none;
+        font-weight: 600;
+        transition: all 0.3s ease;
+    }
+
+    .form-footer a:hover {
+        color: #b33e00;
+        text-decoration: underline;
+    }
+
+    .back-link {
+        display: inline-block;
+        margin-top: 6px;
+        font-size: 14px;
+    }
+
+    .security-note {
+        font-size: 12px !important;
+        opacity: 0.7;
+        margin-top: 12px !important;
+    }
+
+    .security-note i {
+        color: #E04D00;
+    }
+
+    /* ===== ALERTS ===== */
+    .alert {
+        border-radius: 12px;
+        border: none;
+        padding: 14px 18px;
+        margin-bottom: 20px;
+        font-size: 14px;
+    }
+
+    .alert-success {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .alert-error {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .alert-info {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes slideUp {
+        from {
+            opacity: 0;
+            transform: translateY(30px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+
+    /* ===== RESPONSIVE ===== */
+    @media (max-width: 768px) {
+        .register-card {
+            max-width: 520px;
+            padding: 35px 30px 30px;
+        }
+
+        .form-grid {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .form-group.full-width {
+            grid-column: 1;
+        }
+    }
+
+    @media (max-width: 576px) {
+        .register-wrapper {
+            padding: 15px;
+        }
+
+        .register-card {
+            padding: 25px 18px 20px;
+            border-radius: 16px;
+        }
+
+        .header-icon {
+            width: 60px;
+            height: 60px;
+        }
+
+        .header-icon i {
+            font-size: 28px;
+        }
+
+        .register-header h2 {
+            font-size: 22px;
+        }
+
+        .form-control,
+        .form-select {
+            padding: 8px 12px;
+            font-size: 13px;
+            border-radius: 8px;
+            height: 40px;
+        }
+
+        .form-label {
+            font-size: 12px;
+        }
+
+        .btn-register {
+            padding: 12px;
+            font-size: 15px;
+            border-radius: 10px;
+        }
+
+        .password-hints {
+            padding: 8px 12px;
+        }
+
+        .password-hints ul li {
+            font-size: 11px;
+        }
+
+        .notice-box {
+            padding: 10px 12px;
+        }
+
+        .notice-box i {
+            font-size: 16px;
+        }
+
+        .notice-box strong {
+            font-size: 12px;
+        }
+
+        .notice-box p {
+            font-size: 11px;
+        }
+
+        .form-grid {
+            gap: 12px;
+        }
+    }
+
+    @media (max-width: 400px) {
+        .register-card {
+            padding: 20px 14px 16px;
+        }
+
+        .register-header h2 {
+            font-size: 20px;
+        }
+
+        .form-control,
+        .form-select {
+            font-size: 12px;
+            padding: 6px 10px;
+            height: 36px;
+        }
+
+        .password-toggle {
+            right: 8px;
+        }
+    }
+</style>
+
+<script>
+    // Toggle password visibility
+    function togglePassword(fieldId) {
+        const field = document.getElementById(fieldId);
+        const toggle = field.parentElement.querySelector('.password-toggle');
+        const icon = toggle.querySelector('i');
+        
+        if (field.type === 'password') {
+            field.type = 'text';
+            icon.classList.remove('bi-eye');
+            icon.classList.add('bi-eye-slash');
+        } else {
+            field.type = 'password';
+            icon.classList.remove('bi-eye-slash');
+            icon.classList.add('bi-eye');
+        }
+    }
+
+    // Password validation and strength
+    document.addEventListener('DOMContentLoaded', function() {
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirm_password');
+        const strengthIndicator = document.querySelector('.password-strength');
+        const matchError = document.querySelector('.password-match-error');
+
+        // Password strength
+        password.addEventListener('input', function() {
+            const val = this.value;
+            let strength = '';
+            let color = '';
+
+            if (val.length === 0) {
+                strength = '';
+                color = '';
+            } else if (val.length < 6) {
+                strength = 'Weak';
+                color = 'weak';
+            } else if (val.length < 8) {
+                strength = 'Medium';
+                color = 'medium';
+            } else if (val.length >= 8 && /[A-Z]/.test(val) && /[a-z]/.test(val) && /\d/.test(val)) {
+                strength = 'Strong';
+                color = 'strong';
+            } else if (val.length >= 8) {
+                strength = 'Medium';
+                color = 'medium';
+            }
+
+            strengthIndicator.textContent = strength ? `Password strength: ${strength}` : '';
+            strengthIndicator.className = `password-strength mt-1 ${color}`;
+            
+            // Check confirm password match
+            if (confirmPassword.value.length > 0) {
+                validateMatch();
+            }
+        });
+
+        // Password match validation
+        function validateMatch() {
+            if (password.value.length > 0 && confirmPassword.value.length > 0) {
+                if (password.value !== confirmPassword.value) {
+                    confirmPassword.classList.add('error');
+                    confirmPassword.classList.remove('success');
+                    matchError.style.display = 'block';
+                    confirmPassword.setCustomValidity('Passwords do not match');
+                } else {
+                    confirmPassword.classList.remove('error');
+                    confirmPassword.classList.add('success');
+                    matchError.style.display = 'none';
+                    confirmPassword.setCustomValidity('');
+                }
+            } else {
+                confirmPassword.classList.remove('error', 'success');
+                matchError.style.display = 'none';
+                confirmPassword.setCustomValidity('');
+            }
+        }
+
+        confirmPassword.addEventListener('input', validateMatch);
+        confirmPassword.addEventListener('keyup', validateMatch);
+    });
+</script>
+{% endblock %}

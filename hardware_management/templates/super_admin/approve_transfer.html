@@ -1,0 +1,185 @@
+<!-- templates/super_admin/approve_transfer.html -->
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Approve Cross-Branch Transfer - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-3 mb-md-4">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h2 class="h4 h2-md"><i class="bi bi-check-circle"></i> Approve Cross-Branch Transfer</h2>
+                <p class="text-muted mb-0 small small-md">Review and approve hardware transfer request between branches</p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_transfer_requests' %}" class="btn btn-outline-secondary btn-sm btn-md">
+                    <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Back to Requests</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-success text-white py-2 py-md-3">
+                <h5 class="mb-0 h6 h5-md">
+                    <i class="bi bi-shield-check"></i> Review Transfer Request
+                    <span class="badge bg-light text-dark ms-2">{{ transfer.transfer_id }}</span>
+                </h5>
+            </div>
+            <div class="card-body p-3 p-md-4">
+                <!-- Transfer Details -->
+                <div class="row g-3">
+                    <!-- From Section -->
+                    <div class="col-12 col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="text-primary"><i class="bi bi-box-arrow-right"></i> From</h6>
+                                <hr>
+                                <p><strong>Employee:</strong> {{ transfer.from_employee.get_full_name|default:transfer.from_employee.username }}</p>
+                                <p><strong>Email:</strong> {{ transfer.from_employee.email }}</p>
+                                <p><strong>Branch:</strong> <span class="badge bg-info">{{ transfer.from_branch|default:'Unknown' }}</span></p>
+                                <p><strong>City:</strong> {{ transfer.from_exam_city|default:'Not specified' }}</p>
+                                <p><strong>Project:</strong> {{ transfer.from_project.project_name|default:'No Project' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- To Section -->
+                    <div class="col-12 col-md-6">
+                        <div class="card bg-light border-0">
+                            <div class="card-body">
+                                <h6 class="text-success"><i class="bi bi-box-arrow-in-right"></i> To</h6>
+                                <hr>
+                                <p><strong>Employee:</strong> {{ transfer.to_employee.get_full_name|default:transfer.to_employee.username }}</p>
+                                <p><strong>Email:</strong> {{ transfer.to_employee.email }}</p>
+                                <p><strong>Branch:</strong> <span class="badge bg-warning text-dark">{{ transfer.to_branch|default:'Unknown' }}</span></p>
+                                <p><strong>City:</strong> {{ transfer.to_exam_city|default:'Not specified' }}</p>
+                                <p><strong>Project:</strong> {{ transfer.to_project.project_name|default:'No Project' }}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Transfer Details -->
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="text-info"><i class="bi bi-info-circle"></i> Transfer Details</h6>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-12 col-md-4">
+                                        <p><strong>Transfer Type:</strong> 
+                                            <span class="badge {% if transfer.transfer_type == 'temporary' %}bg-warning text-dark{% else %}bg-primary{% endif %}">
+                                                {{ transfer.get_transfer_type_display }}
+                                            </span>
+                                        </p>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <p><strong>Expected Arrival:</strong> {{ transfer.expected_arrival_date|date:"d M Y" }}</p>
+                                    </div>
+                                    <div class="col-12 col-md-4">
+                                        <p><strong>Expected Return:</strong> 
+                                            {% if transfer.expected_return_date %}
+                                                {{ transfer.expected_return_date|date:"d M Y" }}
+                                            {% else %}
+                                                <span class="text-muted">Not applicable (Permanent)</span>
+                                            {% endif %}
+                                        </p>
+                                    </div>
+                                </div>
+                                <p><strong>Delivery Method:</strong> {{ transfer.delivery_method|default:'Not specified'|title }}</p>
+                                <p><strong>Reason:</strong> {{ transfer.reason }}</p>
+                                {% if transfer.requester_notes %}
+                                <p><strong>Additional Notes:</strong> {{ transfer.requester_notes }}</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Hardware Items -->
+                    <div class="col-12">
+                        <div class="card border-0 bg-light">
+                            <div class="card-body">
+                                <h6 class="text-secondary"><i class="bi bi-laptop"></i> Hardware Items</h6>
+                                <hr>
+                                <div class="table-responsive">
+                                    <table class="table table-sm">
+                                        <thead>
+                                            <tr>
+                                                <th>#</th>
+                                                <th>Hardware Type</th>
+                                                <th>Asset Number</th>
+                                                <th>Serial Number</th>
+                                                <th>Status</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for item in transfer.transfer_items.all %}
+                                            <tr>
+                                                <td>{{ forloop.counter }}</td>
+                                                <td>{{ item.hardware.hardware_type.name }}</td>
+                                                <td><code>{{ item.hardware.asset_number|default:'N/A' }}</code></td>
+                                                <td><code>{{ item.hardware.serial_number }}</code></td>
+                                                <td>
+                                                    <span class="badge bg-secondary">{{ item.get_status_display }}</span>
+                                                </td>
+                                            </tr>
+                                            {% empty %}
+                                            <tr>
+                                                <td colspan="5" class="text-center text-muted">No hardware items found</td>
+                                            </tr>
+                                            {% endfor %}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <p><strong>Total Items:</strong> {{ transfer.transfer_items.count }}</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Approval Form -->
+                <form method="post" class="mt-4">
+                    {% csrf_token %}
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="form-group">
+                                <label for="notes" class="form-label small fw-bold">Approval Notes (Optional)</label>
+                                <textarea class="form-control" id="notes" name="notes" rows="3" placeholder="Add any notes or conditions for this approval..."></textarea>
+                            </div>
+                        </div>
+                        <div class="col-12 mt-3">
+                            <div class="alert alert-warning py-2 py-md-3 small small-md">
+                                <i class="bi bi-exclamation-triangle"></i>
+                                <strong>Important:</strong> By approving this transfer, you confirm that:
+                                <ul class="mb-0 mt-1 ps-3 small">
+                                    <li>This is a cross-branch transfer that requires Super Admin approval</li>
+                                    <li>The hardware items are in good condition and eligible for transfer</li>
+                                    <li>The receiving employee is authorized to receive these items</li>
+                                    <li>All transfer details are correct and verified</li>
+                                </ul>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <div class="d-flex flex-wrap gap-2 justify-content-end">
+                                <a href="{% url 'super_admin_transfer_requests' %}" class="btn btn-outline-secondary btn-sm btn-md">
+                                    <i class="bi bi-x-circle"></i> Cancel
+                                </a>
+                                <button type="submit" class="btn btn-success btn-sm btn-md">
+                                    <i class="bi bi-check-lg"></i> Approve Transfer
+                                </button>
+                                <a href="{% url 'super_admin_reject_transfer' transfer.id %}" class="btn btn-danger btn-sm btn-md">
+                                    <i class="bi bi-x-lg"></i> Reject
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

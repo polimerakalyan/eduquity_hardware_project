@@ -1,0 +1,698 @@
+{% extends 'base.html' %}
+{% block title %}Enter Asset Numbers - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-2 mb-md-3">
+    <div class="col-12">
+        <div class="d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2">
+            <div>
+                <h2 class="h5 h2-md mb-0">
+                    <i class="bi bi-upc-scan me-1"></i> 
+                    {% if editing %}Edit Asset Numbers{% else %}Enter Asset Numbers{% endif %}
+                </h2>
+                <p class="text-muted mb-0" style="font-size: 0.75rem;">Enter Asset Numbers from your physical hardware devices</p>
+                {% if has_draft %}
+                <span class="badge bg-info mt-1" style="font-size: 0.6rem;">
+                    <i class="bi bi-clock-history"></i> Draft saved at {{ draft_last_saved|date:"h:i A" }}
+                </span>
+                {% endif %}
+            </div>
+            <div>
+                <a href="{% url 'my_assignment_details' assignment.assignment_id %}" class="btn btn-outline-secondary btn-sm" style="font-size: 0.7rem; padding: 0.2rem 0.6rem;">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-10 mx-auto">
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-1 py-md-2">
+                <div class="d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1">
+                    <h4 class="mb-0 h6 h4-md fw-bold">
+                        <i class="bi bi-upc-scan me-2"></i> Enter Asset Numbers
+                    </h4>
+                    <div class="d-flex align-items-center gap-1">
+                        <span class="badge bg-light text-dark" style="font-size: 0.6rem;" id="autoSaveStatus">
+                            <i class="bi bi-cloud-check text-success"></i> Auto-save
+                        </span>
+                        <span class="badge bg-light text-dark" style="font-size: 0.6rem;" id="progressBadge">0%</span>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <!-- Assignment Info -->
+                <div class="alert alert-info p-2 mb-2" style="font-size: 0.7rem;">
+                    <div class="row g-1">
+                        <div class="col-6 col-md-3"><strong>Project:</strong> {{ assignment.project.project_name|truncatechars:15 }}</div>
+                        <div class="col-6 col-md-3"><strong>Location:</strong> {{ assignment.exam_city|truncatechars:12 }}</div>
+                        <div class="col-6 col-md-3"><strong>Employee:</strong> {{ assignment.employee.get_full_name|default:assignment.employee.username|truncatechars:12 }}</div>
+                        <div class="col-6 col-md-3"><strong>Assigned:</strong> {{ assignment.assigned_date|date:"d M Y" }}</div>
+                    </div>
+                </div>
+
+                <!-- Auto-save status messages -->
+                <div id="autoSaveMessages" class="mb-2"></div>
+
+                <!-- Pending Items -->
+                <div class="pending-section mb-2">
+                    <h6 class="mb-1 fw-bold" style="font-size: 0.75rem;">
+                        <i class="bi bi-clock-history text-warning me-1"></i>
+                        Pending (<span id="pendingCount">{{ pending_items|length }}</span>)
+                    </h6>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover mb-0" style="font-size: 0.7rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30px;">#</th>
+                                    <th>Hardware Type</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pendingTableBody">
+                                {% for item in pending_items %}
+                                <tr id="pendingRow_{{ item.id }}" 
+                                    data-item-id="{{ item.id }}" 
+                                    data-hardware-type="{{ item.hardware.hardware_type.name }}"
+                                    data-expected-asset="{{ item.asset_number }}">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.hardware.hardware_type.name }}</td>
+                                    <td>
+                                        <span class="badge bg-warning" style="font-size: 0.55rem;">
+                                            <i class="bi bi-clock"></i> Awaiting
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                                {% if not pending_items %}
+                                <tr id="noPendingRow">
+                                    <td colspan="3" class="text-center py-2 text-success" style="font-size: 0.7rem;">
+                                        <i class="bi bi-check-circle me-1"></i> All verified!
+                                    </td>
+                                </tr>
+                                {% endif %}
+                            </tbody>
+                        </table>
+                    </div>
+                    <div class="alert alert-warning p-1 mt-1" style="font-size: 0.65rem;">
+                        <i class="bi bi-info-circle me-1"></i> 
+                        Enter the <strong>Asset Number</strong> from the physical device. Auto-saves automatically.
+                    </div>
+                </div>
+
+                <!-- Scan Input Section -->
+                <div class="scan-section mb-2">
+                    <div class="card bg-light border-0">
+                        <div class="card-body p-2">
+                            <div class="text-center mb-1">
+                                <h6 class="mb-0 fw-bold" style="font-size: 0.85rem;">
+                                    <i class="bi bi-qr-code-scan text-primary me-1"></i> Scan or Enter Asset Number
+                                </h6>
+                                <p class="text-muted mb-0" style="font-size: 0.65rem;">Use scanner or type the Asset Number from the device</p>
+                            </div>
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text bg-white" style="font-size: 0.75rem;">
+                                    <i class="bi bi-upc-scan text-primary"></i>
+                                </span>
+                                <input type="text" 
+                                       class="form-control" 
+                                       id="scanInput" 
+                                       placeholder="Scan or type Asset Number..."
+                                       autofocus
+                                       autocomplete="off"
+                                       style="font-size: 0.85rem; font-family: 'Courier New', monospace; text-transform: uppercase;">
+                                <button class="btn btn-primary" id="scanBtn" type="button" style="font-size: 0.7rem;">
+                                    <i class="bi bi-search"></i> Verify
+                                </button>
+                            </div>
+                            <div id="scanFeedback" class="mt-1"></div>
+                            <small class="text-muted d-block mt-1" style="font-size: 0.6rem;">
+                                <i class="bi bi-info-circle"></i> Enter the <strong>Asset Number</strong> sticker from the device
+                            </small>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Verified Hardware List -->
+                <div class="verified-section">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                        <h6 class="mb-0 fw-bold" style="font-size: 0.75rem;">
+                            <i class="bi bi-check-circle-fill text-success me-1"></i>
+                            Verified (<span id="verifiedCount">{{ verified_items|length }}</span> / {{ total_items }})
+                        </h6>
+                        <span class="badge bg-success rounded-pill" style="font-size: 0.6rem;" id="progressBadge2">0%</span>
+                    </div>
+                    
+                    <div class="progress mb-1" style="height: 4px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: 0%" id="progressBar"></div>
+                    </div>
+
+                    <div class="table-responsive">
+                        <table class="table table-sm table-hover align-middle mb-0" style="font-size: 0.7rem;">
+                            <thead class="table-light">
+                                <tr>
+                                    <th style="width: 30px;">#</th>
+                                    <th>Hardware Type</th>
+                                    <th class="d-none d-sm-table-cell">Entered Asset</th>
+                                    <th>Status</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verifiedTableBody">
+                                {% for item in verified_items %}
+                                <tr data-item-id="{{ item.id }}" data-verified="true">
+                                    <td>{{ forloop.counter }}</td>
+                                    <td>{{ item.hardware.hardware_type.name }}</td>
+                                    <td class="d-none d-sm-table-cell">
+                                        <code class="entered-asset" style="font-size: 0.7rem;">{{ item.existing_asset }}</code>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-success" style="font-size: 0.55rem;">
+                                            <i class="bi bi-check-circle"></i> Verified
+                                        </span>
+                                    </td>
+                                    <td class="text-center">
+                                        <button class="btn btn-sm btn-outline-danger remove-verified" data-item-id="{{ item.id }}" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;">
+                                            <i class="bi bi-arrow-return-left"></i> <span class="d-none d-sm-inline">Undo</span>
+                                        </button>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Submit Form -->
+                <form method="POST" id="assetForm" action="{% url 'enter_serial_numbers' assignment.assignment_id %}">
+                    {% csrf_token %}
+                    <div id="assetInputsContainer"></div>
+                    
+                    <div class="d-flex flex-wrap gap-2 justify-content-end mt-3 pt-2 border-top">
+                        <button type="button" class="btn btn-outline-secondary btn-sm" id="saveDraftBtn" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">
+                            <i class="bi bi-cloud-arrow-down me-1"></i> Draft
+                        </button>
+                        <a href="{% url 'my_assignment_details' assignment.assignment_id %}" class="btn btn-outline-secondary btn-sm" style="font-size: 0.65rem; padding: 0.15rem 0.5rem;">
+                            <i class="bi bi-x-circle me-1"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-success btn-sm" id="submitBtn" {% if not verified_items %}disabled{% endif %} style="font-size: 0.65rem; padding: 0.15rem 0.6rem;">
+                            <i class="bi bi-check-circle me-1"></i> Submit <span id="submitCount">{{ verified_items|length }}</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .scan-section {
+        background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+        border-radius: 8px;
+        padding: 2px;
+    }
+    
+    #scanInput:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 0.15rem rgba(224, 77, 0, 0.2);
+    }
+    
+    .verified-item {
+        animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(-5px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .btn-primary {
+        background-color: #E04D00;
+        border-color: #E04D00;
+    }
+    
+    .btn-primary:hover {
+        background-color: #c44500;
+        border-color: #c44500;
+    }
+    
+    .entered-asset {
+        font-weight: 600;
+        color: #28a745;
+        background-color: #d4edda;
+        padding: 1px 6px;
+        border-radius: 3px;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 0.3rem 0.25rem;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 1px 4px;
+        border-radius: 3px;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .progress {
+        border-radius: 8px;
+        overflow: hidden;
+        background-color: #f1f5f9;
+    }
+    
+    .progress-bar {
+        transition: width 0.3s ease;
+    }
+    
+    #autoSaveMessages {
+        position: sticky;
+        top: 5px;
+        z-index: 50;
+    }
+    
+    .auto-save-toast {
+        background: #28a745;
+        color: white;
+        padding: 4px 12px;
+        border-radius: 6px;
+        font-size: 0.75rem;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        animation: slideDown 0.2s ease;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    @keyframes slideDown {
+        from { opacity: 0; transform: translateY(-10px); }
+        to { opacity: 1; transform: translateY(0); }
+    }
+    
+    @media (max-width: 576px) {
+        .auto-save-toast {
+            font-size: 0.65rem;
+            padding: 3px 8px;
+        }
+        
+        .btn { font-size: 0.6rem !important; padding: 0.1rem 0.4rem !important; }
+        .badge { font-size: 0.5rem !important; }
+        .form-control { font-size: 0.75rem !important; }
+        .table td, .table th { font-size: 0.6rem !important; padding: 0.2rem !important; }
+    }
+</style>
+
+<script>
+    (function() {
+        'use strict';
+        
+        document.addEventListener('DOMContentLoaded', function() {
+            const scanInput = document.getElementById('scanInput');
+            const scanBtn = document.getElementById('scanBtn');
+            const scanFeedback = document.getElementById('scanFeedback');
+            const pendingTableBody = document.getElementById('pendingTableBody');
+            const verifiedTableBody = document.getElementById('verifiedTableBody');
+            const progressBar = document.getElementById('progressBar');
+            const progressBadge = document.getElementById('progressBadge');
+            const progressBadge2 = document.getElementById('progressBadge2');
+            const submitBtn = document.getElementById('submitBtn');
+            const assetForm = document.getElementById('assetForm');
+            const assetInputsContainer = document.getElementById('assetInputsContainer');
+            const verifiedCountSpan = document.getElementById('verifiedCount');
+            const pendingCountSpan = document.getElementById('pendingCount');
+            const submitCountSpan = document.getElementById('submitCount');
+            const autoSaveMessages = document.getElementById('autoSaveMessages');
+            const saveDraftBtn = document.getElementById('saveDraftBtn');
+            const autoSaveStatus = document.getElementById('autoSaveStatus');
+            
+            let verifiedCount = parseInt('{{ verified_items|length }}');
+            let totalItems = parseInt('{{ total_items }}');
+            let isSaving = false;
+            
+            function updateProgress() {
+                const percentage = totalItems > 0 ? (verifiedCount / totalItems * 100).toFixed(0) : 0;
+                if (progressBar) progressBar.style.width = percentage + '%';
+                if (progressBadge) progressBadge.textContent = percentage + '%';
+                if (progressBadge2) progressBadge2.textContent = percentage + '%';
+                
+                if (verifiedCountSpan) verifiedCountSpan.textContent = verifiedCount;
+                if (pendingCountSpan) pendingCountSpan.textContent = totalItems - verifiedCount;
+                if (submitCountSpan) submitCountSpan.textContent = verifiedCount;
+                
+                if (submitBtn) {
+                    if (verifiedCount > 0) {
+                        submitBtn.disabled = false;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Submit ' + verifiedCount;
+                    } else {
+                        submitBtn.disabled = true;
+                        submitBtn.innerHTML = '<i class="bi bi-check-circle me-1"></i> Submit';
+                    }
+                }
+                
+                updateHiddenInputs();
+            }
+            
+            function updateHiddenInputs() {
+                if (!assetInputsContainer) return;
+                assetInputsContainer.innerHTML = '';
+                
+                const verifiedRows = verifiedTableBody.querySelectorAll('tr[data-verified="true"]');
+                verifiedRows.forEach(function(row) {
+                    const itemId = row.getAttribute('data-item-id');
+                    const enteredAssetElement = row.querySelector('.entered-asset');
+                    if (enteredAssetElement) {
+                        const enteredAsset = enteredAssetElement.textContent;
+                        const input = document.createElement('input');
+                        input.type = 'hidden';
+                        input.name = 'asset_' + itemId;
+                        input.value = enteredAsset;
+                        assetInputsContainer.appendChild(input);
+                    }
+                });
+            }
+            
+            function showAutoSaveMessage(message, type) {
+                type = type || 'success';
+                const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
+                const color = type === 'success' ? '#28a745' : type === 'error' ? '#dc3545' : '#17a2b8';
+                
+                const toast = document.createElement('div');
+                toast.className = 'auto-save-toast';
+                toast.style.background = color;
+                toast.innerHTML = `
+                    <i class="bi bi-${icon}"></i>
+                    <span>${message}</span>
+                    <button type="button" class="btn-close btn-close-white ms-auto" style="font-size: 0.5rem;" onclick="this.parentElement.remove()"></button>
+                `;
+                
+                if (autoSaveMessages) {
+                    autoSaveMessages.appendChild(toast);
+                }
+                
+                setTimeout(function() {
+                    if (toast.parentElement) {
+                        toast.style.opacity = '0';
+                        setTimeout(function() {
+                            if (toast.parentElement) {
+                                toast.remove();
+                            }
+                        }, 200);
+                    }
+                }, 3500);
+            }
+            
+            function autoSaveAssetNumber(itemId, enteredAsset, isUndo) {
+                isUndo = isUndo || false;
+                if (isSaving) return;
+                isSaving = true;
+                
+                if (autoSaveStatus) {
+                    autoSaveStatus.innerHTML = '<i class="bi bi-cloud-upload text-warning"></i> Saving...';
+                }
+                
+                fetch(window.location.href, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        item_id: itemId,
+                        asset_number: enteredAsset,
+                        undo: isUndo
+                    })
+                })
+                .then(function(response) {
+                    return response.json();
+                })
+                .then(function(data) {
+                    isSaving = false;
+                    if (data.success) {
+                        if (autoSaveStatus) {
+                            autoSaveStatus.innerHTML = '<i class="bi bi-cloud-check text-success"></i> Auto-save';
+                        }
+                        if (!isUndo) {
+                            showAutoSaveMessage('✅ Draft saved: ' + enteredAsset, 'success');
+                        } else {
+                            showAutoSaveMessage('↩️ Removed from draft', 'info');
+                        }
+                    } else {
+                        if (autoSaveStatus) {
+                            autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Auto-save failed';
+                        }
+                        showAutoSaveMessage('⚠️ Error: ' + data.error, 'error');
+                    }
+                })
+                .catch(function(error) {
+                    isSaving = false;
+                    if (autoSaveStatus) {
+                        autoSaveStatus.innerHTML = '<i class="bi bi-cloud-slash text-danger"></i> Auto-save failed';
+                    }
+                    showAutoSaveMessage('❌ Auto-save failed: ' + error, 'error');
+                });
+            }
+            
+            function showFeedback(type, message) {
+                if (!scanFeedback) return;
+                const alertClass = type === 'success' ? 'success' : type === 'error' ? 'danger' : 'warning';
+                const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle';
+                
+                scanFeedback.innerHTML = `
+                    <div class="alert alert-${alertClass} alert-dismissible fade show py-1 mb-0" style="font-size: 0.7rem;">
+                        <i class="bi bi-${icon} me-1"></i>
+                        ${message}
+                        <button type="button" class="btn-close btn-sm" data-bs-dismiss="alert"></button>
+                    </div>
+                `;
+                
+                setTimeout(function() {
+                    const alert = scanFeedback.querySelector('.alert');
+                    if (alert) {
+                        alert.remove();
+                    }
+                }, 3500);
+            }
+            
+            function verifyAssetNumber(enteredAsset) {
+                if (!enteredAsset || !enteredAsset.trim()) {
+                    showFeedback('warning', '⚠️ Please enter or scan an Asset Number');
+                    if (scanInput) scanInput.focus();
+                    return;
+                }
+                
+                enteredAsset = enteredAsset.trim().toUpperCase();
+                
+                const pendingRows = pendingTableBody.querySelectorAll('tr[id^="pendingRow_"]');
+                let matchedItem = null;
+                
+                for (var i = 0; i < pendingRows.length; i++) {
+                    const row = pendingRows[i];
+                    const expectedAsset = row.getAttribute('data-expected-asset');
+                    if (expectedAsset === enteredAsset) {
+                        matchedItem = row;
+                        break;
+                    }
+                }
+                
+                if (!matchedItem) {
+                    showFeedback('error', '❌ Asset "' + enteredAsset + '" does not match any pending hardware.');
+                    if (scanInput) {
+                        scanInput.value = '';
+                        scanInput.focus();
+                    }
+                    return;
+                }
+                
+                const itemId = matchedItem.getAttribute('data-item-id');
+                const hardwareType = matchedItem.getAttribute('data-hardware-type');
+                
+                matchedItem.remove();
+                
+                if (pendingTableBody.querySelectorAll('tr[id^="pendingRow_"]').length === 0) {
+                    const noPendingRow = document.createElement('tr');
+                    noPendingRow.id = 'noPendingRow';
+                    noPendingRow.innerHTML = `
+                        <td colspan="3" class="text-center py-2 text-success" style="font-size: 0.7rem;">
+                            <i class="bi bi-check-circle me-1"></i> All verified!
+                        </td>
+                    `;
+                    pendingTableBody.appendChild(noPendingRow);
+                }
+                
+                const rowNumber = verifiedTableBody.querySelectorAll('tr[data-verified="true"]').length + 1;
+                
+                const newRow = document.createElement('tr');
+                newRow.setAttribute('data-item-id', itemId);
+                newRow.setAttribute('data-verified', 'true');
+                newRow.className = 'verified-item';
+                newRow.innerHTML = `
+                    <td>${rowNumber}</td>
+                    <td>${hardwareType}</td>
+                    <td class="d-none d-sm-table-cell"><code class="entered-asset" style="font-size: 0.7rem;">${enteredAsset}</code></td>
+                    <td>
+                        <span class="badge bg-success" style="font-size: 0.55rem;">
+                            <i class="bi bi-check-circle"></i> Verified
+                        </span>
+                    </td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-danger remove-verified" data-item-id="${itemId}" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;">
+                            <i class="bi bi-arrow-return-left"></i> <span class="d-none d-sm-inline">Undo</span>
+                        </button>
+                    </td>
+                `;
+                
+                verifiedTableBody.appendChild(newRow);
+                
+                autoSaveAssetNumber(itemId, enteredAsset);
+                
+                newRow.querySelector('.remove-verified').addEventListener('click', function() {
+                    undoVerification(itemId, hardwareType, enteredAsset);
+                });
+                
+                verifiedCount++;
+                updateProgress();
+                showFeedback('success', '✅ ' + hardwareType + ' verified: ' + enteredAsset);
+                if (scanInput) {
+                    scanInput.value = '';
+                    scanInput.focus();
+                }
+            }
+            
+            function undoVerification(itemId, hardwareType, enteredAsset) {
+                const verifiedRow = verifiedTableBody.querySelector('tr[data-item-id="' + itemId + '"]');
+                if (verifiedRow) {
+                    verifiedRow.remove();
+                }
+                
+                const noPendingRow = document.getElementById('noPendingRow');
+                if (noPendingRow) {
+                    noPendingRow.remove();
+                }
+                
+                const pendingRows = pendingTableBody.querySelectorAll('tr[id^="pendingRow_"]');
+                const rowNumber = pendingRows.length + 1;
+                
+                const pendingRow = document.createElement('tr');
+                pendingRow.id = 'pendingRow_' + itemId;
+                pendingRow.setAttribute('data-item-id', itemId);
+                pendingRow.setAttribute('data-hardware-type', hardwareType);
+                pendingRow.setAttribute('data-expected-asset', enteredAsset);
+                pendingRow.innerHTML = `
+                    <td>${rowNumber}</td>
+                    <td>${hardwareType}</td>
+                    <td>
+                        <span class="badge bg-warning" style="font-size: 0.55rem;">
+                            <i class="bi bi-clock"></i> Awaiting
+                        </span>
+                    </td>
+                `;
+                
+                pendingTableBody.appendChild(pendingRow);
+                
+                autoSaveAssetNumber(itemId, '', true);
+                
+                verifiedCount--;
+                updateProgress();
+                showFeedback('info', '↩️ ' + hardwareType + ' moved back to pending');
+                if (scanInput) scanInput.focus();
+            }
+            
+            function manualSaveDraft() {
+                const verifiedRows = verifiedTableBody.querySelectorAll('tr[data-verified="true"]');
+                let saveCount = 0;
+                
+                verifiedRows.forEach(function(row) {
+                    const itemId = row.getAttribute('data-item-id');
+                    const enteredAssetElement = row.querySelector('.entered-asset');
+                    if (enteredAssetElement) {
+                        const enteredAsset = enteredAssetElement.textContent;
+                        autoSaveAssetNumber(itemId, enteredAsset);
+                        saveCount++;
+                    }
+                });
+                
+                if (saveCount > 0) {
+                    showAutoSaveMessage('💾 Saved ' + saveCount + ' asset(s) to draft', 'success');
+                } else {
+                    showAutoSaveMessage('💾 No assets to save.', 'info');
+                }
+            }
+            
+            // Event listeners
+            if (scanBtn) {
+                scanBtn.addEventListener('click', function() {
+                    verifyAssetNumber(scanInput ? scanInput.value : '');
+                });
+            }
+            
+            if (scanInput) {
+                scanInput.addEventListener('keypress', function(e) {
+                    if (e.key === 'Enter') {
+                        e.preventDefault();
+                        verifyAssetNumber(scanInput.value);
+                    }
+                });
+            }
+            
+            document.querySelectorAll('.remove-verified').forEach(function(btn) {
+                btn.addEventListener('click', function() {
+                    const row = this.closest('tr');
+                    if (row) {
+                        const itemId = row.getAttribute('data-item-id');
+                        const hardwareType = row.cells[1].textContent;
+                        const enteredAssetElement = row.querySelector('.entered-asset');
+                        if (enteredAssetElement) {
+                            const enteredAsset = enteredAssetElement.textContent;
+                            undoVerification(itemId, hardwareType, enteredAsset);
+                        }
+                    }
+                });
+            });
+            
+            if (saveDraftBtn) {
+                saveDraftBtn.addEventListener('click', manualSaveDraft);
+            }
+            
+            // Auto-save every 30 seconds
+            setInterval(function() {
+                if (verifiedCount > 0) {
+                    const verifiedRows = verifiedTableBody.querySelectorAll('tr[data-verified="true"]');
+                    verifiedRows.forEach(function(row) {
+                        const itemId = row.getAttribute('data-item-id');
+                        const enteredAssetElement = row.querySelector('.entered-asset');
+                        if (enteredAssetElement) {
+                            const enteredAsset = enteredAssetElement.textContent;
+                            autoSaveAssetNumber(itemId, enteredAsset);
+                        }
+                    });
+                }
+            }, 30000);
+            
+            window.addEventListener('beforeunload', function(e) {
+                if (verifiedCount > 0) {
+                    e.preventDefault();
+                    e.returnValue = 'You have unsaved asset entries.';
+                    return e.returnValue;
+                }
+            });
+            
+            if (scanInput) {
+                scanInput.focus();
+            }
+            
+            updateProgress();
+            
+            document.addEventListener('keydown', function(e) {
+                if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                    e.preventDefault();
+                    manualSaveDraft();
+                }
+            });
+        });
+    })();
+</script>
+{% endblock %}

@@ -1,0 +1,422 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cross-Branch Transfer Requests - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-2 mb-md-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+            <div>
+                <h5 class="mb-0 fw-bold" style="font-size: 0.95rem;"><i class="bi bi-arrows-expand text-primary me-1"></i> Cross-Branch Transfer Requests</h5>
+                <p class="text-muted mb-0" style="font-size: 0.7rem;">Manage hardware transfer requests between different branches</p>
+            </div>
+            <div>
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary" style="font-size: 0.7rem; padding: 0.2rem 0.6rem;">
+                    <i class="bi bi-arrow-left"></i> <span class="d-none d-sm-inline">Back</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-12">
+        <!-- Statistics Cards - Compact -->
+        <div class="row g-1 g-md-2 mb-2 mb-md-3">
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-info" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ total }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">Total</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-arrow-left-right"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-warning" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ pending }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">Pending</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-clock-history"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-success" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ approved }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">Approved</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-primary" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ in_transit|default:0 }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">In Transit</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-truck"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-secondary" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ completed|default:0 }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">Completed</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-check-all"></i>
+                    </div>
+                </div>
+            </div>
+            <div class="col-4 col-md-2 col-xl-2">
+                <div class="small-box bg-danger" style="padding: 6px 10px; min-height: 50px;">
+                    <div class="inner">
+                        <h3 style="font-size: 1.1rem; margin: 0;">{{ rejected|default:0 }}</h3>
+                        <p style="font-size: 0.55rem; margin: 0; letter-spacing: 0.3px;">Rejected</p>
+                    </div>
+                    <div class="icon" style="font-size: 16px; top: 4px; right: 6px;">
+                        <i class="bi bi-x-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filter Section - Compact -->
+        <div class="card border-0 shadow-sm mb-2 mb-md-3">
+            <div class="card-header bg-light py-1 py-md-2">
+                <h6 class="mb-0" style="font-size: 0.7rem; font-weight: 600;">
+                    <i class="bi bi-funnel me-1"></i> Filter Transfers
+                </h6>
+            </div>
+            <div class="card-body p-2 p-md-3">
+                <form method="get" class="row g-1 g-md-2">
+                    <div class="col-6 col-md-3">
+                        <label class="form-label" style="font-size: 0.6rem; margin-bottom: 1px;">Status</label>
+                        <select name="status" class="form-select" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                            <option value="">All Status</option>
+                            <option value="requested" {% if status_filter == 'requested' %}selected{% endif %}>Pending</option>
+                            <option value="approved_by_super_admin" {% if status_filter == 'approved_by_super_admin' %}selected{% endif %}>Approved</option>
+                            <option value="in_transit" {% if status_filter == 'in_transit' %}selected{% endif %}>In Transit</option>
+                            <option value="received_by_receiver" {% if status_filter == 'received_by_receiver' %}selected{% endif %}>Received</option>
+                            <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                            <option value="return_completed" {% if status_filter == 'return_completed' %}selected{% endif %}>Returned</option>
+                            <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                            <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label" style="font-size: 0.6rem; margin-bottom: 1px;">From Branch</label>
+                        <select name="from_branch" class="form-select" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                            <option value="">All Branches</option>
+                            {% for branch in from_branches %}
+                            <option value="{{ branch }}" {% if from_branch_filter == branch %}selected{% endif %}>{{ branch }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label" style="font-size: 0.6rem; margin-bottom: 1px;">To Branch</label>
+                        <select name="to_branch" class="form-select" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;">
+                            <option value="">All Branches</option>
+                            {% for branch in to_branches %}
+                            <option value="{{ branch }}" {% if to_branch_filter == branch %}selected{% endif %}>{{ branch }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    <div class="col-6 col-md-3">
+                        <label class="form-label" style="font-size: 0.6rem; margin-bottom: 1px;">Requested Date</label>
+                        <input type="date" name="date" class="form-control" style="font-size: 0.7rem; padding: 0.15rem 0.4rem;" value="{{ date_filter }}">
+                    </div>
+                    <div class="col-12 mt-1">
+                        <button type="submit" class="btn btn-primary" style="font-size: 0.7rem; padding: 0.15rem 0.6rem;">
+                            <i class="bi bi-search"></i> Apply
+                        </button>
+                        <a href="{% url 'super_admin_transfer_requests' %}" class="btn btn-secondary" style="font-size: 0.7rem; padding: 0.15rem 0.6rem;">
+                            <i class="bi bi-arrow-counterclockwise"></i> Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Transfers Table - Compact -->
+        <div class="card border-0 shadow-sm">
+            <div class="card-header bg-primary text-white py-1 py-md-2 d-flex flex-wrap justify-content-between align-items-center">
+                <h6 class="mb-0" style="font-size: 0.75rem; font-weight: 600;">
+                    <i class="bi bi-list-ul me-1"></i> Cross-Branch Transfer Requests
+                    <span class="badge bg-light text-dark ms-1" style="font-size: 0.6rem;">{{ total }}</span>
+                </h6>
+                <div class="d-flex flex-wrap gap-1">
+                    <span class="badge bg-warning text-dark" style="font-size: 0.55rem;">Pending: {{ pending }}</span>
+                    <span class="badge bg-success" style="font-size: 0.55rem;">Approved: {{ approved }}</span>
+                    <span class="badge bg-primary" style="font-size: 0.55rem;">In Transit: {{ in_transit|default:0 }}</span>
+                    <span class="badge bg-secondary" style="font-size: 0.55rem;">Completed: {{ completed|default:0 }}</span>
+                    <span class="badge bg-danger" style="font-size: 0.55rem;">Rejected: {{ rejected|default:0 }}</span>
+                </div>
+            </div>
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0" style="font-size: 0.7rem;">
+                        <thead class="table-light">
+                            <tr>
+                                <th class="px-1 px-md-2 py-1" style="font-size: 0.6rem; font-weight: 600;">Transfer ID</th>
+                                <th class="px-1 px-md-2 py-1" style="font-size: 0.6rem; font-weight: 600;">From Employee</th>
+                                <th class="px-1 px-md-2 py-1 d-none d-sm-table-cell" style="font-size: 0.6rem; font-weight: 600;">From Branch</th>
+                                <th class="px-1 px-md-2 py-1" style="font-size: 0.6rem; font-weight: 600;">To Employee</th>
+                                <th class="px-1 px-md-2 py-1 d-none d-sm-table-cell" style="font-size: 0.6rem; font-weight: 600;">To Branch</th>
+                                <th class="px-1 px-md-2 py-1 text-center" style="font-size: 0.6rem; font-weight: 600;">Items</th>
+                                <th class="px-1 px-md-2 py-1 text-center" style="font-size: 0.6rem; font-weight: 600;">Status</th>
+                                <th class="px-1 px-md-2 py-1 d-none d-md-table-cell" style="font-size: 0.6rem; font-weight: 600;">Requested</th>
+                                <th class="px-1 px-md-2 py-1 text-center" style="font-size: 0.6rem; font-weight: 600;">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for transfer_data in enriched_transfers %}
+                            <tr class="{% if transfer_data.transfer.status == 'requested' %}table-warning{% elif transfer_data.transfer.status == 'rejected' %}table-danger{% elif transfer_data.transfer.status == 'completed' %}table-success{% endif %}">
+                                <td class="px-1 px-md-2 py-1">
+                                    <code style="font-size: 0.6rem;">{{ transfer_data.transfer.transfer_id|truncatechars:12 }}</code>
+                                </td>
+                                <td class="px-1 px-md-2 py-1">
+                                    <div class="d-flex flex-column">
+                                        <strong style="font-size: 0.65rem;">{{ transfer_data.transfer.from_employee.get_full_name|default:transfer_data.transfer.from_employee.username|truncatechars:12 }}</strong>
+                                        <small class="text-muted" style="font-size: 0.55rem;">{{ transfer_data.transfer.from_employee.email|truncatechars:15 }}</small>
+                                    </div>
+                                </td>
+                                <td class="px-1 px-md-2 py-1 d-none d-sm-table-cell">
+                                    <span class="badge bg-info" style="font-size: 0.55rem;">{{ transfer_data.transfer.from_branch|default:'Unknown'|truncatechars:10 }}</span>
+                                </td>
+                                <td class="px-1 px-md-2 py-1">
+                                    <div class="d-flex flex-column">
+                                        <strong style="font-size: 0.65rem;">{{ transfer_data.transfer.to_employee.get_full_name|default:transfer_data.transfer.to_employee.username|truncatechars:12 }}</strong>
+                                        <small class="text-muted" style="font-size: 0.55rem;">{{ transfer_data.transfer.to_employee.email|truncatechars:15 }}</small>
+                                    </div>
+                                </td>
+                                <td class="px-1 px-md-2 py-1 d-none d-sm-table-cell">
+                                    <span class="badge bg-warning text-dark" style="font-size: 0.55rem;">{{ transfer_data.transfer.to_branch|default:'Unknown'|truncatechars:10 }}</span>
+                                    {% if transfer_data.transfer.is_cross_branch %}
+                                    <span class="badge bg-dark ms-1" style="font-size: 0.5rem;" title="Cross-Branch Transfer">🌐</span>
+                                    {% endif %}
+                                </td>
+                                <td class="px-1 px-md-2 py-1 text-center">
+                                    <span class="badge bg-secondary" style="font-size: 0.55rem;">{{ transfer_data.total_items }}</span>
+                                    {% if transfer_data.received_items %}
+                                    <br>
+                                    <small class="text-success" style="font-size: 0.5rem;">✅ {{ transfer_data.received_items }}</small>
+                                    {% endif %}
+                                </td>
+                                <td class="px-1 px-md-2 py-1 text-center">
+                                    <div class="d-flex flex-column align-items-center">
+                                        <span class="badge 
+                                            {% if transfer_data.transfer.status == 'requested' %}bg-warning text-dark
+                                            {% elif transfer_data.transfer.status == 'approved_by_super_admin' %}bg-success
+                                            {% elif transfer_data.transfer.status == 'in_transit' %}bg-primary
+                                            {% elif transfer_data.transfer.status == 'received_by_receiver' %}bg-info
+                                            {% elif transfer_data.transfer.status == 'completed' %}bg-success
+                                            {% elif transfer_data.transfer.status == 'return_completed' %}bg-info
+                                            {% elif transfer_data.transfer.status == 'rejected' %}bg-danger
+                                            {% elif transfer_data.transfer.status == 'cancelled' %}bg-secondary
+                                            {% else %}bg-secondary{% endif %}" 
+                                            style="font-size: 0.55rem;">
+                                            {{ transfer_data.transfer.get_status_display|truncatechars:12 }}
+                                        </span>
+                                        <small class="text-muted mt-1" style="font-size: 0.5rem;">
+                                            {% if transfer_data.transfer.transfer_type == 'temporary' %}
+                                            <span class="badge bg-warning text-dark" style="font-size: 0.5rem;">Temp</span>
+                                            {% else %}
+                                            <span class="badge bg-primary" style="font-size: 0.5rem;">Perm</span>
+                                            {% endif %}
+                                        </small>
+                                    </div>
+                                </td>
+                                <td class="px-1 px-md-2 py-1 d-none d-md-table-cell">
+                                    <div class="d-flex flex-column">
+                                        <small style="font-size: 0.55rem;">{{ transfer_data.transfer.requested_date|date:"d/m/Y H:i" }}</small>
+                                        <small class="text-muted" style="font-size: 0.5rem;">{{ transfer_data.transfer.requested_date|timesince }} ago</small>
+                                    </div>
+                                </td>
+                                <td class="px-1 px-md-2 py-1 text-center">
+                                    <div class="d-flex flex-wrap justify-content-center gap-1">
+                                        {% if transfer_data.can_approve %}
+                                        <!-- ✅ FIXED: Use transfer.transfer_id instead of transfer.id -->
+                                        <a href="{% url 'super_admin_approve_transfer' transfer_data.transfer.transfer_id %}" 
+                                           class="btn btn-success" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;" title="Approve">
+                                            <i class="bi bi-check-lg"></i>
+                                        </a>
+                                        <a href="{% url 'super_admin_reject_transfer' transfer_data.transfer.transfer_id %}" 
+                                           class="btn btn-danger" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;" title="Reject">
+                                            <i class="bi bi-x-lg"></i>
+                                        </a>
+                                        {% endif %}
+                                        <!-- ✅ FIXED: Use transfer.transfer_id instead of transfer.id -->
+                                        <a href="{% url 'super_admin_transfer_details' transfer_data.transfer.transfer_id %}" 
+                                           class="btn btn-outline-primary" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;" title="View">
+                                            <i class="bi bi-eye"></i>
+                                        </a>
+                                    </div>
+                                </td>
+                            </tr>
+                            
+                            <!-- Mobile Detail Row -->
+                            <tr class="d-sm-none">
+                                <td colspan="9" class="p-1 bg-light">
+                                    <div class="row g-1" style="font-size: 0.6rem;">
+                                        <div class="col-6"><strong>ID:</strong> <code style="font-size: 0.55rem;">{{ transfer_data.transfer.transfer_id }}</code></div>
+                                        <div class="col-6">
+                                            <strong>Status:</strong>
+                                            <span class="badge 
+                                                {% if transfer_data.transfer.status == 'requested' %}bg-warning text-dark
+                                                {% elif transfer_data.transfer.status == 'approved_by_super_admin' %}bg-success
+                                                {% elif transfer_data.transfer.status == 'in_transit' %}bg-primary
+                                                {% elif transfer_data.transfer.status == 'received_by_receiver' %}bg-info
+                                                {% elif transfer_data.transfer.status == 'completed' %}bg-success
+                                                {% elif transfer_data.transfer.status == 'return_completed' %}bg-info
+                                                {% elif transfer_data.transfer.status == 'rejected' %}bg-danger
+                                                {% else %}bg-secondary{% endif %}" 
+                                                style="font-size: 0.5rem;">
+                                                {{ transfer_data.transfer.get_status_display }}
+                                            </span>
+                                        </div>
+                                        <div class="col-6"><strong>From:</strong> {{ transfer_data.transfer.from_employee.get_full_name|default:transfer_data.transfer.from_employee.username|truncatechars:12 }}</div>
+                                        <div class="col-6"><strong>To:</strong> {{ transfer_data.transfer.to_employee.get_full_name|default:transfer_data.transfer.to_employee.username|truncatechars:12 }}</div>
+                                        <div class="col-6"><strong>From Branch:</strong> {{ transfer_data.transfer.from_branch|default:'Unknown' }}</div>
+                                        <div class="col-6"><strong>To Branch:</strong> {{ transfer_data.transfer.to_branch|default:'Unknown' }}</div>
+                                        <div class="col-6"><strong>Items:</strong> {{ transfer_data.total_items }}</div>
+                                        <div class="col-6"><strong>Received:</strong> {{ transfer_data.received_items|default:0 }}</div>
+                                        <div class="col-12 mt-1">
+                                            <div class="d-flex gap-1 flex-wrap">
+                                                {% if transfer_data.can_approve %}
+                                                <!-- ✅ FIXED: Use transfer.transfer_id instead of transfer.id -->
+                                                <a href="{% url 'super_admin_approve_transfer' transfer_data.transfer.transfer_id %}" class="btn btn-success" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;">
+                                                    <i class="bi bi-check-lg"></i> Approve
+                                                </a>
+                                                <a href="{% url 'super_admin_reject_transfer' transfer_data.transfer.transfer_id %}" class="btn btn-danger" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;">
+                                                    <i class="bi bi-x-lg"></i> Reject
+                                                </a>
+                                                {% endif %}
+                                                <!-- ✅ FIXED: Use transfer.transfer_id instead of transfer.id -->
+                                                <a href="{% url 'super_admin_transfer_details' transfer_data.transfer.transfer_id %}" class="btn btn-outline-primary" style="font-size: 0.55rem; padding: 0.1rem 0.3rem;">
+                                                    <i class="bi bi-eye"></i> View
+                                                </a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% empty %}
+                            <tr>
+                                <td colspan="9" class="text-center py-2">
+                                    <i class="bi bi-inbox text-muted" style="font-size: 1.2rem;"></i>
+                                    <p class="text-muted mb-0" style="font-size: 0.7rem;">No cross-branch transfer requests found.</p>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Note - Compact -->
+<div class="row mt-2 mt-md-3">
+    <div class="col-12">
+        <div class="alert alert-info py-1 py-md-2" style="font-size: 0.65rem;">
+            <i class="bi bi-info-circle me-1"></i>
+            <strong>Cross-Branch Transfer Process:</strong>
+            <ul class="mb-0 mt-1 ps-3" style="font-size: 0.65rem;">
+                <li>Transfers between different branches require <strong>Super Admin approval</strong></li>
+                <li>Once approved, the transfer status changes to <strong>In Transit</strong></li>
+                <li>The receiving employee must confirm receipt to complete the transfer</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<style>
+    .small-box {
+        border-radius: 6px;
+        padding: 6px 10px;
+        position: relative;
+        display: block;
+        margin-bottom: 0;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        transition: all 0.2s;
+        min-height: 50px;
+    }
+    .small-box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 3px 10px rgba(0,0,0,0.12);
+    }
+    .small-box .inner h3 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin: 0;
+        line-height: 1.2;
+    }
+    .small-box .inner p {
+        font-size: 0.55rem;
+        margin: 0;
+        opacity: 0.85;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    .small-box .icon {
+        position: absolute;
+        top: 4px;
+        right: 6px;
+        font-size: 16px;
+        opacity: 0.3;
+    }
+    .small-box.bg-info { background: #17a2b8; color: white; }
+    .small-box.bg-warning { background: #ffc107; color: #212529; }
+    .small-box.bg-success { background: #28a745; color: white; }
+    .small-box.bg-danger { background: #dc3545; color: white; }
+    .small-box.bg-primary { background: #007bff; color: white; }
+    .small-box.bg-dark { background: #343a40; color: white; }
+    .small-box.bg-secondary { background: #6c757d; color: white; }
+    
+    .table-warning td { background-color: #fff3cd !important; }
+    .table-danger td { background-color: #f8d7da !important; }
+    .table-success td { background-color: #d4edda !important; }
+    
+    .table td, .table th {
+        padding: 0.2rem 0.3rem;
+        vertical-align: middle;
+    }
+    
+    .badge {
+        font-weight: 500;
+    }
+    
+    .btn {
+        border-radius: 4px;
+    }
+    
+    .form-control, .form-select {
+        border-radius: 4px;
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th {
+            padding: 0.15rem 0.2rem;
+        }
+        .small-box .inner h3 { font-size: 0.9rem; }
+        .small-box .icon { font-size: 14px; top: 3px; right: 4px; }
+        .small-box { min-height: 40px; padding: 4px 8px; }
+        .badge { font-size: 0.45rem !important; }
+        .btn { font-size: 0.5rem !important; padding: 0.05rem 0.2rem !important; }
+    }
+</style>
+{% endblock %}

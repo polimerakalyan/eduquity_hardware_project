@@ -1,0 +1,34 @@
+{% if action == 'approved' %}✅ REQUEST APPROVED{% else %}❌ REQUEST REJECTED{% endif %}
+===============================================
+
+Dear {{ manager.get_full_name|default:manager.username }},
+
+Your {{ request.get_request_type_display }} request for hardware {{ hardware.asset_number }} has been {{ action }}d.
+
+📋 REQUEST DETAILS
+-----------------------------------------------
+Request ID: #{{ request.id }}
+Type: {{ request.get_request_type_display }}
+Status: {{ action|title }}
+Hardware: {{ hardware.asset_number }} ({{ hardware.hardware_type.name }})
+Serial Number: {{ hardware.serial_number }}
+Requested By: {{ requested_by.get_full_name|default:requested_by.username }}
+Submitted: {{ created_at|date:"F d, Y H:i" }}
+Reviewed By: {{ reviewed_by.get_full_name|default:reviewed_by.username }}
+Reviewed: {{ reviewed_at|date:"F d, Y H:i" }}
+
+Reason:
+{{ reason }}
+
+{% if notes %}
+Admin Notes:
+{{ notes }}
+{% endif %}
+
+===============================================
+Please login to view your inventory:
+{{ manage_url }}
+
+===============================================
+This is an automated notification from Eduquity Hardware Management System.
+© {% now "Y" %} Eduquity. All rights reserved.

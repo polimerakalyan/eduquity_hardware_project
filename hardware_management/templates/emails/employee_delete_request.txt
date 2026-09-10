@@ -1,0 +1,39 @@
+🔔 EMPLOYEE DELETE REQUEST - ACTION REQUIRED
+===============================================
+
+Dear Super Admin,
+
+A new employee deletion request has been submitted.
+
+📋 REQUEST DETAILS
+-----------------------------------------------
+Request ID: #{{ delete_request.id }}
+Status: Pending
+
+👤 EMPLOYEE INFORMATION
+-----------------------------------------------
+Name: {{ employee.get_full_name|default:employee.username }}
+Username: {{ employee.username }}
+Email: {{ employee.email }}
+Branch: {{ employee.branch_location|default:"Not set" }}
+Phone: {{ employee.phone|default:"Not set" }}
+
+Requested By: {{ requested_by.get_full_name|default:requested_by.username }}
+Submitted: {{ created_at|date:"F d, Y H:i" }}
+
+Reason:
+{{ reason }}
+
+===============================================
+🔗 QUICK ACTIONS
+-----------------------------------------------
+Approve: {{ approve_url }}
+Reject: {{ reject_url }}
+View All Requests: {{ admin_url }}
+
+⚠️ Note: This action will permanently delete the employee and cannot be undone.
+Please verify that the employee has no active assignments before approving.
+
+===============================================
+This is an automated notification from Eduquity Hardware Management System.
+© {% now "Y" %} Eduquity. All rights reserved.

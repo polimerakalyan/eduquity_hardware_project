@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <style>
+        body { font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; color: #333; }
+        .container { max-width: 700px; margin: 0 auto; padding: 20px; }
+        .header { background: linear-gradient(90deg, #E04D00 0%, #FF6B1A 100%); color: white; padding: 25px; text-align: center; border-radius: 8px 8px 0 0; }
+        .header h2 { margin: 0; font-weight: 300; }
+        .content { background: #ffffff; padding: 30px; border: 1px solid #e9ecef; border-top: none; border-radius: 0 0 8px 8px; }
+        .info-box { background: #f8f9fa; padding: 15px 20px; margin: 15px 0; border-radius: 6px; border-left: 4px solid #E04D00; }
+        .info-box h6 { margin: 0 0 5px 0; color: #495057; }
+        .badge { display: inline-block; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .badge-success { background: #28a745; color: white; }
+        .badge-primary { background: #E04D00; color: white; }
+        .badge-warning { background: #ffc107; color: #212529; }
+        .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e9ecef; color: #6c757d; font-size: 12px; text-align: center; }
+        .btn { display: inline-block; padding: 10px 24px; background: #E04D00; color: white; text-decoration: none; border-radius: 6px; margin: 10px 0; }
+        .btn:hover { background: #c44500; }
+        .alert { padding: 12px 16px; border-radius: 6px; margin: 10px 0; }
+        .alert-info { background: #d1ecf1; border: 1px solid #bee5eb; color: #0c5460; }
+        .table { width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }
+        .table th { background: #2c3e50; color: white; padding: 10px 12px; text-align: left; }
+        .table td { padding: 10px 12px; border-bottom: 1px solid #e9ecef; }
+        .table tr:hover { background: #f8f9fa; }
+        code { background: #f8f9fa; padding: 2px 6px; border-radius: 4px; font-family: 'Courier New', monospace; font-size: 13px; }
+        @media (max-width: 600px) {
+            .table { font-size: 12px; }
+            .table th, .table td { padding: 6px 8px; }
+            .content { padding: 15px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h2>📦 Extra Hardware Added</h2>
+        </div>
+        <div class="content">
+            <p>Dear <strong>{{ employee.get_full_name|default:employee.username }}</strong>,</p>
+            
+            <div class="alert alert-info">
+                <strong>📌 Assignment Updated!</strong>
+                <br>
+                Additional hardware has been added to your assignment by <strong>{{ manager.get_full_name|default:manager.username }}</strong>.
+            </div>
+            
+            <div class="info-box">
+                <h6>📌 Assignment Information</h6>
+                <table style="width: 100%; border-collapse: collapse; font-size: 14px;">
+                    <tr>
+                        <td style="padding: 4px 0; width: 35%;"><strong>Assignment ID:</strong></td>
+                        <td style="padding: 4px 0;"><code>{{ assignment.assignment_id }}</code></td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0;"><strong>Project:</strong></td>
+                        <td style="padding: 4px 0;">{{ assignment.project.project_name }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0;"><strong>Exam City:</strong></td>
+                        <td style="padding: 4px 0;">{{ assignment.exam_city|default:"Not specified" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0;"><strong>Expected Return:</strong></td>
+                        <td style="padding: 4px 0;">{{ assignment.expected_return_date|date:"d F Y" }}</td>
+                    </tr>
+                    <tr>
+                        <td style="padding: 4px 0;"><strong>Added By:</strong></td>
+                        <td style="padding: 4px 0;">{{ manager.get_full_name|default:manager.username }}</td>
+                    </tr>
+                </table>
+            </div>
+            
+            <h6 style="margin-top: 20px; margin-bottom: 10px;">🖥️ Extra Hardware Items Added</h6>
+            <div style="overflow-x: auto;">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th style="width: 40px;">#</th>
+                            <th>Hardware Type</th>
+                            <th>Asset Number</th>
+                            <th>Serial Number</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for hw in added_items %}
+                        <tr>
+                            <td style="padding: 8px 12px; border-bottom: 1px solid #e9ecef;">{{ forloop.counter }}</td>
+                            <td style="padding: 8px 12px; border-bottom: 1px solid #e9ecef;"><strong>{{ hw.type }}</strong></td>
+                            <td style="padding: 8px 12px; border-bottom: 1px solid #e9ecef;"><code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">{{ hw.asset_number }}</code></td>
+                            <td style="padding: 8px 12px; border-bottom: 1px solid #e9ecef;"><code style="background: #f8f9fa; padding: 2px 6px; border-radius: 4px;">{{ hw.serial_number }}</code></td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin: 10px 0;">
+                <span class="badge badge-primary">Added Items: {{ added_items|length }}</span>
+            </p>
+            
+            {% if notes %}
+            <div class="alert alert-info" style="background: #f8f9fa; border-left: 4px solid #E04D00;">
+                <h6>📝 Manager's Notes:</h6>
+                <p class="mb-0">{{ notes }}</p>
+            </div>
+            {% endif %}
+            
+            <div class="alert alert-info">
+                <strong>📌 Next Steps:</strong>
+                <ol style="margin: 8px 0 0 20px;">
+                    <li>Go to the <a href="http://eduquityinventory.co.in/" style="color: #E04D00; text-decoration: none; font-weight: 600;">Eduquity Hardware Portal</a></li>
+                    <li>Navigate to <strong>"My Assignments"</strong> section</li>
+                    <li>Click <strong>"Enter Asset"</strong> to input the Asset Numbers for the new hardware</li>
+                    <li>Your manager will verify the new entries</li>
+                </ol>
+            </div>
+            
+            <p style="margin-top: 20px;">
+                <a href="http://eduquityinventory.co.in/" class="btn">🚀 Go to Hardware Portal</a>
+            </p>
+            
+            <div class="footer">
+                <p><strong>Eduquity Hardware Management Team</strong><br>
+                Established in 2000 - Thought-leader in the Indian assessment industry</p>
+                <p><em>This is an automated email. Please do not reply to this message.</em></p>
+                <p style="font-size: 11px;">If you have any issues, please contact your manager: {{ manager.get_full_name|default:manager.username }}</p>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

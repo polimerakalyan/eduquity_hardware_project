@@ -1,0 +1,408 @@
+{% extends 'base.html' %}
+{% block title %}Add Extra Hardware - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+    <!-- Page Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+        <div>
+            <h2><i class="bi bi-plus-circle text-success"></i> Add Extra Hardware</h2>
+            <p class="text-muted">
+                Adding extra hardware to assignment: 
+                <strong>{{ assignment.assignment_id|slice:"0:8" }}...</strong>
+                for <strong>{{ assignment.employee.get_full_name|default:assignment.employee.username }}</strong>
+                {% if assignment.exam_city %}at <span class="text-info">{{ assignment.exam_city }}</span>{% endif %}
+            </p>
+        </div>
+        <div>
+            <a href="{% url 'assignment_details' assignment.assignment_id %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left"></i> Back to Assignment
+            </a>
+        </div>
+    </div>
+
+    <!-- Assignment Summary -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="card bg-light border-0">
+                <div class="card-body">
+                    <div class="row text-center">
+                        <div class="col-md-3 col-6 mb-2 mb-md-0">
+                            <div class="h4 text-primary mb-0">{{ total_existing }}</div>
+                            <small class="text-muted">Current Items</small>
+                        </div>
+                        <div class="col-md-3 col-6 mb-2 mb-md-0">
+                            <div class="h4 text-success mb-0">{{ total_available }}</div>
+                            <small class="text-muted">Available Hardware</small>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="h4 text-warning mb-0">
+                                {% if not assignment.actual_return_date %}
+                                <span class="badge bg-success">Active</span>
+                                {% else %}
+                                <span class="badge bg-secondary">Returned</span>
+                                {% endif %}
+                            </div>
+                            <small class="text-muted">Assignment Status</small>
+                        </div>
+                        <div class="col-md-3 col-6">
+                            <div class="h4 text-info mb-0">
+                                {{ assignment.expected_return_date|date:"d M Y" }}
+                            </div>
+                            <small class="text-muted">Expected Return</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="row">
+            <!-- Available Hardware -->
+            <div class="col-lg-8">
+                <div class="card">
+                    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center flex-wrap gap-2">
+                        <h4 class="mb-0">
+                            <i class="bi bi-laptop"></i> Available Hardware
+                        </h4>
+                        <span class="badge bg-light text-dark">{{ available_hardware.count }} items</span>
+                    </div>
+                    <div class="card-body p-0">
+                        {% if available_hardware.exists %}
+                        <div class="table-responsive p-3">
+                            <table class="table table-hover" id="hardwareTable">
+                                <thead class="table-light">
+                                    <tr>
+                                        <th width="40px">
+                                            <input type="checkbox" id="selectAll" onclick="toggleAll(this)">
+                                        </th>
+                                        <th>Hardware Type</th>
+                                        <th>Asset Number</th>
+                                        <th>Serial Number</th>
+                                        <th>Model</th>
+                                        <th>Brand</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for hw in available_hardware %}
+                                    <tr>
+                                        <td>
+                                            <!-- ✅ FIXED: Use hardware_id (UUID) instead of id (Integer) -->
+                                            <input type="checkbox" name="hardware_ids" value="{{ hw.hardware_id }}" 
+                                                   class="hardware-checkbox"
+                                                   {% if hw.hardware_id in existing_hardware_ids %}disabled{% endif %}>
+                                        </td>
+                                        <td>
+                                            <span class="badge bg-primary">{{ hw.hardware_type.name }}</span>
+                                        </td>
+                                        <td>
+                                            <code class="asset-number">{{ hw.asset_number|default:"N/A" }}</code>
+                                        </td>
+                                        <td>
+                                            <code class="serial-number">{{ hw.serial_number }}</code>
+                                        </td>
+                                        <td>{{ hw.model_name|default:"-" }}</td>
+                                        <td>{{ hw.brand|default:"-" }}</td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="6" class="text-center py-4 text-muted">
+                                            <i class="bi bi-inbox display-4 d-block mb-2"></i>
+                                            No available hardware found.
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                        {% else %}
+                        <div class="text-center py-5">
+                            <i class="bi bi-box display-4 text-muted"></i>
+                            <h5 class="mt-3">No Available Hardware</h5>
+                            <p class="text-muted">All hardware is currently assigned or in use.</p>
+                            <a href="{% url 'manage_hardware' %}" class="btn btn-outline-primary">
+                                <i class="bi bi-plus-circle"></i> Add Hardware
+                            </a>
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Sidebar -->
+            <div class="col-lg-4">
+                <!-- Selected Items -->
+                <div class="card mb-4">
+                    <div class="card-header bg-info text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-check-circle"></i> Selected Items
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div id="selectedCount" class="text-center">
+                            <div class="h1 text-primary" id="selectedCountNumber">0</div>
+                            <small class="text-muted">Items Selected</small>
+                        </div>
+                        <div id="selectedItems" class="mt-3">
+                            <div class="alert alert-info">
+                                <i class="bi bi-info-circle"></i>
+                                Select hardware items from the list to add to this assignment.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Notes -->
+                <div class="card mb-4">
+                    <div class="card-header bg-warning text-dark">
+                        <h4 class="mb-0">
+                            <i class="bi bi-sticky"></i> Notes
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label for="condition_notes" class="form-label">
+                                <i class="bi bi-clipboard-check"></i> Condition at Assignment
+                            </label>
+                            <textarea name="condition_notes" id="condition_notes" 
+                                      class="form-control" rows="2"
+                                      placeholder="e.g., Good condition, checked on 15 Jan 2026">Assigned for exam duty</textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="add_notes" class="form-label">
+                                <i class="bi bi-pencil"></i> Additional Notes (for employee email)
+                            </label>
+                            <textarea name="add_notes" id="add_notes" 
+                                      class="form-control" rows="3"
+                                      placeholder="Any additional information for the employee..."></textarea>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="card">
+                    <div class="card-header bg-primary text-white">
+                        <h4 class="mb-0">
+                            <i class="bi bi-gear"></i> Actions
+                        </h4>
+                    </div>
+                    <div class="card-body">
+                        <button type="submit" class="btn btn-success w-100 mb-2" 
+                                id="addButton" disabled>
+                            <i class="bi bi-plus-circle"></i> Add Selected Hardware
+                        </button>
+                        
+                        <div class="d-grid gap-2">
+                            <a href="{% url 'assignment_details' assignment.assignment_id %}" 
+                               class="btn btn-outline-secondary">
+                                <i class="bi bi-arrow-left"></i> Cancel
+                            </a>
+                        </div>
+                        
+                        <hr>
+                        
+                        <div class="small text-muted">
+                            <i class="bi bi-info-circle"></i>
+                            Selected hardware will be:
+                            <ul class="mt-2 mb-0 ps-3">
+                                <li>Added to this assignment</li>
+                                <li>Marked as "Assigned"</li>
+                                <li>Employee will receive email notification</li>
+                                <li>Employee must enter asset numbers</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- ========== DEBUG INFO BLOCK ========== -->
+    {% if debug_branch_info %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-info small border">
+                <strong>🔍 Branch Debug Info:</strong><br>
+                Manager Branch: <code>{{ debug_branch_info.manager_branch|default:"None (Not Set)" }}</code><br>
+                Assignment Exam City: <code>{{ debug_branch_info.assignment_exam_city|default:"None (Not Set)" }}</code><br>
+                Filtering Hardware By Branch: <strong class="text-success">{{ debug_branch_info.target_branch_used|default:"ALL (No branch filter applied)" }}</strong><br>
+                Showing All Hardware in System: <strong>{{ debug_branch_info.is_showing_all_hardware }}</strong>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    <!-- ======================================== -->
+</div>
+
+<style>
+    /* Styling */
+    .asset-number {
+        background-color: #e7f1ff;
+        color: #0d6efd;
+        font-weight: 600;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .serial-number {
+        background-color: #f8f9fa;
+        color: #6c757d;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.85em;
+        font-family: 'Courier New', monospace;
+    }
+    
+    .hardware-checkbox:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+    
+    .hardware-checkbox:checked {
+        accent-color: #198754;
+    }
+    
+    #selectedItems {
+        max-height: 200px;
+        overflow-y: auto;
+    }
+    
+    #selectedItems .selected-item {
+        font-size: 0.85rem;
+        padding: 4px 8px;
+        margin: 2px 0;
+        background-color: #e7f1ff;
+        border-radius: 4px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    
+    #selectedItems .selected-item .remove-btn {
+        cursor: pointer;
+        color: #dc3545;
+    }
+    
+    #selectedItems .selected-item .remove-btn:hover {
+        color: #a71d2a;
+    }
+    
+    .table th {
+        font-size: 0.85rem;
+        font-weight: 600;
+    }
+    
+    .table td {
+        font-size: 0.85rem;
+        vertical-align: middle;
+    }
+    
+    @media (max-width: 768px) {
+        .table td, .table th {
+            font-size: 0.75rem;
+            padding: 0.5rem;
+        }
+        .asset-number, .serial-number {
+            font-size: 0.7rem;
+        }
+    }
+</style>
+
+<script>
+    // Toggle all checkboxes
+    function toggleAll(source) {
+        const checkboxes = document.querySelectorAll('.hardware-checkbox:not(:disabled)');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = source.checked;
+        });
+        updateSelectedCount();
+    }
+    
+    // Update selected count and display
+    function updateSelectedCount() {
+        const checkboxes = document.querySelectorAll('.hardware-checkbox:checked');
+        const count = checkboxes.length;
+        const addButton = document.getElementById('addButton');
+        const countDisplay = document.getElementById('selectedCountNumber');
+        const selectedItems = document.getElementById('selectedItems');
+        
+        countDisplay.textContent = count;
+        addButton.disabled = count === 0;
+        
+        if (count > 0) {
+            let html = '<div class="list-group list-group-flush">';
+            const seenIds = new Set(); // ✅ Prevent duplicate UUID selection
+            
+            checkboxes.forEach(checkbox => {
+                const hwId = checkbox.value; // ✅ Now using UUID string
+                if (seenIds.has(hwId)) return;
+                seenIds.add(hwId);
+                
+                const row = checkbox.closest('tr');
+                const type = row.querySelector('td:nth-child(2) .badge').textContent;
+                const asset = row.querySelector('.asset-number').textContent;
+                const serial = row.querySelector('.serial-number').textContent;
+                
+                html += `
+                    <div class="list-group-item d-flex justify-content-between align-items-center p-2">
+                        <div>
+                            <span class="badge bg-primary">${type}</span>
+                            <code class="ms-1">${asset}</code>
+                            <small class="text-muted ms-1">(${serial})</small>
+                        </div>
+                        <span class="badge bg-success">Selected</span>
+                    </div>
+                `;
+            });
+            html += '</div>';
+            selectedItems.innerHTML = html;
+        } else {
+            selectedItems.innerHTML = `
+                <div class="alert alert-info">
+                    <i class="bi bi-info-circle"></i>
+                    Select hardware items from the list to add to this assignment.
+                </div>
+            `;
+        }
+    }
+    
+    // Event listeners
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkboxes = document.querySelectorAll('.hardware-checkbox:not(:disabled)');
+        checkboxes.forEach(checkbox => {
+            checkbox.addEventListener('change', updateSelectedCount);
+        });
+        
+        updateSelectedCount();
+    });
+</script>
+
+<!-- DataTables for better searching/filtering -->
+{% block extra_js %}
+<link rel="stylesheet" href="https://cdn.datatables.net/1.11.5/css/jquery.dataTables.min.css">
+<script src="https://cdn.datatables.net/1.11.5/js/jquery.dataTables.min.js"></script>
+<script>
+    $(document).ready(function() {
+        $('#hardwareTable').DataTable({
+            pageLength: 10,
+            lengthMenu: [5, 10, 25, 50],
+            language: {
+                search: "Search hardware:",
+                lengthMenu: "Show _MENU_ items",
+                info: "Showing _START_ to _END_ of _TOTAL_ items",
+                infoEmpty: "No items found"
+            },
+            columnDefs: [
+                { orderable: false, targets: 0 }
+            ]
+        });
+    });
+</script>
+{% endblock %}
+{% endblock %}

@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eduquity Hardware Management System - Documentation</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px;
+            background: white;
+        }
+        h1 {
+            color: #2c3e50;
+            border-bottom: 3px solid #3498db;
+            padding-bottom: 10px;
+        }
+        h2 {
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 8px;
+            margin-top: 30px;
+        }
+        h3 {
+            color: #2c3e50;
+            margin-top: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            text-align: left;
+        }
+        th {
+            background-color: #3498db;
+            color: white;
+        }
+        code {
+            background-color: #f4f4f4;
+            padding: 2px 5px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9em;
+        }
+        pre {
+            background-color: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+        }
+        .note {
+            background-color: #e8f4fc;
+            border-left: 4px solid #3498db;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        .warning {
+            background-color: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 10px 15px;
+            margin: 15px 0;
+        }
+        @media print {
+            body {
+                padding: 20px;
+            }
+            .no-print {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="no-print" style="text-align: center; margin-bottom: 20px;">
+        <button onclick="window.print()" style="padding: 10px 20px; background: #3498db; color: white; border: none; border-radius: 5px; cursor: pointer;">📄 Print / Save as PDF</button>
+    </div>
+
+    <h1>EDUQUITY HARDWARE MANAGEMENT SYSTEM</h1>
+    <p style="text-align: center; color: #6c757d;">Complete Project Documentation | Version 1.0 | April 2026</p>
+
+    <h2>TABLE OF CONTENTS</h2>
+    <ol>
+        <li><a href="#overview">Project Overview</a></li>
+        <li><a href="#architecture">System Architecture</a></li>
+        <li><a href="#roles">User Roles & Permissions</a></li>
+        <li><a href="#features">Features & Modules</a></li>
+        <li><a href="#database">Database Schema</a></li>
+        <li><a href="#api">API Endpoints</a></li>
+        <li><a href="#screenshots">User Interface Screenshots</a></li>
+        <li><a href="#installation">Installation Guide</a></li>
+        <li><a href="#deployment">Deployment Guide</a></li>
+        <li><a href="#testing">Testing & Quality Assurance</a></li>
+        <li><a href="#troubleshooting">Troubleshooting Guide</a></li>
+        <li><a href="#enhancements">Future Enhancements</a></li>
+    </ol>
+
+    <h2 id="overview">1. PROJECT OVERVIEW</h2>
+    
+    <h3>1.1 Project Title</h3>
+    <p><strong>Eduquity Hardware Management System</strong></p>
+    
+    <h3>1.2 Project Description</h3>
+    <p>A comprehensive web-based hardware management system designed for Eduquity, a thought-leader in the Indian assessment industry since 2000. The system manages hardware inventory, employee assignments, serial number tracking, and verification processes for exam duty equipment.</p>
+    
+    <h3>1.3 Key Objectives</h3>
+    <ul>
+        <li>Track hardware inventory with serial numbers</li>
+        <li>Assign hardware to employees for exam duties</li>
+        <li>Verify serial numbers during assignment and return</li>
+        <li>Provide dual verification (manual and Excel-based)</li>
+        <li>Generate reports and export data</li>
+        <li>Maintain complete audit trail</li>
+    </ul>
+    
+    <h3>1.4 Technologies Used</h3>
+    <table>
+        <tr><th>Category</th><th>Technology</th></tr>
+        <tr><td>Backend</td><td>Django 4.2 (Python 3.11)</td></tr>
+        <tr><td>Frontend</td><td>Bootstrap 5, HTML5, CSS3, JavaScript</td></tr>
+        <tr><td>Database</td><td>MySQL / SQLite</td></tr>
+        <tr><td>Authentication</td><td>Django Auth with Custom User Model</td></tr>
+        <tr><td>File Handling</td><td>openpyxl, pandas</td></tr>
+        <tr><td>UI Icons</td><td>Bootstrap Icons</td></tr>
+    </table>
+
+    <h2 id="architecture">2. SYSTEM ARCHITECTURE</h2>
+    
+    <pre>
+┌─────────────────────────────────────────────────────────────┐
+│                         Client Browser                       │
+│                    (Responsive Web Interface)                │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                      Django Application                      │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Views.py  │  │  Models.py  │  │    Middleware.py    │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+│  ┌─────────────┐  ┌─────────────┐  ┌─────────────────────┐  │
+│  │   Forms.py  │  │   Admin.py  │  │      urls.py        │  │
+│  └─────────────┘  └─────────────┘  └─────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────┐
+│                         Database                             │
+│                   (MySQL / SQLite Storage)                   │
+└─────────────────────────────────────────────────────────────┘
+    </pre>
+
+    <h2 id="roles">3. USER ROLES & PERMISSIONS</h2>
+    
+    <h3>3.1 User Types</h3>
+    <table>
+        <tr><th>MANAGER</th><th>EMPLOYEE</th></tr>
+        <tr>
+            <td>
+                <ul>
+                    <li>Full system access</li>
+                    <li>Create/Edit hardware</li>
+                    <li>Create employees</li>
+                    <li>Create projects</li>
+                    <li>Create assignments</li>
+                    <li>Verify serial entries</li>
+                    <li>Return hardware</li>
+                    <li>Export reports</li>
+                </ul>
+            </td>
+            <td>
+                <ul>
+                    <li>Limited access</li>
+                    <li>View assigned hardware</li>
+                    <li>Enter serial numbers</li>
+                    <li>Verify received hardware</li>
+                    <li>View assignment history</li>
+                    <li>Change own password</li>
+                </ul>
+            </td>
+         </tr>
+    </table>
+
+    <h3>3.2 First Login Flow</h3>
+    <pre>
+Employee Login → Check is_first_login → (True) → Redirect to Change Password → 
+Employee changes password → is_first_login set to False → Full access granted
+    </pre>
+
+    <h2 id="features">4. FEATURES & MODULES</h2>
+    
+    <h3>4.1 Authentication Module</h3>
+    <ul>
+        <li>User login with role-based redirection</li>
+        <li>First login password change enforcement</li>
+        <li>Password strength validation</li>
+        <li>Session management</li>
+        <li>Logout functionality</li>
+    </ul>
+    
+    <h3>4.2 Dashboard Module</h3>
+    <ul>
+        <li><strong>Manager Dashboard:</strong> Statistics cards, hardware status overview, recent activity feed</li>
+        <li><strong>Employee Dashboard:</strong> Current assignments, pending serial entries, completed assignments, exam city display</li>
+    </ul>
+    
+    <h3>4.3 Hardware Management Module</h3>
+    <ul>
+        <li>Add/Edit/Delete hardware items</li>
+        <li>Hardware types management</li>
+        <li>Serial number tracking</li>
+        <li>Status management (Available, Assigned, In Use, Maintenance, Retired)</li>
+        <li>Filter and search functionality</li>
+        <li>Export to Excel</li>
+    </ul>
+    
+    <h3>4.4 Employee Management Module</h3>
+    <ul>
+        <li>Create employee accounts</li>
+        <li>Automatic temporary password generation</li>
+        <li>Email credentials delivery</li>
+        <li>Employee listing with search/filter</li>
+        <li>Delete employee (with active assignment check)</li>
+    </ul>
+    
+    <h3>4.5 Assignment Module</h3>
+    <ul>
+        <li>Create assignments with manual serial entry</li>
+        <li>Select employee and project</li>
+        <li>Specify exam city and return date</li>
+        <li>Real-time serial number verification</li>
+        <li>Multiple hardware items per assignment</li>
+        <li>Return assignment with serial verification</li>
+    </ul>
+    
+    <h3>4.6 Verification Module (Dual Verification)</h3>
+    <ul>
+        <li><strong>Manual Verification:</strong> Employee enters serial numbers, Manager verifies each entry</li>
+        <li><strong>Auto Verification (Excel):</strong> Employee generates verification Excel, Manager uploads, System auto-verifies matching serials</li>
+    </ul>
+
+    <h2 id="database">5. DATABASE SCHEMA</h2>
+    
+    <h3>5.1 Models</h3>
+    
+    <p><strong>CustomUser Model:</strong></p>
+    <pre>class CustomUser(AbstractUser):
+    USER_TYPE_CHOICES = (
+        ('manager', 'Manager'),
+        ('employee', 'Employee'),
+    )
+    user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    is_first_login = models.BooleanField(default=True)
+    manager = models.ForeignKey('self', on_delete=models.SET_NULL, null=True, blank=True)
+    phone = models.CharField(max_length=15, blank=True, null=True)</pre>
+    
+    <p><strong>Hardware Model:</strong></p>
+    <pre>class Hardware(models.Model):
+    STATUS_CHOICES = (
+        ('available', 'Available'),
+        ('assigned', 'Assigned'),
+        ('in_use', 'In Use'),
+        ('maintenance', 'Maintenance'),
+        ('retired', 'Retired'),
+    )
+    hardware_type = models.ForeignKey(HardwareType, on_delete=models.CASCADE)
+    serial_number = models.CharField(max_length=100, unique=True)
+    model_name = models.CharField(max_length=100)
+    brand = models.CharField(max_length=100, blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='available')</pre>
+    
+    <h3>5.2 Database Relationships</h3>
+    <table>
+        <tr><th>Relationship</th><th>Type</th><th>Description</th></tr>
+        <tr><td>Manager → Employees</td><td>One-to-Many</td><td>Each manager can have multiple employees</td></tr>
+        <tr><td>Hardware → HardwareType</td><td>Many-to-One</td><td>Each hardware belongs to one type</td></tr>
+        <tr><td>Assignment → Employee</td><td>Many-to-One</td><td>Each assignment belongs to one employee</td></tr>
+        <tr><td>Assignment → Project</td><td>Many-to-One</td><td>Each assignment belongs to one project</td></tr>
+    </table>
+
+    <h2 id="api">6. API ENDPOINTS</h2>
+    
+    <h3>6.1 Manager URLs</h3>
+    <table>
+        <tr><th>URL</th><th>Method</th><th>Description</th></tr>
+        <tr><td>/manager/dashboard/</td><td>GET</td><td>Manager dashboard</td></tr>
+        <tr><td>/manager/manage-hardware/</td><td>GET</td><td>Hardware listing</td></tr>
+        <tr><td>/manager/add-hardware/</td><td>GET, POST</td><td>Add hardware</td></tr>
+        <tr><td>/manager/create-assignment/</td><td>GET, POST</td><td>Create assignment</td></tr>
+        <tr><td>/manager/auto-verify/upload/</td><td>POST</td><td>Upload Excel for auto-verification</td></tr>
+    </table>
+    
+    <h3>6.2 Employee URLs</h3>
+    <table>
+        <tr><th>URL</th><th>Method</th><th>Description</th></tr>
+        <tr><td>/employee/dashboard/</td><td>GET</td><td>Employee dashboard</td></tr>
+        <tr><td>/employee/my-hardware/</td><td>GET</td><td>My hardware</td></tr>
+        <tr><td>/employee/enter-serial-numbers/&lt;id&gt;/</td><td>GET, POST</td><td>Enter serial numbers</td></tr>
+        <tr><td>/employee/generate-verification-excel/&lt;id&gt;/</td><td>GET</td><td>Generate verification Excel</td></tr>
+    </table>
+
+    <h2 id="installation">8. INSTALLATION GUIDE</h2>
+    
+    <h3>8.1 Prerequisites</h3>
+    <pre># Install Python 3.11+
+python --version
+
+# Install pip
+pip --version</pre>
+
+    <h3>8.2 Clone Repository</h3>
+    <pre>git clone https://github.com/your-repo/eduquity-hardware.git
+cd eduquity-hardware</pre>
+
+    <h3>8.3 Create Virtual Environment</h3>
+    <pre># Windows
+python -m venv venv
+venv\Scripts\activate
+
+# Linux/Mac
+python3 -m venv venv
+source venv/bin/activate</pre>
+
+    <h3>8.4 Install Dependencies</h3>
+    <pre>pip install -r requirements.txt</pre>
+    
+    <p><strong>requirements.txt:</strong></p>
+    <pre>Django==4.2
+mysqlclient==2.2.0
+openpyxl==3.1.2
+pandas==2.1.0
+Pillow==10.0.0
+python-decouple==3.8</pre>
+
+    <h3>8.5 Run Migrations</h3>
+    <pre>python manage.py makemigrations
+python manage.py migrate</pre>
+
+    <h3>8.6 Create Superuser</h3>
+    <pre>python manage.py createsuperuser</pre>
+
+    <h3>8.7 Run Development Server</h3>
+    <pre>python manage.py runserver</pre>
+
+    <div class="note">
+        <strong>Note:</strong> Access the application at http://127.0.0.1:8000/
+    </div>
+
+    <h2 id="troubleshooting">11. TROUBLESHOOTING GUIDE</h2>
+    
+    <h3>Common Issues & Solutions</h3>
+    
+    <p><strong>Issue 1: Database migration errors</strong></p>
+    <pre>Solution:
+python manage.py migrate --fake
+python manage.py migrate</pre>
+    
+    <p><strong>Issue 2: Email not sending</strong></p>
+    <pre>Check:
+- EMAIL_HOST settings in settings.py
+- SMTP server credentials
+- Firewall settings</pre>
+    
+    <p><strong>Issue 3: File upload fails</strong></p>
+    <pre>Check:
+- MAX_UPLOAD_SIZE in settings
+- File permissions
+- Disk space</pre>
+
+    <h2 id="enhancements">12. FUTURE ENHANCEMENTS</h2>
+    
+    <ul>
+        <li><strong>QR Code Integration</strong> - Generate QR codes for each hardware item</li>
+        <li><strong>Mobile Application</strong> - React Native mobile app with offline support</li>
+        <li><strong>Advanced Analytics Dashboard</strong> - Charts for hardware utilization</li>
+        <li><strong>Email Notifications</strong> - Automated reminders for pending returns</li>
+        <li><strong>Bulk Operations</strong> - Bulk assign and verify hardware</li>
+        <li><strong>REST API Development</strong> - Third-party integration support</li>
+        <li><strong>Reports Module</strong> - PDF report generation</li>
+    </ul>
+
+    <div class="warning">
+        <strong>Important:</strong> This documentation is confidential and proprietary to Eduquity.
+    </div>
+
+    <hr>
+    <p style="text-align: center;">
+        <strong>Document Version:</strong> 1.0 | <strong>Last Updated:</strong> April 2026<br>
+        <strong>Author:</strong> Eduquity Development Team<br>
+        <strong>Support:</strong> support@eduquity.com
+    </p>
+</body>
+</html>

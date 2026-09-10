@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Cleanup Audit Logs{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-md-8 offset-md-2">
+            <div class="card">
+                <div class="card-header bg-danger text-white">
+                    <h5 class="mb-0"><i class="fas fa-trash-alt"></i> Cleanup Audit Logs</h5>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-warning">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <strong>Warning:</strong> This action will permanently delete old audit logs. 
+                        This action cannot be undone.
+                    </div>
+
+                    <!-- Statistics -->
+                    <div class="row mb-4">
+                        <div class="col-md-3">
+                            <div class="small-box bg-info">
+                                <div class="inner">
+                                    <h3>{{ total_logs }}</h3>
+                                    <p>Total Logs</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-warning">
+                                <div class="inner">
+                                    <h3>{{ logs_30_days }}</h3>
+                                    <p>Older than 30 days</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-danger">
+                                <div class="inner">
+                                    <h3>{{ logs_60_days }}</h3>
+                                    <p>Older than 60 days</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="small-box bg-dark">
+                                <div class="inner">
+                                    <h3>{{ logs_90_days }}</h3>
+                                    <p>Older than 90 days</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="form-group">
+                            <label>Retention Period (days):</label>
+                            <select name="retention_days" class="form-control" id="retentionDays">
+                                <option value="7">7 days ({{ logs_7_days }} logs)</option>
+                                <option value="15">15 days</option>
+                                <option value="30" selected>30 days ({{ logs_30_days }} logs) - Recommended</option>
+                                <option value="60">60 days ({{ logs_60_days }} logs)</option>
+                                <option value="90">90 days ({{ logs_90_days }} logs)</option>
+                            </select>
+                            <small class="form-text text-muted">
+                                Logs older than the selected number of days will be deleted.
+                            </small>
+                        </div>
+
+                        <div class="form-group">
+                            <div class="custom-control custom-checkbox">
+                                <input type="checkbox" class="custom-control-input" id="confirmCheck" name="confirm">
+                                <label class="custom-control-label" for="confirmCheck">
+                                    I understand that this action is <strong>permanent</strong> and cannot be undone.
+                                </label>
+                            </div>
+                        </div>
+
+                        <div class="form-group">
+                            <button type="submit" class="btn btn-danger" id="cleanupBtn" disabled>
+                                <i class="fas fa-trash"></i> Delete Old Logs
+                            </button>
+                            <a href="{% url 'view_audit_logs' %}" class="btn btn-secondary">
+                                <i class="fas fa-arrow-left"></i> Cancel
+                            </a>
+                            <span id="estimatedDeletion" class="float-right text-muted"></span>
+                        </div>
+                    </form>
+
+                    <div class="alert alert-info mt-3">
+                        <i class="fas fa-info-circle"></i>
+                        <strong>Automatic Cleanup:</strong> Logs are automatically cleaned up daily at 2 AM.
+                        <br>
+                        <strong>Manual Cleanup:</strong> Use the form above to manually delete old logs.
+                        <br>
+                        <strong>Command Line:</strong>
+                        <code>python manage.py cleanup_audit_logs --days=30</code>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const checkbox = document.getElementById('confirmCheck');
+        const cleanupBtn = document.getElementById('cleanupBtn');
+        const retentionSelect = document.getElementById('retentionDays');
+        const estimatedDeletion = document.getElementById('estimatedDeletion');
+
+        // Enable/disable button based on checkbox
+        checkbox.addEventListener('change', function() {
+            cleanupBtn.disabled = !this.checked;
+        });
+
+        // Show estimated deletion count
+        retentionSelect.addEventListener('change', function() {
+            const text = this.options[this.selectedIndex].text;
+            const match = text.match(/(\d+)\s+logs/);
+            if (match) {
+                estimatedDeletion.textContent = `Will delete approximately ${match[1]} logs`;
+            } else {
+                estimatedDeletion.textContent = '';
+            }
+        });
+
+        // Trigger initial estimate
+        retentionSelect.dispatchEvent(new Event('change'));
+    });
+</script>
+{% endblock %}

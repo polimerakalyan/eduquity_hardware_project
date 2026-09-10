@@ -1,0 +1,390 @@
+{% extends 'base.html' %}
+{% block title %}Managers - Super Admin{% endblock %}
+
+{% block page_title %}All Managers{% endblock %}
+{% block page_subtitle %}View and manage all managers across all branches{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Compact Styles */
+    .page-title-sm {
+        font-size: 1.1rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .page-subtitle-sm {
+        font-size: 0.7rem !important;
+        margin-bottom: 0 !important;
+    }
+    
+    .btn-sm-custom {
+        font-size: 0.65rem !important;
+        padding: 0.15rem 0.4rem !important;
+    }
+    
+    .badge {
+        font-weight: 500;
+        border-radius: 20px;
+        padding: 0.15rem 0.4rem;
+        font-size: 0.6rem;
+    }
+    
+    .table td {
+        vertical-align: middle;
+        padding: 0.4rem 0.3rem;
+        font-size: 0.75rem;
+    }
+    
+    .table th {
+        background-color: #f8fafc;
+        font-weight: 600;
+        color: #1e293b;
+        padding: 0.4rem 0.3rem;
+        font-size: 0.65rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .table-responsive {
+        border-radius: 10px;
+        overflow: hidden;
+    }
+    
+    .manager-avatar {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #E04D00, #FF6B1A);
+        color: white;
+        font-weight: bold;
+        font-size: 10px;
+        flex-shrink: 0;
+    }
+    
+    .super-admin-badge {
+        font-size: 0.5rem;
+        padding: 0.1rem 0.4rem;
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        border-radius: 20px;
+        display: inline-block;
+    }
+    
+    code {
+        font-size: 0.65rem;
+        padding: 1px 3px;
+    }
+    
+    .compact-text {
+        font-size: 0.7rem;
+    }
+    
+    .btn-delete {
+        padding: 0.1rem 0.2rem;
+        font-size: 0.6rem;
+    }
+    
+    /* Modal Compact */
+    .modal-content {
+        border: none;
+        border-radius: 10px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.15);
+    }
+    
+    .modal-header {
+        padding: 0.6rem 1rem;
+        border-bottom: 1px solid #e2e8f0;
+    }
+    
+    .modal-body {
+        padding: 1rem;
+    }
+    
+    .modal-footer {
+        padding: 0.6rem 1rem;
+        border-top: 1px solid #e2e8f0;
+        background: #f8f9fa;
+    }
+    
+    .modal-body .alert {
+        padding: 0.4rem 0.6rem;
+        font-size: 0.7rem;
+        margin-bottom: 0.5rem;
+    }
+    
+    .modal-body h5 {
+        font-size: 0.95rem;
+    }
+    
+    .modal-body .display-4 {
+        font-size: 2.5rem !important;
+    }
+    
+    .btn {
+        border-radius: 6px;
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+    
+    @media (max-width: 768px) {
+        .table td, .table th {
+            padding: 0.3rem 0.2rem;
+            font-size: 0.65rem;
+        }
+        
+        .btn {
+            font-size: 0.6rem;
+            padding: 0.15rem 0.3rem;
+        }
+        
+        .badge {
+            font-size: 0.55rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+        
+        .manager-avatar {
+            width: 22px;
+            height: 22px;
+            font-size: 8px;
+        }
+        
+        .page-title-sm {
+            font-size: 0.95rem !important;
+        }
+        
+        .page-subtitle-sm {
+            font-size: 0.65rem !important;
+        }
+        
+        .btn-sm-custom {
+            font-size: 0.55rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+        
+        .super-admin-badge {
+            font-size: 0.45rem;
+            padding: 0.05rem 0.3rem;
+        }
+        
+        .compact-text {
+            font-size: 0.6rem;
+        }
+        
+        code {
+            font-size: 0.55rem;
+        }
+        
+        .modal-dialog {
+            margin: 0.5rem;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .table td, .table th {
+            padding: 0.2rem 0.15rem;
+            font-size: 0.6rem;
+        }
+        
+        .btn {
+            font-size: 0.55rem;
+            padding: 0.1rem 0.25rem;
+        }
+        
+        .badge {
+            font-size: 0.5rem !important;
+            padding: 0.05rem 0.25rem !important;
+        }
+        
+        .manager-avatar {
+            width: 20px;
+            height: 20px;
+            font-size: 7px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Compact Header -->
+<div class="row mb-2">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-1">
+            <div>
+                <h4 class="fw-bold mb-0 page-title-sm"><i class="bi bi-people me-1 text-primary"></i>Managers</h4>
+                <p class="text-muted page-subtitle-sm">Total: {{ total_managers }}</p>
+            </div>
+            <div class="d-flex flex-wrap gap-1">
+                <a href="{% url 'super_admin_create_manager' %}" class="btn btn-primary btn-sm-custom">
+                    <i class="bi bi-person-plus me-1"></i> Add
+                </a>
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary btn-sm-custom">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+                <span class="super-admin-badge align-self-center">
+                    <i class="bi bi-shield-lock me-1"></i> Super Admin
+                </span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compact Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="bg-light">
+                    <tr>
+                        <th>Name</th>
+                        <th class="d-none d-sm-table-cell">Username</th>
+                        <th class="d-none d-md-table-cell">Email</th>
+                        <th>Branch</th>
+                        <th class="d-none d-xl-table-cell">Phone</th>
+                        <th class="text-center">Emp</th>
+                        <th class="text-center d-none d-sm-table-cell">Asgn</th>
+                        <th class="text-center d-none d-md-table-cell">HW</th>
+                        <th class="text-center" style="min-width: 30px;">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for manager in managers %}
+                    <tr>
+                        <td>
+                            <div class="d-flex align-items-center gap-1">
+                                <div class="manager-avatar">
+                                    {{ manager.get_full_name|default:manager.username|first|upper }}
+                                </div>
+                                <strong class="compact-text">{{ manager.get_full_name|default:manager.username|truncatechars:12 }}</strong>
+                            </div>
+                        </td>
+                        <td class="d-none d-sm-table-cell"><code>{{ manager.username|truncatechars:10 }}</code></td>
+                        <td class="d-none d-md-table-cell compact-text">{{ manager.email|truncatechars:20 }}</td>
+                        <td><span class="badge bg-info">{{ manager.branch_location|default:"-"|truncatechars:8 }}</span></td>
+                        <td class="d-none d-xl-table-cell compact-text">{{ manager.phone|default:"-" }}</td>
+                        <td class="text-center"><span class="badge bg-secondary">{{ manager.employee_count|default:0 }}</span></td>
+                        <td class="text-center d-none d-sm-table-cell"><span class="badge bg-primary">{{ manager.assignment_count|default:0 }}</span></td>
+                        <td class="text-center d-none d-md-table-cell"><span class="badge bg-success">{{ manager.hardware_count|default:0 }}</span></td>
+                        <td class="text-center">
+                            <button class="btn btn-sm btn-outline-danger btn-delete" 
+                                    data-bs-toggle="modal" 
+                                    data-bs-target="#deleteModal{{ manager.id }}" 
+                                    title="Delete Manager">
+                                <i class="bi bi-trash"></i>
+                            </button>
+                        </td>
+                    </tr>
+                    
+                    <!-- Delete Modal - Compact -->
+                    <div class="modal fade" id="deleteModal{{ manager.id }}" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <form method="POST" action="{% url 'super_admin_delete_manager' manager.id %}">
+                                    {% csrf_token %}
+                                    <div class="modal-header bg-danger text-white py-1">
+                                        <h6 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-1"></i>Delete Manager</h6>
+                                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" style="font-size: 0.6rem;"></button>
+                                    </div>
+                                    <div class="modal-body py-2">
+                                        <div class="text-center mb-1">
+                                            <i class="bi bi-person-x display-4 text-danger"></i>
+                                        </div>
+                                        <h6 class="text-center mb-1">Delete: {{ manager.get_full_name|default:manager.username }}?</h6>
+                                        <div class="alert alert-warning py-1">
+                                            <i class="bi bi-exclamation-triangle-fill me-1"></i>
+                                            <strong>Warning:</strong> Cannot be undone.
+                                            {% if manager.employee_count > 0 %}
+                                            <br>
+                                            <span class="text-danger">⚠️ Has {{ manager.employee_count }} employee(s). Reassign first.</span>
+                                            {% endif %}
+                                        </div>
+                                        <div class="bg-light p-1 rounded compact-text">
+                                            <div class="row g-1">
+                                                <div class="col-6"><strong>Username:</strong></div>
+                                                <div class="col-6">{{ manager.username }}</div>
+                                                <div class="col-6"><strong>Email:</strong></div>
+                                                <div class="col-6">{{ manager.email|truncatechars:20 }}</div>
+                                                <div class="col-6"><strong>Branch:</strong></div>
+                                                <div class="col-6">{{ manager.branch_location|default:"-" }}</div>
+                                                <div class="col-6"><strong>Employees:</strong></div>
+                                                <div class="col-6">{{ manager.employee_count|default:0 }}</div>
+                                                <div class="col-6"><strong>Assignments:</strong></div>
+                                                <div class="col-6">{{ manager.assignment_count|default:0 }}</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="modal-footer py-1">
+                                        <button type="button" class="btn btn-secondary btn-sm-custom" data-bs-dismiss="modal">Cancel</button>
+                                        <button type="submit" class="btn btn-danger btn-sm-custom" {% if manager.employee_count > 0 %}disabled{% endif %}>
+                                            <i class="bi bi-trash"></i> Delete
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <tr>
+                        <td colspan="9" class="text-center py-3">
+                            <i class="bi bi-inbox display-4 text-muted"></i>
+                            <h6 class="mt-2">No Managers Found</h6>
+                            <p class="text-muted compact-text">No managers have been created yet.</p>
+                            <a href="{% url 'super_admin_create_manager' %}" class="btn btn-primary btn-sm-custom">
+                                <i class="bi bi-person-plus"></i> Create First Manager
+                            </a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Footer Info - Compact -->
+<div class="mt-2 text-muted compact-text d-flex flex-wrap justify-content-between align-items-center">
+    <div>
+        <i class="bi bi-info-circle me-1"></i>
+        Showing {{ managers|length }} managers
+    </div>
+    <div>
+        <span class="super-admin-badge">
+            <i class="bi bi-shield-lock me-1"></i> Super Admin
+        </span>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Modal scroll fix
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                document.body.style.overflow = 'hidden';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Prevent modal from closing when clicking outside on mobile
+        var modalDialogs = document.querySelectorAll('.modal-dialog');
+        modalDialogs.forEach(function(dialog) {
+            dialog.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>
+{% endblock %}

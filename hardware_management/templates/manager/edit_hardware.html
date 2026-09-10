@@ -1,0 +1,196 @@
+{% extends 'base.html' %}
+{% block title %}Edit Hardware - Eduquity Hardware Management{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-12">
+        <div class="d-flex justify-content-between align-items-center">
+            <div>
+                <h2><i class="bi bi-pencil"></i> Edit Hardware</h2>
+                <p class="text-muted">Update hardware item details</p>
+            </div>
+            <div>
+                <a href="{% url 'manage_hardware' %}" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Back to Inventory
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-header bg-warning text-dark">
+                <h4 class="mb-0">
+                    <i class="bi bi-pencil"></i> Edit Hardware
+                </h4>
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{% url 'edit_hardware' hardware.id %}">
+                    {% csrf_token %}
+                    
+                    <div class="mb-3">
+                        <label for="hardware_type" class="form-label">Hardware Type *</label>
+                        <select class="form-select" id="hardware_type" name="hardware_type" required>
+                            {% for hw_type in hardware_types %}
+                            <option value="{{ hw_type.id }}" {% if hw_type.id == hardware.hardware_type.id %}selected{% endif %}>
+                                {{ hw_type.name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="asset_number" class="form-label">Asset Number *</label>
+                        <input type="text" class="form-control" id="asset_number" name="asset_number" 
+                               value="{{ hardware.asset_number }}" required>
+                        <small class="text-muted">Unique asset tag for tracking</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="serial_number" class="form-label">Serial Number *</label>
+                        <input type="text" class="form-control" id="serial_number" name="serial_number" 
+                               value="{{ hardware.serial_number }}" required>
+                        <small class="text-muted">Manufacturer's serial number</small>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="status" class="form-label">Status *</label>
+                        <select class="form-select" id="status" name="status" required>
+                            <option value="available" {% if hardware.status == 'available' %}selected{% endif %}>Available</option>
+                            <option value="assigned" {% if hardware.status == 'assigned' %}selected{% endif %}>Assigned</option>
+                            <option value="in_use" {% if hardware.status == 'in_use' %}selected{% endif %}>In Use</option>
+                            <option value="maintenance" {% if hardware.status == 'maintenance' %}selected{% endif %}>Under Maintenance</option>
+                            <option value="retired" {% if hardware.status == 'retired' %}selected{% endif %}>Retired</option>
+                        </select>
+                    </div>
+                    
+                    <div class="alert alert-info">
+                        <i class="bi bi-info-circle"></i> 
+                        <strong>Note:</strong> Changing status may affect assignments.
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary">
+                        <i class="bi bi-save"></i> Update Hardware
+                    </button>
+                    <a href="{% url 'manage_hardware' %}" class="btn btn-outline-secondary">
+                        <i class="bi bi-x-circle"></i> Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-info text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-info-circle"></i> Hardware Information
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="text-center mb-3">
+                    <div class="bg-light rounded-3 p-3">
+                        <h5 class="mb-0 text-primary">{{ hardware.asset_number }}</h5>
+                        <small class="text-muted">Asset Number</small>
+                    </div>
+                </div>
+                
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Type:</span>
+                        <strong>{{ hardware.hardware_type.name }}</strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Asset Number:</span>
+                        <strong><code>{{ hardware.asset_number }}</code></strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Serial Number:</span>
+                        <strong><code>{{ hardware.serial_number }}</code></strong>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Status:</span>
+                        <span class="badge {% if hardware.status == 'available' %}bg-success{% elif hardware.status == 'assigned' %}bg-warning text-dark{% elif hardware.status == 'in_use' %}bg-info{% else %}bg-danger{% endif %}">
+                            {{ hardware.get_status_display }}
+                        </span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Added On:</span>
+                        <span>{{ hardware.created_at|date:"d M Y" }}</span>
+                    </li>
+                    <li class="list-group-item d-flex justify-content-between">
+                        <span>Created By:</span>
+                        <span>{{ hardware.created_by.get_full_name|default:hardware.created_by.username }}</span>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow-sm">
+            <div class="card-header bg-success text-white">
+                <h4 class="mb-0">
+                    <i class="bi bi-lightbulb"></i> Quick Tips
+                </h4>
+            </div>
+            <div class="card-body">
+                <div class="d-flex mb-3">
+                    <i class="bi bi-shield-check fs-4 text-success me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Unique Identifiers</h6>
+                        <small class="text-muted">Asset numbers and serial numbers must be unique</small>
+                    </div>
+                </div>
+                <div class="d-flex">
+                    <i class="bi bi-arrow-repeat fs-4 text-info me-3"></i>
+                    <div>
+                        <h6 class="mb-1">Status Tracking</h6>
+                        <small class="text-muted">Update status to reflect current hardware state</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    
+    .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08) !important;
+    }
+    
+    code {
+        background-color: #f8f9fa;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+    }
+    
+    .list-group-item {
+        border-left: none;
+        border-right: none;
+        padding: 0.75rem 0;
+    }
+    
+    .list-group-item:first-child {
+        border-top: none;
+    }
+    
+    .list-group-item:last-child {
+        border-bottom: none;
+    }
+    
+    @media (max-width: 768px) {
+        .col-md-8, .col-md-4 {
+            margin-bottom: 20px;
+        }
+    }
+</style>
+{% endblock %}

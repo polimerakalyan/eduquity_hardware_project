@@ -1,0 +1,779 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}Super Admin Dashboard - Eduquity Hardware Management{% endblock %}
+
+{% block page_title %}Super Admin Dashboard{% endblock %}
+{% block page_subtitle %}Welcome back, {{ user.get_full_name|default:user.username }}! Full system overview and analytics.{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* Modern Dashboard Styles */
+    .stat-card {
+        border: none;
+        border-radius: 12px;
+        transition: all 0.3s ease;
+        overflow: hidden;
+        position: relative;
+    }
+    
+    .stat-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+    }
+    
+    .stat-card.primary::before { background: linear-gradient(90deg, #4F46E5, #818CF8); }
+    .stat-card.success::before { background: linear-gradient(90deg, #059669, #34D399); }
+    .stat-card.warning::before { background: linear-gradient(90deg, #D97706, #FBBF24); }
+    .stat-card.info::before { background: linear-gradient(90deg, #2563EB, #60A5FA); }
+    .stat-card.danger::before { background: linear-gradient(90deg, #DC2626, #F87171); }
+    .stat-card.purple::before { background: linear-gradient(90deg, #7C3AED, #A78BFA); }
+    .stat-card.orange::before { background: linear-gradient(90deg, #EA580C, #FB923C); }
+    .stat-card.pink::before { background: linear-gradient(90deg, #DB2777, #F472B6); }
+    .stat-card.teal::before { background: linear-gradient(90deg, #0D9488, #2DD4BF); }
+    
+    .stat-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 25px rgba(0,0,0,0.1) !important;
+    }
+    
+    .stat-icon-wrapper {
+        width: 38px;
+        height: 38px;
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
+    
+    .stat-icon-wrapper.primary { background: rgba(79, 70, 229, 0.1); color: #4F46E5; }
+    .stat-icon-wrapper.success { background: rgba(5, 150, 105, 0.1); color: #059669; }
+    .stat-icon-wrapper.warning { background: rgba(217, 119, 6, 0.1); color: #D97706; }
+    .stat-icon-wrapper.info { background: rgba(37, 99, 235, 0.1); color: #2563EB; }
+    .stat-icon-wrapper.danger { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
+    .stat-icon-wrapper.purple { background: rgba(124, 58, 237, 0.1); color: #7C3AED; }
+    .stat-icon-wrapper.orange { background: rgba(234, 88, 12, 0.1); color: #EA580C; }
+    .stat-icon-wrapper.pink { background: rgba(219, 39, 119, 0.1); color: #DB2777; }
+    .stat-icon-wrapper.teal { background: rgba(13, 148, 136, 0.1); color: #0D9488; }
+    
+    .stat-number {
+        font-size: 1.3rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.65rem;
+        color: #6B7280;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    
+    /* Chart Cards - Compact */
+    .chart-card {
+        border: none;
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.3s ease;
+    }
+    
+    .chart-card .card-header {
+        background: white;
+        border-bottom: 1px solid #F3F4F6;
+        padding: 0.6rem 1rem;
+    }
+    
+    .chart-card .card-header h6 {
+        font-weight: 600;
+        font-size: 0.75rem;
+        margin: 0;
+        color: #1F2937;
+    }
+    
+    .chart-card .card-body {
+        padding: 0.75rem !important;
+    }
+    
+    .chart-container {
+        position: relative;
+        height: 150px;
+        width: 100%;
+    }
+    
+    .chart-container-sm {
+        height: 130px;
+    }
+    
+    /* Smaller badges for status */
+    .status-badge {
+        font-size: 0.55rem;
+        padding: 2px 8px;
+        border-radius: 12px;
+    }
+    
+    /* Progress bar for utilization */
+    .utilization-bar {
+        height: 4px;
+        border-radius: 10px;
+        background: #F3F4F6;
+        overflow: hidden;
+        margin-top: 4px;
+    }
+    
+    .utilization-bar .fill {
+        height: 100%;
+        border-radius: 10px;
+        transition: width 1s ease;
+    }
+    
+    .utilization-bar .fill.high { background: linear-gradient(90deg, #059669, #34D399); }
+    .utilization-bar .fill.medium { background: linear-gradient(90deg, #D97706, #FBBF24); }
+    .utilization-bar .fill.low { background: linear-gradient(90deg, #DC2626, #F87171); }
+    
+    /* Activity timeline - compact */
+    .activity-item {
+        border-left: 2px solid #E5E7EB;
+        padding: 0.4rem 0 0.4rem 0.75rem;
+        position: relative;
+        transition: all 0.2s ease;
+    }
+    
+    .activity-item:last-child {
+        border-left: none;
+    }
+    
+    .activity-item::before {
+        content: '';
+        position: absolute;
+        left: -5px;
+        top: 0.7rem;
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: #E5E7EB;
+    }
+    
+    .activity-item.active::before {
+        background: #4F46E5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.2);
+    }
+    
+    .activity-item:hover {
+        background: #F9FAFB;
+        border-radius: 6px;
+    }
+    
+    /* Compact table */
+    .table-compact td, .table-compact th {
+        padding: 0.3rem 0.5rem !important;
+        font-size: 0.7rem !important;
+    }
+    
+    /* Responsive */
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.1rem !important;
+        }
+        .stat-icon-wrapper {
+            width: 32px;
+            height: 32px;
+        }
+        .stat-icon-wrapper i {
+            font-size: 0.8rem !important;
+        }
+        .chart-container {
+            height: 120px;
+        }
+        .card-body {
+            padding: 0.5rem !important;
+        }
+    }
+    
+    @media (max-width: 576px) {
+        .stat-number {
+            font-size: 0.95rem !important;
+        }
+        .stat-label {
+            font-size: 0.55rem !important;
+        }
+        .stat-icon-wrapper {
+            width: 28px;
+            height: 28px;
+        }
+        .stat-icon-wrapper i {
+            font-size: 0.7rem !important;
+        }
+        .chart-container {
+            height: 100px;
+        }
+        .table-compact td, .table-compact th {
+            font-size: 0.6rem !important;
+            padding: 0.15rem 0.3rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+
+<!-- Statistics Cards Row - Compact -->
+ 
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card primary shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Total Hardware</span>
+                        <div class="stat-number text-primary">{{ total_hardware }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper primary">
+                        <i class="bi bi-laptop fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_hardware' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card success shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Total Employees</span>
+                        <div class="stat-number text-success">{{ total_employees }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper success">
+                        <i class="bi bi-people fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_employees' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card warning shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Total Managers</span>
+                        <div class="stat-number text-warning">{{ total_managers }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper warning">
+                        <i class="bi bi-person-badge fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_managers' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card info shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Total Projects</span>
+                        <div class="stat-number text-info">{{ total_projects }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper info">
+                        <i class="bi bi-folder fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_projects' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Row 2: Assignment Stats - Compact -->
+<div class="row g-2 mb-3">
+    <div class="col-6 col-md-3">
+        <div class="card stat-card purple shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Total Assignments</span>
+                        <div class="stat-number text-purple">{{ total_assignments }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper purple">
+                        <i class="bi bi-clipboard-check fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_assignments' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card teal shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Active Assignments</span>
+                        <div class="stat-number text-teal">{{ active_assignments }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper teal">
+                        <i class="bi bi-play-circle fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_assignments' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card orange shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Pending Requests</span>
+                        <div class="stat-number text-orange">{{ pending_requests }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper orange">
+                        <i class="bi bi-clock-history fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'super_admin_requests' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+    <div class="col-6 col-md-3">
+        <div class="card stat-card pink shadow-sm h-100">
+            <div class="card-body p-2">
+                <div class="d-flex align-items-center justify-content-between">
+                    <div>
+                        <span class="stat-label">Hardware Types</span>
+                        <div class="stat-number text-pink">{{ total_hardware_types }}</div>
+                    </div>
+                    <div class="stat-icon-wrapper pink">
+                        <i class="bi bi-tags fs-6"></i>
+                    </div>
+                </div>
+                <a href="{% url 'manage_hardware_types' %}" class="text-decoration-none small" style="font-size: 0.6rem;">
+                    View all <i class="bi bi-arrow-right"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Charts Row - Smaller Charts -->
+<div class="row g-2 mb-3">
+    <!-- Hardware Status Chart -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-pie-chart-fill text-primary me-1"></i>Hardware Status</h6>
+                <span class="badge bg-light text-dark" style="font-size: 0.55rem;">{{ total_hardware }}</span>
+            </div>
+            <div class="card-body p-2">
+                <div class="chart-container">
+                    <canvas id="hardwareStatusChart"></canvas>
+                </div>
+                <div class="row g-1 mt-1">
+                    <div class="col-4 text-center">
+                        <span class="badge bg-success status-badge">Avail</span>
+                        <div class="fw-bold" style="font-size: 0.7rem;">{{ available_hardware }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <span class="badge bg-warning text-dark status-badge">Assgn</span>
+                        <div class="fw-bold" style="font-size: 0.7rem;">{{ assigned_hardware }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <span class="badge bg-info status-badge">In Use</span>
+                        <div class="fw-bold" style="font-size: 0.7rem;">{{ in_use_hardware }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <span class="badge bg-danger status-badge">Maint</span>
+                        <div class="fw-bold" style="font-size: 0.7rem;">{{ maintenance_hardware }}</div>
+                    </div>
+                    <div class="col-4 text-center">
+                        <span class="badge bg-secondary status-badge">Ret</span>
+                        <div class="fw-bold" style="font-size: 0.7rem;">{{ retired_hardware|default:0 }}</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Monthly Assignments Chart -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-graph-up-arrow text-success me-1"></i>Monthly Assignments</h6>
+                <span class="badge bg-light text-dark" style="font-size: 0.55rem;">6 months</span>
+            </div>
+            <div class="card-body p-2">
+                <div class="chart-container">
+                    <canvas id="assignmentsChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Hardware by Type Chart -->
+    <div class="col-12 col-md-6 col-lg-4">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-laptop-fill text-info me-1"></i>Hardware by Type</h6>
+                <span class="badge bg-light text-dark" style="font-size: 0.55rem;">{{ hardware_by_type|length }} types</span>
+            </div>
+            <div class="card-body p-2">
+                <div class="chart-container">
+                    <canvas id="hardwareTypeChart"></canvas>
+                </div>
+                {% if hardware_by_type %}
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% for type, count in hardware_by_type_items|slice:":5" %}
+                    <span class="badge bg-light text-dark" style="font-size: 0.5rem;">
+                        {{ type|truncatechars:8 }}: {{ count }}
+                    </span>
+                    {% endfor %}
+                    {% if hardware_by_type_items|length > 5 %}
+                    <span class="badge bg-light text-dark" style="font-size: 0.5rem;">+{{ hardware_by_type_items|length|add:"-5" }} more</span>
+                    {% endif %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Branch Distribution Chart - Smaller -->
+<div class="row g-2 mb-3">
+    <div class="col-12 col-md-6">
+        <div class="card chart-card shadow-sm">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <h6><i class="bi bi-building-fill text-warning me-1"></i>Branch Distribution</h6>
+                <span class="badge bg-light text-dark" style="font-size: 0.55rem;">{{ branch_distribution|length }} branches</span>
+            </div>
+            <div class="card-body p-2">
+                <div class="chart-container chart-container-sm">
+                    <canvas id="branchChart"></canvas>
+                </div>
+                {% if branch_distribution %}
+                <div class="d-flex flex-wrap gap-1 mt-1">
+                    {% for branch, count in branch_distribution_items %}
+                    <span class="badge bg-light text-dark" style="font-size: 0.5rem;">
+                        {{ branch|truncatechars:10 }}: {{ count }}
+                    </span>
+                    {% endfor %}
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Quick Stats -->
+    <div class="col-12 col-md-6">
+        <div class="card chart-card shadow-sm h-100">
+            <div class="card-header">
+                <h6><i class="bi bi-speedometer2 text-primary me-1"></i>System Overview</h6>
+            </div>
+            <div class="card-body p-2">
+                <div class="row g-1">
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded text-center">
+                            <div class="fw-bold text-primary" style="font-size: 1rem;">{{ total_managers }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Managers</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded text-center">
+                            <div class="fw-bold text-success" style="font-size: 1rem;">{{ total_employees }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Employees</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded text-center">
+                            <div class="fw-bold text-info" style="font-size: 1rem;">{{ total_projects }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Projects</small>
+                        </div>
+                    </div>
+                    <div class="col-6">
+                        <div class="bg-light p-2 rounded text-center">
+                            <div class="fw-bold text-warning" style="font-size: 1rem;">{{ total_assignments }}</div>
+                            <small class="text-muted" style="font-size: 0.55rem;">Assignments</small>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Manager Performance - Compact -->
+<div class="card chart-card shadow-sm mb-3">
+    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1">
+        <h6><i class="bi bi-trophy-fill text-warning me-1"></i>Top Managers</h6>
+        <div class="d-flex gap-1">
+            <span class="badge bg-light text-dark" style="font-size: 0.55rem;">{{ manager_performance|length }} managers</span>
+            <a href="{% url 'super_admin_managers' %}" class="btn btn-sm btn-outline-primary" style="font-size: 0.6rem; padding: 0.1rem 0.4rem;">View All</a>
+        </div>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0 table-compact">
+                <thead class="bg-light">
+                    <tr>
+                        <th class="text-center">#</th>
+                        <th>Manager</th>
+                        <th class="d-none d-sm-table-cell">Branch</th>
+                        <th class="text-center">Emp</th>
+                        <th class="text-center">Assign</th>
+                        <th class="text-center d-none d-md-table-cell">HW</th>
+                        <th class="text-center d-none d-lg-table-cell">Util</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for manager in manager_performance|slice:":5" %}
+                    <tr>
+                        <td class="text-center">{{ forloop.counter }}</td>
+                        <td><strong>{{ manager.name }}</strong></td>
+                        <td class="d-none d-sm-table-cell">
+                            <span class="badge bg-light text-dark" style="font-size: 0.55rem;">{{ manager.branch }}</span>
+                        </td>
+                        <td class="text-center">{{ manager.employees }}</td>
+                        <td class="text-center">
+                            <span class="badge bg-primary" style="font-size: 0.55rem;">{{ manager.assignments }}</span>
+                        </td>
+                        <td class="text-center d-none d-md-table-cell">{{ manager.hardware }}</td>
+                        <td class="d-none d-lg-table-cell">
+                            <div class="d-flex align-items-center gap-1">
+                                <span style="font-size: 0.6rem;">{{ manager.utilization }}%</span>
+                                <div class="utilization-bar flex-grow-1">
+                                    <div class="fill {% if manager.utilization >= 70 %}high{% elif manager.utilization >= 40 %}medium{% else %}low{% endif %}" 
+                                         style="width: {{ manager.utilization }}%;"></div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="7" class="text-center py-3 small">No managers found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Recent Activities - Compact -->
+<div class="card chart-card shadow-sm">
+    <div class="card-header d-flex flex-column flex-sm-row justify-content-between align-items-start align-items-sm-center gap-1">
+        <h6><i class="bi bi-clock-history text-primary me-1"></i>Recent Activities</h6>
+        <span class="badge bg-light text-dark" style="font-size: 0.55rem;">Latest {{ recent_activities|length }}</span>
+    </div>
+    <div class="card-body p-2">
+        {% for activity in recent_activities|slice:":5" %}
+        <div class="activity-item active">
+            <div class="d-flex align-items-start gap-2">
+                <div class="stat-icon-wrapper {{ activity.color }} flex-shrink-0" style="width: 24px; height: 24px;">
+                    <i class="bi bi-{{ activity.icon }}" style="font-size: 0.6rem;"></i>
+                </div>
+                <div class="flex-grow-1">
+                    <div class="d-flex flex-wrap justify-content-between align-items-start">
+                        <div>
+                            <strong style="font-size: 0.7rem;">{{ activity.title }}</strong>
+                            <p class="text-muted mb-0" style="font-size: 0.6rem;">{{ activity.description|truncatechars:40 }}</p>
+                        </div>
+                        <small class="text-muted flex-shrink-0 ms-2" style="font-size: 0.55rem;">{{ activity.timestamp|timesince }} ago</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-3">
+            <i class="bi bi-inbox display-6 text-muted"></i>
+            <p class="text-muted small mb-0">No recent activities</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const colorPalette = ['#4F46E5', '#059669', '#D97706', '#2563EB', '#DC2626', '#7C3AED', '#0D9488', '#EA580C', '#DB2777', '#6B7280'];
+    
+    // Smaller chart options
+    const smallOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 8,
+                    usePointStyle: true,
+                    pointStyle: 'circle',
+                    font: { size: 8 },
+                    boxWidth: 8
+                }
+            }
+        }
+    };
+    
+    // 1. Hardware Status Chart
+    const statusCtx = document.getElementById('hardwareStatusChart').getContext('2d');
+    new Chart(statusCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Available', 'Assigned', 'In Use', 'Maintenance', 'Retired'],
+            datasets: [{
+                data: [
+                    {{ available_hardware }},
+                    {{ assigned_hardware }},
+                    {{ in_use_hardware }},
+                    {{ maintenance_hardware }},
+                    {{ retired_hardware|default:0 }}
+                ],
+                backgroundColor: ['#059669', '#D97706', '#2563EB', '#DC2626', '#6B7280'],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            ...smallOptions,
+            cutout: '60%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: {
+                        padding: 5,
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        font: { size: 7 },
+                        boxWidth: 6
+                    }
+                }
+            }
+        }
+    });
+    
+    // 2. Monthly Assignments Chart
+    const assignCtx = document.getElementById('assignmentsChart').getContext('2d');
+    new Chart(assignCtx, {
+        type: 'bar',
+        data: {
+            labels: {{ months_json|safe }},
+            datasets: [{
+                label: 'Assignments',
+                data: {{ monthly_assignments_json|safe }},
+                backgroundColor: ['#4F46E5', '#818CF8', '#A78BFA', '#7C3AED', '#6366F1', '#4F46E5'],
+                borderWidth: 0,
+                borderRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: { stepSize: 1, font: { size: 7 } },
+                    grid: { color: 'rgba(0,0,0,0.05)' }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 7 } }
+                }
+            }
+        }
+    });
+    
+    // 3. Hardware by Type Chart
+    const typeCtx = document.getElementById('hardwareTypeChart').getContext('2d');
+    const hardwareTypes = {{ hardware_by_type_json|safe }};
+    const typeLabels = Object.keys(hardwareTypes);
+    const typeData = Object.values(hardwareTypes);
+    
+    if (typeLabels.length > 0) {
+        new Chart(typeCtx, {
+            type: 'bar',
+            data: {
+                labels: typeLabels,
+                datasets: [{
+                    label: 'Count',
+                    data: typeData,
+                    backgroundColor: typeLabels.map((_, i) => colorPalette[i % colorPalette.length]),
+                    borderWidth: 0,
+                    borderRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: { stepSize: 1, font: { size: 7 } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: {
+                        grid: { display: false },
+                        ticks: { font: { size: 6 }, maxRotation: 30, minRotation: 15 }
+                    }
+                }
+            }
+        });
+    }
+    
+    // 4. Branch Distribution Chart
+    const branchCtx = document.getElementById('branchChart').getContext('2d');
+    const branchData = {{ branch_distribution_json|safe }};
+    const branchLabels = Object.keys(branchData);
+    const branchValues = Object.values(branchData);
+    
+    if (branchLabels.length > 0) {
+        new Chart(branchCtx, {
+            type: 'pie',
+            data: {
+                labels: branchLabels,
+                datasets: [{
+                    data: branchValues,
+                    backgroundColor: branchLabels.map((_, i) => colorPalette[i % colorPalette.length]),
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            padding: 5,
+                            usePointStyle: true,
+                            pointStyle: 'circle',
+                            font: { size: 7 },
+                            boxWidth: 6
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endblock %}

@@ -1,0 +1,471 @@
+{% extends 'base.html' %}
+{% load static %}
+{% block title %}All Projects - Super Admin{% endblock %}
+
+{% block page_title %}All Projects{% endblock %}
+{% block page_subtitle %}View and manage all projects across branches{% endblock %}
+
+{% block extra_css %}
+<style>
+    /* ========== STATS CARDS ========== */
+    .stat-card {
+        border-radius: 10px;
+        transition: all 0.2s ease;
+        cursor: default;
+        border: none;
+        padding: 0.3rem;
+    }
+    
+    .stat-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 20px rgba(0,0,0,0.06) !important;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .stat-label {
+        font-size: 0.6rem;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+        color: #6B7280;
+        font-weight: 500;
+    }
+    
+    /* ========== PROJECT CARD ========== */
+    .project-card {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        border: none;
+        background: #ffffff;
+        height: 100%;
+    }
+    
+    .project-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 12px 30px rgba(0,0,0,0.08) !important;
+    }
+    
+    .project-card .card-header {
+        padding: 0.7rem 1rem;
+        background: #F8FAFC;
+        border-bottom: 1px solid #F1F5F9;
+    }
+    
+    .project-card .card-header h6 {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    .project-card .card-header small {
+        font-size: 0.7rem;
+        color: #94A3B8;
+    }
+    
+    .project-card .card-body {
+        padding: 0.8rem 1rem;
+    }
+    
+    .project-card .card-footer {
+        padding: 0.5rem 1rem;
+        background: #F8FAFC;
+        border-top: 1px solid #F1F5F9;
+    }
+    
+    /* ========== STATS BOX ========== */
+    .stats-box {
+        background: #F8FAFC;
+        border-radius: 8px;
+        padding: 0.4rem 0.5rem;
+        text-align: center;
+    }
+    
+    .stats-box .number {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #1E293B;
+    }
+    
+    .stats-box .label {
+        font-size: 0.55rem;
+        color: #94A3B8;
+        text-transform: uppercase;
+        letter-spacing: 0.2px;
+    }
+    
+    /* ========== PROJECT INFO ========== */
+    .project-info {
+        font-size: 0.75rem;
+        color: #64748B;
+    }
+    
+    .project-info .label {
+        color: #94A3B8;
+    }
+    
+    .project-info .value {
+        color: #1E293B;
+        font-weight: 500;
+    }
+    
+    /* ========== BADGES ========== */
+    .badge-status {
+        font-size: 0.6rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    
+    .badge-status.active {
+        background: #DCFCE7;
+        color: #166534;
+    }
+    
+    .badge-status.inactive {
+        background: #F1F5F9;
+        color: #64748B;
+    }
+    
+    .badge-location {
+        background: #EFF6FF;
+        color: #1E40AF;
+        font-size: 0.6rem;
+        padding: 0.15rem 0.5rem;
+        border-radius: 12px;
+        font-weight: 500;
+    }
+    
+    /* ========== FILTER ========== */
+    .filter-card {
+        border-radius: 10px;
+        border: none;
+        background: #ffffff;
+    }
+    
+    .filter-card .form-control,
+    .filter-card .form-select {
+        border-radius: 6px;
+        font-size: 0.8rem;
+        padding: 0.3rem 0.7rem;
+        border-color: #E2E8F0;
+    }
+    
+    .filter-card .form-control:focus,
+    .filter-card .form-select:focus {
+        border-color: #E04D00;
+        box-shadow: 0 0 0 3px rgba(224, 77, 0, 0.08);
+    }
+    
+    /* ========== RESPONSIVE ========== */
+    @media (max-width: 576px) {
+        .stat-number {
+            font-size: 1.2rem;
+        }
+        .stat-card .card-body {
+            padding: 0.3rem !important;
+        }
+        .project-card .card-header h6 {
+            font-size: 0.8rem;
+        }
+        .project-card .card-body {
+            padding: 0.5rem !important;
+        }
+        .project-card .card-footer {
+            padding: 0.4rem 0.5rem !important;
+        }
+        .stats-box .number {
+            font-size: 0.8rem;
+        }
+        .project-info {
+            font-size: 0.65rem;
+        }
+        .badge {
+            font-size: 0.5rem !important;
+            padding: 0.1rem 0.3rem !important;
+        }
+        .btn-sm {
+            font-size: 0.6rem !important;
+            padding: 0.15rem 0.3rem !important;
+        }
+    }
+    
+    @media (max-width: 768px) {
+        .stat-number {
+            font-size: 1.3rem;
+        }
+        .project-card .card-body {
+            padding: 0.6rem !important;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Header -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="d-flex flex-wrap justify-content-between align-items-center gap-2">
+            <div>
+                <h4 class="fw-bold mb-0" style="font-size: 1.1rem;">
+                    <i class="bi bi-folder-fill text-primary me-2"></i>All Projects
+                </h4>
+                <p class="text-muted small mb-0" style="font-size: 0.75rem;">View and manage all projects across branches</p>
+            </div>
+            <div class="d-flex gap-2">
+                <a href="{% url 'super_admin_create_project' %}" class="btn btn-primary btn-sm">
+                    <i class="bi bi-plus-circle me-1"></i> Create Project
+                </a>
+                <a href="{% url 'super_admin_dashboard' %}" class="btn btn-outline-secondary btn-sm">
+                    <i class="bi bi-arrow-left me-1"></i> Back
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics Cards -->
+<div class="row g-2 mb-3">
+    <div class="col-3 col-md-3">
+        <div class="card stat-card shadow-sm" style="background: #EEF2FF;">
+            <div class="card-body text-center p-2">
+                <div class="stat-number text-primary">{{ total_projects }}</div>
+                <div class="stat-label">Total Projects</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3 col-md-3">
+        <div class="card stat-card shadow-sm" style="background: #DCFCE7;">
+            <div class="card-body text-center p-2">
+                <div class="stat-number text-success">{{ active_projects }}</div>
+                <div class="stat-label">Active Projects</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3 col-md-3">
+        <div class="card stat-card shadow-sm" style="background: #F1F5F9;">
+            <div class="card-body text-center p-2">
+                <div class="stat-number text-secondary">{{ completed_projects }}</div>
+                <div class="stat-label">Inactive Projects</div>
+            </div>
+        </div>
+    </div>
+    <div class="col-3 col-md-3">
+        <div class="card stat-card shadow-sm" style="background: #E0F2FE;">
+            <div class="card-body text-center p-2">
+                <div class="stat-number text-info">{{ total_projects }}</div>
+                <div class="stat-label">Total</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Section -->
+<div class="row mb-3">
+    <div class="col-12">
+        <div class="card filter-card shadow-sm">
+            <div class="card-body py-2">
+                <form method="GET" class="row g-2">
+                    <div class="col-md-5">
+                        <input type="text" name="search" class="form-control form-control-sm" 
+                               placeholder="Search by name, ID, branch..." 
+                               value="{{ search_query|default:'' }}">
+                    </div>
+                    <div class="col-md-3">
+                        <select name="status" class="form-select form-select-sm">
+                            <option value="">All Projects</option>
+                            <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Active (With Assignments)</option>
+                            <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Inactive (No Assignments)</option>
+                        </select>
+                    </div>
+                    <div class="col-md-2">
+                        <button type="submit" class="btn btn-primary btn-sm w-100">
+                            <i class="bi bi-search me-1"></i>Filter
+                        </button>
+                    </div>
+                    <div class="col-md-2">
+                        <a href="{% url 'super_admin_projects' %}" class="btn btn-outline-secondary btn-sm w-100">
+                            <i class="bi bi-arrow-counterclockwise me-1"></i>Reset
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Projects List -->
+<div class="row g-3">
+    {% for project in projects %}
+    <div class="col-12 col-md-6">
+        <div class="card project-card shadow-sm">
+            <!-- Card Header -->
+            <div class="card-header d-flex flex-wrap justify-content-between align-items-center gap-1">
+                <div>
+                    <h6 class="mb-0 fw-bold">
+                        <i class="bi bi-folder-fill text-primary me-1"></i>
+                        {{ project.project_name }}
+                    </h6>
+                    <small>{{ project.project_id }}</small>
+                </div>
+                <div class="d-flex gap-1">
+                    <span class="badge-location">
+                        <i class="bi bi-geo-alt me-1"></i>{{ project.location|truncatechars:10 }}
+                    </span>
+                    {% if project.active_assignment_count > 0 %}
+                    <span class="badge-status active">Active</span>
+                    {% else %}
+                    <span class="badge-status inactive">Inactive</span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <!-- Card Body -->
+            <div class="card-body">
+                <!-- Stats -->
+                <div class="row g-1 mb-2">
+                    <div class="col-4">
+                        <div class="stats-box">
+                            <div class="number">{{ project.active_assignment_count }}</div>
+                            <div class="label">Assignments</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stats-box">
+                            <div class="number">{{ project.total_hardware }}</div>
+                            <div class="label">Total HW</div>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="stats-box">
+                            <div class="number">{{ project.employee_count }}</div>
+                            <div class="label">Employees</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Project Info -->
+                <div class="project-info">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span class="label">Manager:</span>
+                        <span class="value">{{ project.manager_name|default:"Unassigned" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between">
+                        <span class="label">Duration:</span>
+                        <span class="value">{{ project.start_date|date:"d M Y" }} - {{ project.end_date|date:"d M Y" }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Card Footer -->
+            <div class="card-footer d-flex gap-2">
+                <a href="{% url 'super_admin_project_assignments' project.id %}" class="btn btn-sm btn-outline-info flex-grow-1">
+                    <i class="bi bi-eye me-1"></i>View
+                </a>
+                {% if project.can_delete %}
+                <button type="button" class="btn btn-sm btn-outline-danger" 
+                        data-bs-toggle="modal" 
+                        data-bs-target="#deleteProjectModal{{ project.id }}">
+                    <i class="bi bi-trash me-1"></i>Delete
+                </button>
+                {% else %}
+                <span class="badge bg-warning text-dark d-flex align-items-center justify-content-center flex-grow-1" style="font-size: 0.6rem; padding: 0.3rem;">
+                    <i class="bi bi-lock me-1"></i> {{ project.total_hardware }} items
+                </span>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Modal -->
+    {% if project.can_delete %}
+    <div class="modal fade" id="deleteProjectModal{{ project.id }}" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="bi bi-exclamation-triangle-fill me-2"></i>Confirm Delete</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center mb-3">
+                        <i class="bi bi-folder-x display-1 text-danger"></i>
+                        <h6 class="mt-2">Delete Project: {{ project.project_name }}?</h6>
+                    </div>
+                    <div class="alert alert-warning small py-2">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>
+                        <strong>Warning:</strong> This action cannot be undone.
+                    </div>
+                    <div class="bg-light p-2 rounded small">
+                        <div class="row g-1">
+                            <div class="col-6"><strong>Project ID:</strong></div>
+                            <div class="col-6">{{ project.project_id }}</div>
+                            <div class="col-6"><strong>Branch:</strong></div>
+                            <div class="col-6">{{ project.location }}</div>
+                            <div class="col-6"><strong>Created:</strong></div>
+                            <div class="col-6">{{ project.created_at|date:"d M Y" }}</div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary btn-sm" data-bs-dismiss="modal">Cancel</button>
+                    <form method="POST" action="{% url 'super_admin_delete_project' project.id %}" style="display: inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger btn-sm">
+                            <i class="bi bi-trash me-1"></i>Delete
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+    {% empty %}
+    <div class="col-12">
+        <div class="text-center py-4">
+            <i class="bi bi-folder-x display-1 text-muted"></i>
+            <h6 class="mt-2">No Projects Found</h6>
+            <p class="text-muted small">Create your first project for any branch.</p>
+            <a href="{% url 'super_admin_create_project' %}" class="btn btn-primary btn-sm">
+                <i class="bi bi-plus-circle me-1"></i>Create Project
+            </a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Auto-dismiss alerts after 5 seconds
+        setTimeout(function() {
+            var alerts = document.querySelectorAll('.alert');
+            alerts.forEach(function(alert) {
+                var bsAlert = new bootstrap.Alert(alert);
+                bsAlert.close();
+            });
+        }, 5000);
+        
+        // Modal scroll fix
+        var modals = document.querySelectorAll('.modal');
+        modals.forEach(function(modal) {
+            modal.addEventListener('shown.bs.modal', function() {
+                document.body.style.overflow = 'hidden';
+            });
+            modal.addEventListener('hidden.bs.modal', function() {
+                document.body.style.overflow = '';
+            });
+        });
+        
+        // Prevent modal from closing when clicking outside on mobile
+        var modalDialogs = document.querySelectorAll('.modal-dialog');
+        modalDialogs.forEach(function(dialog) {
+            dialog.addEventListener('click', function(e) {
+                e.stopPropagation();
+            });
+        });
+    });
+</script>
+{% endblock %}
