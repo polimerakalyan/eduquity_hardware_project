@@ -81,7 +81,6 @@ class Command(BaseCommand):
                     first_name='Super',
                     last_name='Admin',
                     branch_location='Head Office',
-                    is_first_login=False,
                     phone='+91 7569148233'
                 )
                 
