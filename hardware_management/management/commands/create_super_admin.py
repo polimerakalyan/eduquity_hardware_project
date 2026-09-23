@@ -59,7 +59,6 @@ class Command(BaseCommand):
                 user.first_name = 'Super'
                 user.last_name = 'Admin'
                 user.branch_location = 'Head Office'
-                user.is_first_login = False
                 user.phone = '+91 7569148233'
                 user.set_password(password)
                 user.save()
